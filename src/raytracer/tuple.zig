@@ -1,65 +1,88 @@
 const std = @import("std");
 const testing = std.testing;
 
-const tolerance = @import("definitions.zig").tolerance;
-const F = @import("definitions.zig").F;
+const tolerance = @import("../definitions.zig").tolerance;
+const F = @import("../definitions.zig").F;
 
-const Tuple = struct {
-    v: @Vector(4, F),
+pub const Tuple = struct {
+    const Self = @This();
 
-    pub fn new(x: F, y: F, z: F, w: F) Tuple {
-        return Tuple{ .v = @Vector(4, F){ x, y, z, w } };
+    x: F,
+    y: F,
+    z: F,
+    w: F,
+
+    pub inline fn new(x: F, y: F, z: F, w: F) Self {
+        return .{ .x = x, .y = y, .z = z, .w = w };
     }
 
-    pub fn new_point(x: F, y: F, z: F) Tuple {
-        return Tuple{ .v = @Vector(4, F){ x, y, z, 1.0 } };
+    pub inline fn new_point(x: F, y: F, z: F) Self {
+        return .{ .x = x, .y = y, .z = z, .w = 1.0 };
     }
 
-    pub fn new_vec3(x: F, y: F, z: F) Tuple {
-        return Tuple{ .v = @Vector(4, F){ x, y, z, 0.0 } };
+    pub inline fn new_vec3(x: F, y: F, z: F) Self {
+        return .{ .x = x, .y = y, .z = z, .w = 0.0 };
     }
 
-    pub fn approx_equal(self: Tuple, other: Tuple) bool {
-        return @reduce(.And, @fabs(self.v - other.v) < @splat(4, tolerance));
+    pub inline fn approx_equal(self: Self, other: Self) bool {
+        return @fabs(self.x - other.x) < tolerance
+            and @fabs(self.y - other.y) < tolerance
+            and @fabs(self.z - other.z) < tolerance
+            and @fabs(self.w - other.w) < tolerance;
     }
 
-    pub fn add(self: Tuple, other: Tuple) Tuple {
-        return Tuple{ .v = self.v + other.v };
+    pub inline fn add(self: Self, other: Self) Self {
+        return .{ .x = self.x + other.x,
+                  .y = self.y + other.y,
+                  .z = self.z + other.z,
+                  .w = self.w + other.w };
     }
 
-    pub fn sub(self: Tuple, other: Tuple) Tuple {
-        return Tuple{ .v = self.v - other.v };
+    pub inline fn sub(self: Self, other: Self) Self {
+        return .{ .x = self.x - other.x,
+                  .y = self.y - other.y,
+                  .z = self.z - other.z,
+                  .w = self.w - other.w };
     }
 
-    pub fn negate(self: Tuple) Tuple {
-        return Tuple{ .v = self.v * @splat(4, @as(F, -1.0)) };
+    pub inline fn negate(self: Self) Self {
+        return .{ .x = - self.x,
+                  .y = - self.y,
+                  .z = - self.z,
+                  .w = - self.w };
     }
 
-    pub fn mul(self: Tuple, val: F) Tuple {
-        return Tuple{ .v = self.v * @splat(4, val) };
+    pub inline fn mul(self: Self, val: F) Self {
+        return .{ .x = self.x * val,
+                  .y = self.y * val,
+                  .z = self.z * val,
+                  .w = self.w * val };
     }
 
-    pub fn div(self: Tuple, val: F) Tuple {
-        return Tuple{ .v = self.v / @splat(4, val) };
+    pub inline fn div(self: Self, val: F) Self {
+        return .{ .x = self.x / val,
+                  .y = self.y / val,
+                  .z = self.z / val,
+                  .w = self.w / val };
     }
 
-    pub fn magnitude(self: Tuple) F {
-        return @sqrt(@reduce(.Add, self.v * self.v));
+    pub inline fn magnitude(self: Self) F {
+        return @sqrt(self.x * self.x + self.y * self.y + self.z * self.z + self.w * self.w);
     }
 
-    pub fn normalized(self: Tuple) Tuple {
+    pub inline fn normalized(self: Self) Self {
         return self.div(self.magnitude());
     }
 
-    pub fn dot(self: Tuple, other: Tuple) F {
-        return @reduce(.Add, self.v * other.v);
+    pub inline fn dot(self: Self, other: Self) F {
+        return self.x * other.x + self.y * other.y + self.z * other.z + self.w * other.w;
     }
 
-    pub fn cross(self: Tuple, other: Tuple) Tuple {
-        return Tuple.new_vec3(
-            self.v[1] * other.v[2] - self.v[2] * other.v[1],
-            self.v[2] * other.v[0] - self.v[0] * other.v[2],
-            self.v[0] * other.v[1] - self.v[1] * other.v[0]
+    pub inline fn cross(self: Self, other: Self) Self {
+        return Self.new_vec3(
+            self.y * other.z - self.z * other.y,
+            self.z * other.x - self.x * other.z,
+            self.x * other.y - self.y * other.x
         );
     }
 };
