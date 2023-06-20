@@ -46,6 +46,19 @@ pub fn Color(comptime T: type) type {
     };
 }
 
+pub fn scaledChannel(channel: f32) u8 {
+    var tmp = @floatToInt(i128, @round(channel * 255));
+
+    if (tmp < 0) {
+        tmp = 0;
+    } else if (tmp > 255) {
+        tmp = 255;
+    }
+
+    return @intCast(u8, tmp);
+}
+
+
 test "Color ops" {
     // add
     var c1 = Color(f32).new(0.9, 0.6, 0.75);
@@ -63,4 +76,10 @@ test "Color ops" {
     c1 = Color(f32).new(1.0, 0.2, 0.4);
     c2 = Color(f32).new(0.9, 1.0, 0.1);
     try testing.expect(c1.elementwiseMul(c2).approx_equal(Color(f32).new(0.9, 0.2, 0.04)));
+
+    // integer representation of channels
+    try testing.expectEqual(scaledChannel(0.1), 26);
+    try testing.expectEqual(scaledChannel(0.5), 128);
+    try testing.expectEqual(scaledChannel(-0.1), 0);
+    try testing.expectEqual(scaledChannel(21.0), 255);
 }

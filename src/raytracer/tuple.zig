@@ -1,7 +1,6 @@
 const std = @import("std");
 const testing = std.testing;
 
-
 pub fn Tuple(comptime T: type) type {
     return packed struct {
         const Self = @This();
