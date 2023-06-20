@@ -1,6 +1,9 @@
-const print = @import("std").debug.print;
+const std = @import("std");
+const print = std.debug.print;
 
+const Canvas = @import("../raytracer/canvas.zig").Canvas;
 const Tuple = @import("../raytracer/tuple.zig").Tuple;
+const Color = @import("../raytracer/color.zig").Color;
 
 const Projectile = struct {
     position: Tuple(f32),
@@ -17,15 +20,43 @@ const Environment = struct {
     }
 };
 
-pub fn simulate() void {
+pub fn simulate() !void {
     var proj = Projectile { .position = Tuple(f32).new_point(0.0, 1.0, 0.0),
-                            .velocity = Tuple(f32).new_vec3(1.0, 1.0, 1.0)};
+                            .velocity = Tuple(f32).new_vec3(1.0, 1.8, 0.0).normalized().mul(11.25)};
     const env = Environment { .gravity = Tuple(f32).new_vec3(0.0, -0.1, 0.0),
                               .wind = Tuple(f32).new_vec3(-0.01, 0.0, 0.0)};
 
+
+    comptime var width = 900;
+    comptime var height = 550;
+
+    const allocator = std.heap.page_allocator;
+
+    var canvas = try Canvas(f32).new(allocator, width, height);
+    defer canvas.destroy();
+
     while (proj.position.y > 0) {
-        print("{}\n", .{ proj.position });
+        const x = @floatToInt(i32, proj.position.x);
+        const y = @intCast(i32, canvas.height - 1) - @floatToInt(i32, proj.position.y);
+
+        if (x > 0 and y > 0) {
+            if (canvas.get_pixel_pointer(@intCast(usize, x), @intCast(usize, y))) |pixel| {
+                pixel.* = Color(f32).new(1.0, 0.0, 0.0);
+            }
+        }
+
         env.tick(&proj);
     }
+
+    const ppm = try canvas.as_ppm(allocator);
+    defer allocator.free(ppm);
+
+    const file = try std.fs.cwd().createFile(
+        "images/projectile.ppm",
+        .{ .read = true },
+    );
+    defer file.close();
+
+    _ = try file.writeAll(ppm);
 }
 

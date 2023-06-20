@@ -29,6 +29,9 @@ pub fn Canvas(comptime T: type) type {
         }
 
         pub fn get_pixel_pointer(self: *Self, x: usize, y: usize) ?*Color(T) {
+            if (x >= self.width or y >= self.width) {
+                return null;
+            }
             return &self.pixels[y * self.width + x];
         }
 
