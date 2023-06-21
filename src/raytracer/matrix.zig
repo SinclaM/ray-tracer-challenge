@@ -1,6 +1,7 @@
 const std = @import("std");
-const print = std.debug.print;
 const testing = std.testing;
+const pi = std.math.pi;
+const print = std.debug.print;
 
 const Tuple = @import("tuple.zig").Tuple;
 
@@ -178,6 +179,81 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
             return inverse_;
         }
 
+        fn translate(self: Self, x: T, y: T, z: T) Self {
+            const translation = Matrix(T, 4).new([4][4]f32{
+                [_]f32{ 1.0, 0.0, 0.0, x },
+                [_]f32{ 0.0, 1.0, 0.0, y },
+                [_]f32{ 0.0, 0.0, 1.0, z },
+                [_]f32{ 0.0, 0.0, 0.0, 1.0 },
+            });
+
+            return translation.mul(self);
+        }
+
+        fn scale(self: Self, x: T, y: T, z: T) Self {
+            const scaling = Matrix(T, 4).new([4][4]f32{
+                [_]f32{  x , 0.0, 0.0, 0.0 },
+                [_]f32{ 0.0,  y , 0.0, 0.0 },
+                [_]f32{ 0.0, 0.0,  z , 0.0 },
+                [_]f32{ 0.0, 0.0, 0.0, 1.0 },
+            });
+
+            return scaling.mul(self);
+        }
+
+        fn rotate_x(self: Self, theta: T) Self {
+            const rotation = Matrix(T, 4).new([4][4]f32{
+                [_]f32{ 1.0,    0.0     ,     0.0     , 0.0 },
+                [_]f32{ 0.0, @cos(theta), -@sin(theta), 0.0 },
+                [_]f32{ 0.0, @sin(theta),  @cos(theta), 0.0 },
+                [_]f32{ 0.0,    0.0     ,     0.0     , 1.0 },
+            });
+
+            return rotation.mul(self);
+        }
+
+        fn rotate_y(self: Self, theta: T) Self {
+            const rotation = Matrix(T, 4).new([4][4]f32{
+                [_]f32{ @cos(theta) , 0.0, @sin(theta), 0.0 },
+                [_]f32{    0.0      , 1.0,    0.0     , 0.0 },
+                [_]f32{ -@sin(theta), 0.0, @cos(theta), 0.0 },
+                [_]f32{    0.0      , 0.0,    0.0     , 1.0 },
+            });
+
+            return rotation.mul(self);
+        }
+
+        fn rotate_z(self: Self, theta: T) Self {
+            const rotation = Matrix(T, 4).new([4][4]f32{
+                [_]f32{@cos(theta), -@sin(theta), 0.0, 0.0 },
+                [_]f32{@sin(theta),  @cos(theta), 0.0, 0.0 },
+                [_]f32{   0.0     ,     0.0     , 1.0, 0.0 },
+                [_]f32{   0.0     ,     0.0     , 0.0, 1.0 },
+            });
+
+            return rotation.mul(self);
+        }
+
+        const ShearArgs = struct {
+            xy: T = 0.0,
+            xz: T = 0.0,
+            yx: T = 0.0,
+            yz: T = 0.0,
+            zx: T = 0.0,
+            zy: T = 0.0,
+        };
+
+        fn shear(self: Self, args: ShearArgs) Self {
+            const shearing = Matrix(T, 4).new([4][4]f32{
+                [_]f32{ 1.0    , args.xy, args.xz, 0.0 },
+                [_]f32{ args.yx, 1.0    , args.yz, 0.0 },
+                [_]f32{ args.zx, args.zy, 1.0    , 0.0 },
+                [_]f32{ 0.0    , 0.0    , 0.0    , 1.0 },
+            });
+
+            return shearing.mul(self);
+        }
+
     };
 }
 
@@ -333,4 +409,128 @@ test "Inversion" {
     });
 
     try testing.expect((try a.inverse()).approx_equal(a_inverse));
+
+    const b = Matrix(f32, 4).new([4][4]f32{
+        [_]f32{  9.0,  3.0,  0.0,  9.0 },
+        [_]f32{ -5.0, -2.0, -6.0, -3.0 },
+        [_]f32{ -4.0,  9.0,  6.0,  4.0 },
+        [_]f32{ -7.0,  6.0,  6.0,  2.0 },
+    });
+
+    const b_inverse = Matrix(f32, 4).new([4][4]f32{
+        [_]f32{ -0.04074, -0.07778,  0.14444, -0.22222 },
+        [_]f32{ -0.07778,  0.03333,  0.36667, -0.33333 },
+        [_]f32{ -0.02901, -0.14630, -0.10926,  0.12963 },
+        [_]f32{  0.17778,  0.06667, -0.26667,  0.33333 },
+    });
+
+    try testing.expect((try b.inverse()).approx_equal(b_inverse));
+
+    const c = Matrix(f32, 4).new([4][4]f32{
+        [_]f32{  3.0, -9.0,  7.0,  3.0 },
+        [_]f32{  3.0, -8.0,  2.0, -9.0 },
+        [_]f32{ -4.0,  4.0,  4.0,  1.0 },
+        [_]f32{ -6.0,  5.0, -1.0,  1.0 },
+    });
+
+    const d = Matrix(f32, 4).new([4][4]f32{
+        [_]f32{ 8.0,  2.0,  2.0,  2.0 },
+        [_]f32{ 3.0, -1.0,  7.0,  0.0 },
+        [_]f32{ 7.0,  0.0,  5.0,  4.0 },
+        [_]f32{ 6.0, -2.0,  0.0,  5.0 },
+    });
+
+    try testing.expect(c.mul(d).mul(try d.inverse()).approx_equal(c));
 }
+
+test "Transformations" {
+    // translation
+    var transform = Matrix(f32, 4).identity().translate(5.0, -3.0, 2.0);
+    var p = Tuple(f32).new_point(-3.0, 4.0, 5.0);
+
+    try testing.expect(transform.tupleMul(p).approx_equal(Tuple(f32).new_point(2.0, 1.0, 7.0)));
+
+    transform = try transform.inverse();
+    try testing.expect(transform.tupleMul(p).approx_equal(Tuple(f32).new_point(-8, 7.0, 3.0)));
+
+    var v = Tuple(f32).new_vec3(3.0, 4.0, 5.0);
+    try testing.expect(transform.tupleMul(v).approx_equal(v));
+
+    // scaling
+    transform = Matrix(f32, 4).identity().scale(2.0, 3.0, 4.0);
+    p = Tuple(f32).new_point(-4.0, 6.0, 8.0);
+
+    try testing.expect(transform.tupleMul(p).approx_equal(Tuple(f32).new_point(-8.0, 18.0, 32.0)));
+
+    v = Tuple(f32).new_vec3(-4.0, 6.0, 8.0);
+
+    try testing.expect(transform.tupleMul(v).approx_equal(Tuple(f32).new_vec3(-8.0, 18.0, 32.0)));
+    try testing.expect((try transform.inverse()).tupleMul(v).approx_equal(Tuple(f32).new_vec3(-2.0, 2.0, 2.0)));
+
+    transform = Matrix(f32, 4).identity().scale(-1.0, 1.0, 1.0);
+    p = Tuple(f32).new_point(2.0, 3.0, 4.0);
+
+    try testing.expect(transform.tupleMul(p).approx_equal(Tuple(f32).new_point(-2.0, 3.0, 4.0)));
+
+    // rotations
+    transform = Matrix(f32, 4).identity().rotate_x(pi / 4.0);
+    p = Tuple(f32).new_point(0.0, 1.0, 0.0);
+
+    try testing.expect(transform.tupleMul(p)
+        .approx_equal(Tuple(f32).new_point(0.0, 1.0 / @sqrt(2.0), 1.0 / @sqrt(2.0))));
+
+    transform = transform.rotate_x(pi / 4.0);
+    try testing.expect(transform.tupleMul(p).approx_equal(Tuple(f32).new_point(0.0, 0.0, 1.0)));
+
+    transform = Matrix(f32, 4).identity().rotate_x(pi / 4.0);
+    try testing.expect((try transform.inverse()).tupleMul(p)
+        .approx_equal(Tuple(f32).new_point(0.0, 1.0 / @sqrt(2.0), -1.0 / @sqrt(2.0))));
+
+    transform = Matrix(f32, 4).identity().rotate_y(pi / 4.0);
+    p = Tuple(f32).new_point(0.0, 0.0, 1.0);
+
+    try testing.expect(transform.tupleMul(p)
+        .approx_equal(Tuple(f32).new_point(1.0 / @sqrt(2.0), 0.0, 1.0 / @sqrt(2.0))));
+
+    transform = transform.rotate_y(pi / 4.0);
+
+    try testing.expect(transform.tupleMul(p).approx_equal(Tuple(f32).new_point(1.0, 0.0, 0.0)));
+
+    transform = Matrix(f32, 4).identity().rotate_z(pi / 4.0);
+    p = Tuple(f32).new_point(0.0, 1.0, 0.0);
+
+    try testing.expect(transform.tupleMul(p)
+        .approx_equal(Tuple(f32).new_point(-1.0 / @sqrt(2.0), 1.0 / @sqrt(2.0), 0.0)));
+
+    transform = transform.rotate_z(pi / 4.0);
+    try testing.expect(transform.tupleMul(p).approx_equal(Tuple(f32).new_point(-1.0, 0.0, 0.0)));
+
+    // shearing
+    transform = Matrix(f32, 4).identity().shear(.{.xy = 1.0});
+    p = Tuple(f32).new_point(2.0, 3.0, 4.0);
+
+    try testing.expect(transform.tupleMul(p).approx_equal(Tuple(f32).new_point(5.0, 3.0, 4.0)));
+
+    transform = Matrix(f32, 4).identity().shear(.{.xz = 1.0});
+    try testing.expect(transform.tupleMul(p).approx_equal(Tuple(f32).new_point(6.0, 3.0, 4.0)));
+
+    transform = Matrix(f32, 4).identity().shear(.{.yx = 1.0});
+    try testing.expect(transform.tupleMul(p).approx_equal(Tuple(f32).new_point(2.0, 5.0, 4.0)));
+
+    transform = Matrix(f32, 4).identity().shear(.{.yz = 1.0});
+    try testing.expect(transform.tupleMul(p).approx_equal(Tuple(f32).new_point(2.0, 7.0, 4.0)));
+
+    transform = Matrix(f32, 4).identity().shear(.{.zx = 1.0});
+    try testing.expect(transform.tupleMul(p).approx_equal(Tuple(f32).new_point(2.0, 3.0, 6.0)));
+
+    transform = Matrix(f32, 4).identity().shear(.{.zy = 1.0});
+    try testing.expect(transform.tupleMul(p).approx_equal(Tuple(f32).new_point(2.0, 3.0, 7.0)));
+
+
+    // chaining
+    transform = Matrix(f32, 4).identity().rotate_x(pi / 2.0).scale(5.0, 5.0, 5.0).translate(10.0, 5.0, 7.0);
+    p = Tuple(f32).new_point(1.0, 0.0, 1.0);
+
+    try testing.expect(transform.tupleMul(p).approx_equal(Tuple(f32).new_point(15.0, 0.0, 7.0)));
+}
+
