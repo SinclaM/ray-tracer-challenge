@@ -71,7 +71,7 @@ pub fn Canvas(comptime T: type) type {
                 slice = (try std.fmt.bufPrint(&scratch, "{}", .{ scaledChannel(pixel.g) }));
 
                 if (col + slice.len >= 70) {
-                    // If the red channel can't fit on the current line, break the
+                    // If the green channel can't fit on the current line, break the
                     // line.
                     try str.append('\n');
                     col = @intCast(usize, 0);
@@ -88,7 +88,7 @@ pub fn Canvas(comptime T: type) type {
                 slice = (try std.fmt.bufPrint(&scratch, "{}", .{ scaledChannel(pixel.b) }));
 
                 if (col + slice.len >= 70) {
-                    // If the red channel can't fit on the current line, break the
+                    // If the blue channel can't fit on the current line, break the
                     // line.
                     try str.append('\n');
                     col = @intCast(usize, 0);
