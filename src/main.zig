@@ -1,8 +1,7 @@
-const std = @import("std");
-
-const tuple = @import("raytracer/tuple.zig");
 const projectile = @import("examples/projectile.zig");
+const clock = @import("examples/clock.zig");
 
 pub fn main() !void {
     try projectile.simulate();
+    try clock.drawHours();
 }

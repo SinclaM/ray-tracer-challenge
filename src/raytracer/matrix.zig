@@ -14,16 +14,16 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
 
         data: [N][N]T,
 
-        fn new(data: [N][N]T) Self {
+        pub fn new(data: [N][N]T) Self {
             return .{ .data = data };
         }
 
-        fn new_uninit() Self {
+        pub fn new_uninit() Self {
             const data: [N][N]T = undefined;
             return .{ .data = data };
         }
 
-        fn zero() Self {
+        pub fn zero() Self {
             var data: [N][N]T = undefined;
             for (data) |*row| {
                 for (row) |*val| {
@@ -33,7 +33,7 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
             return .{ .data = data };
         }
 
-        fn identity() Self {
+        pub fn identity() Self {
             var matrix = Self.zero();
 
             var i: usize = 0;
@@ -45,7 +45,7 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
             return matrix;
         }
 
-        fn approx_equal(self: Self, other: Self) bool {
+        pub fn approx_equal(self: Self, other: Self) bool {
             var row: usize = 0;
             while (row < N) {
                 var col: usize = 0;
@@ -60,7 +60,7 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
             return true;
         }
 
-        fn mul(self: Self, other: Self) Self {
+        pub fn mul(self: Self, other: Self) Self {
             var result = Self.new_uninit();
             var row: usize = 0;
             while (row < N) {
@@ -81,7 +81,7 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
             return result;
         }
 
-        fn tupleMul(self: Self, tup: Tuple(T)) Tuple(T) {
+        pub fn tupleMul(self: Self, tup: Tuple(T)) Tuple(T) {
             var result = Tuple(T).new(0.0, 0.0, 0.0, 0.0);
 
             var row = Tuple(T).from_buf(self.data[0]);
@@ -99,7 +99,7 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
             return result;
         }
 
-        fn transpose(self: Self) Self {
+        pub fn transpose(self: Self) Self {
             var transposed = Self.new_uninit();
 
             var row: usize = 0;
@@ -115,7 +115,7 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
             return transposed;
         }
 
-        fn submatrix(self: Self, row: usize, col: usize) Matrix(T, N - 1) {
+        pub fn submatrix(self: Self, row: usize, col: usize) Matrix(T, N - 1) {
             var sub = Matrix(T, N - 1).new_uninit();
 
             var r: usize = 0;
@@ -133,11 +133,11 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
             return sub;
         }
 
-        fn minor(self: Self, row: usize, col: usize) T {
+        pub fn minor(self: Self, row: usize, col: usize) T {
             return self.submatrix(row, col).det();
         }
 
-        fn cofactor(self: Self, row: usize, col: usize) T {
+        pub fn cofactor(self: Self, row: usize, col: usize) T {
             if ((row + col) % 2 == 0) {
                 return self.minor(row, col);
             } else {
@@ -145,7 +145,7 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
             }
         }
 
-        fn det(self: Self) T {
+        pub fn det(self: Self) T {
             var det_: T = 0.0;
 
             if (N == 2) {
@@ -160,7 +160,7 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
             return det_;
         }
 
-        fn inverse(self: Self) !Self {
+        pub fn inverse(self: Self) !Self {
             const det_ = self.det();
             if (@fabs(det_) < Self.tolerance) {
                 return MatrixError.NotInvertible;
@@ -179,7 +179,7 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
             return inverse_;
         }
 
-        fn translate(self: Self, x: T, y: T, z: T) Self {
+        pub fn translate(self: Self, x: T, y: T, z: T) Self {
             const translation = Matrix(T, 4).new([4][4]f32{
                 [_]f32{ 1.0, 0.0, 0.0, x },
                 [_]f32{ 0.0, 1.0, 0.0, y },
@@ -190,7 +190,7 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
             return translation.mul(self);
         }
 
-        fn scale(self: Self, x: T, y: T, z: T) Self {
+        pub fn scale(self: Self, x: T, y: T, z: T) Self {
             const scaling = Matrix(T, 4).new([4][4]f32{
                 [_]f32{  x , 0.0, 0.0, 0.0 },
                 [_]f32{ 0.0,  y , 0.0, 0.0 },
@@ -201,32 +201,32 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
             return scaling.mul(self);
         }
 
-        fn rotate_x(self: Self, theta: T) Self {
+        pub fn rotate_x(self: Self, angle: T) Self {
             const rotation = Matrix(T, 4).new([4][4]f32{
                 [_]f32{ 1.0,    0.0     ,     0.0     , 0.0 },
-                [_]f32{ 0.0, @cos(theta), -@sin(theta), 0.0 },
-                [_]f32{ 0.0, @sin(theta),  @cos(theta), 0.0 },
+                [_]f32{ 0.0, @cos(angle), -@sin(angle), 0.0 },
+                [_]f32{ 0.0, @sin(angle),  @cos(angle), 0.0 },
                 [_]f32{ 0.0,    0.0     ,     0.0     , 1.0 },
             });
 
             return rotation.mul(self);
         }
 
-        fn rotate_y(self: Self, theta: T) Self {
+        pub fn rotate_y(self: Self, angle: T) Self {
             const rotation = Matrix(T, 4).new([4][4]f32{
-                [_]f32{ @cos(theta) , 0.0, @sin(theta), 0.0 },
+                [_]f32{ @cos(angle) , 0.0, @sin(angle), 0.0 },
                 [_]f32{    0.0      , 1.0,    0.0     , 0.0 },
-                [_]f32{ -@sin(theta), 0.0, @cos(theta), 0.0 },
+                [_]f32{ -@sin(angle), 0.0, @cos(angle), 0.0 },
                 [_]f32{    0.0      , 0.0,    0.0     , 1.0 },
             });
 
             return rotation.mul(self);
         }
 
-        fn rotate_z(self: Self, theta: T) Self {
+        pub fn rotate_z(self: Self, angle: T) Self {
             const rotation = Matrix(T, 4).new([4][4]f32{
-                [_]f32{@cos(theta), -@sin(theta), 0.0, 0.0 },
-                [_]f32{@sin(theta),  @cos(theta), 0.0, 0.0 },
+                [_]f32{@cos(angle), -@sin(angle), 0.0, 0.0 },
+                [_]f32{@sin(angle),  @cos(angle), 0.0, 0.0 },
                 [_]f32{   0.0     ,     0.0     , 1.0, 0.0 },
                 [_]f32{   0.0     ,     0.0     , 0.0, 1.0 },
             });
@@ -234,7 +234,7 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
             return rotation.mul(self);
         }
 
-        const ShearArgs = struct {
+        pub const ShearArgs = struct {
             xy: T = 0.0,
             xz: T = 0.0,
             yx: T = 0.0,
@@ -243,7 +243,7 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
             zy: T = 0.0,
         };
 
-        fn shear(self: Self, args: ShearArgs) Self {
+        pub fn shear(self: Self, args: ShearArgs) Self {
             const shearing = Matrix(T, 4).new([4][4]f32{
                 [_]f32{ 1.0    , args.xy, args.xz, 0.0 },
                 [_]f32{ args.yx, 1.0    , args.yz, 0.0 },
