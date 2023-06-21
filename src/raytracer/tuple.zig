@@ -23,6 +23,10 @@ pub fn Tuple(comptime T: type) type {
             return .{ .x = x, .y = y, .z = z, .w = 0.0 };
         }
 
+        pub inline fn from_buf(buf: [4]T) Self {
+            return .{ .x = buf[0], .y = buf[1], .z = buf[2], .w = buf[3] };
+        }
+
         pub inline fn approx_equal(self: Self, other: Self) bool {
             return @fabs(self.x - other.x) < tolerance
                 and @fabs(self.y - other.y) < tolerance
