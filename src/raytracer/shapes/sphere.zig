@@ -4,6 +4,7 @@ const Alloctor = std.mem.Allocator;
 const PriorityQueue = std.PriorityQueue;
 
 const Tuple = @import("../tuple.zig").Tuple;
+const Matrix = @import("../matrix.zig").Matrix;
 const Ray = @import("../ray.zig").Ray;
 
 pub fn Intersection(comptime T: type) type {
@@ -76,7 +77,7 @@ pub fn Sphere(comptime T: type) type {
         const Self = @This();
 
         id: usize,
-        _: T = 0,
+        transform: Matrix(f32, 4) = Matrix(f32, 4).identity(),
 
         pub fn new() Self {
             const static = struct {
@@ -90,11 +91,12 @@ pub fn Sphere(comptime T: type) type {
         }
 
         pub fn intersect(self: Self, allocator: Alloctor, ray: Ray(T)) !Intersections(T) {
-            const sphere_to_ray = ray.origin.sub(Tuple(T).new_point(0.0, 0.0, 0.0));
+            const ray_tr = ray.transform(try self.transform.inverse());
+            const sphere_to_ray_tr = ray_tr.origin.sub(Tuple(T).new_point(0.0, 0.0, 0.0));
 
-            const a = ray.direction.dot(ray.direction);
-            const b = 2.0 * sphere_to_ray.dot(ray.direction);
-            const c = sphere_to_ray.dot(sphere_to_ray) - 1.0;
+            const a = ray_tr.direction.dot(ray_tr.direction);
+            const b = 2.0 * sphere_to_ray_tr.dot(ray_tr.direction);
+            const c = sphere_to_ray_tr.dot(sphere_to_ray_tr) - 1.0;
 
             const discriminant = b * b - 4.0 * a * c;
             
@@ -121,108 +123,154 @@ test "Intersections" {
     const tolerance = 1e-5;
     const allocator = testing.allocator;
 
-    var r = Ray(f32).new(Tuple(f32).new_point(0.0, 0.0, -5.0), Tuple(f32).new_vec3(0.0, 0.0, 1.0));
-    var s = Sphere(f32).new();
-    var xs1 = try s.intersect(allocator, r);
-    var it = xs1.iterator();
-    defer xs1.destroy();
+    {
+        const r = Ray(f32).new(Tuple(f32).new_point(0.0, 0.0, -5.0), Tuple(f32).new_vec3(0.0, 0.0, 1.0));
+        const s = Sphere(f32).new();
+        var xs = try s.intersect(allocator, r);
+        var it = xs.iterator();
+        defer xs.destroy();
 
-    try testing.expectEqual(xs1.count(), 2);
+        try testing.expectEqual(xs.count(), 2);
 
-    var first = it.next().?;
-    var second = it.next().?;
-    try testing.expectApproxEqAbs(first.t, 4.0, tolerance);
-    try testing.expectApproxEqAbs(second.t, 6.0, tolerance);
-    try testing.expectEqual(first.object, s);
-    try testing.expectEqual(second.object, s);
+        const first = it.next().?;
+        const second = it.next().?;
+        try testing.expectApproxEqAbs(first.t, 4.0, tolerance);
+        try testing.expectApproxEqAbs(second.t, 6.0, tolerance);
+        try testing.expectEqual(first.object, s);
+        try testing.expectEqual(second.object, s);
+    }
 
-    r = Ray(f32).new(Tuple(f32).new_point(0.0, 1.0, -5.0), Tuple(f32).new_vec3(0.0, 0.0, 1.0));
-    s = Sphere(f32).new();
-    var xs2 = try s.intersect(allocator, r);
-    it = xs2.iterator();
-    defer xs2.destroy();
+    {
+        const r = Ray(f32).new(Tuple(f32).new_point(0.0, 1.0, -5.0), Tuple(f32).new_vec3(0.0, 0.0, 1.0));
+        const s = Sphere(f32).new();
+        var xs = try s.intersect(allocator, r);
+        var it = xs.iterator();
+        defer xs.destroy();
 
-    try testing.expectEqual(xs2.count(), 2);
+        try testing.expectEqual(xs.count(), 2);
 
-    first = it.next().?;
-    second = it.next().?;
-    try testing.expectApproxEqAbs(first.t, 5.0, tolerance);
-    try testing.expectApproxEqAbs(second.t, 5.0, tolerance);
-    try testing.expectEqual(first.object, s);
-    try testing.expectEqual(second.object, s);
+        const first = it.next().?;
+        const second = it.next().?;
+        try testing.expectApproxEqAbs(first.t, 5.0, tolerance);
+        try testing.expectApproxEqAbs(second.t, 5.0, tolerance);
+        try testing.expectEqual(first.object, s);
+        try testing.expectEqual(second.object, s);
+    }
 
-    r = Ray(f32).new(Tuple(f32).new_point(0.0, 2.0, -5.0), Tuple(f32).new_vec3(0.0, 0.0, 1.0));
-    s = Sphere(f32).new();
-    var xs3 = try s.intersect(allocator, r);
-    defer xs3.destroy();
+    {
+        const r = Ray(f32).new(Tuple(f32).new_point(0.0, 2.0, -5.0), Tuple(f32).new_vec3(0.0, 0.0, 1.0));
+        const s = Sphere(f32).new();
+        var xs = try s.intersect(allocator, r);
+        defer xs.destroy();
 
-    try testing.expectEqual(xs3.count(), 0);
+        try testing.expectEqual(xs.count(), 0);
+    }
 
-    r = Ray(f32).new(Tuple(f32).new_point(0.0, 0.0, 0.0), Tuple(f32).new_vec3(0.0, 0.0, 1.0));
-    s = Sphere(f32).new();
-    var xs4 = try s.intersect(allocator, r);
-    it = xs4.iterator();
-    defer xs4.destroy();
+    {
+        const r = Ray(f32).new(Tuple(f32).new_point(0.0, 0.0, 0.0), Tuple(f32).new_vec3(0.0, 0.0, 1.0));
+        const s = Sphere(f32).new();
+        var xs = try s.intersect(allocator, r);
+        var it = xs.iterator();
+        defer xs.destroy();
 
-    try testing.expectEqual(xs4.count(), 2);
+        try testing.expectEqual(xs.count(), 2);
 
-    first = it.next().?;
-    second = it.next().?;
-    try testing.expectApproxEqAbs(first.t, 1.0, tolerance);
-    try testing.expectApproxEqAbs(second.t, -1.0, tolerance);
-    try testing.expectEqual(first.object, s);
-    try testing.expectEqual(second.object, s);
+        const first = it.next().?;
+        const second = it.next().?;
+        try testing.expectApproxEqAbs(first.t, 1.0, tolerance);
+        try testing.expectApproxEqAbs(second.t, -1.0, tolerance);
+        try testing.expectEqual(first.object, s);
+        try testing.expectEqual(second.object, s);
+    }
 
-    r = Ray(f32).new(Tuple(f32).new_point(0.0, 0.0, 5.0), Tuple(f32).new_vec3(0.0, 0.0, 1.0));
-    s = Sphere(f32).new();
-    var xs5 = try s.intersect(allocator, r);
-    it = xs5.iterator();
-    defer xs5.destroy();
+    {
+        const r = Ray(f32).new(Tuple(f32).new_point(0.0, 0.0, 5.0), Tuple(f32).new_vec3(0.0, 0.0, 1.0));
+        const s = Sphere(f32).new();
+        var xs = try s.intersect(allocator, r);
+        var it = xs.iterator();
+        defer xs.destroy();
 
-    try testing.expectEqual(xs5.count(), 2);
+        try testing.expectEqual(xs.count(), 2);
 
-    first = it.next().?;
-    second = it.next().?;
-    try testing.expectApproxEqAbs(first.t, -6.0, tolerance);
-    try testing.expectApproxEqAbs(second.t, -4.0, tolerance);
-    try testing.expectEqual(first.object, s);
-    try testing.expectEqual(second.object, s);
+        const first = it.next().?;
+        const second = it.next().?;
+        try testing.expectApproxEqAbs(first.t, -6.0, tolerance);
+        try testing.expectApproxEqAbs(second.t, -4.0, tolerance);
+        try testing.expectEqual(first.object, s);
+        try testing.expectEqual(second.object, s);
+    }
+
+    {
+        const r = Ray(f32).new(Tuple(f32).new_point(0.0, 0.0, -5.0), Tuple(f32).new_vec3(0.0, 0.0, 1.0));
+        var s = Sphere(f32).new();
+        s.transform = Matrix(f32, 4).identity().scale(2.0, 2.0, 2.0);
+        var xs = try s.intersect(allocator, r);
+        var it = xs.iterator();
+        defer xs.destroy();
+
+        try testing.expectEqual(xs.count(), 2);
+
+        const first = it.next().?;
+        const second = it.next().?;
+        try testing.expectApproxEqAbs(first.t, 3.0, tolerance);
+        try testing.expectApproxEqAbs(second.t, 7.0, tolerance);
+        try testing.expectEqual(first.object, s);
+        try testing.expectEqual(second.object, s);
+    }
+
+    {
+        const r = Ray(f32).new(Tuple(f32).new_point(0.0, 0.0, -5.0), Tuple(f32).new_vec3(0.0, 0.0, 1.0));
+        var s = Sphere(f32).new();
+        s.transform = Matrix(f32, 4).identity().translate(5.0, 0.0, 0.0);
+        var xs = try s.intersect(allocator, r);
+        defer xs.destroy();
+
+        try testing.expectEqual(xs.count(), 0);
+    }
 }
 
 test "Hit" {
     const allocator = std.testing.allocator;
 
-    var s = Sphere(f32).new();
-    var xs1 = Intersections(f32).new(allocator);
-    defer xs1.destroy();
-    try xs1.add(.{ .t = 1.0, .object = s});
-    try xs1.add(.{ .t = 2.0, .object = s});
+    {
+        var s = Sphere(f32).new();
+        var xs = Intersections(f32).new(allocator);
+        defer xs.destroy();
+        try xs.add(.{ .t = 1.0, .object = s});
+        try xs.add(.{ .t = 2.0, .object = s});
 
-    try testing.expectEqual(xs1.hit(), .{ .t = 1.0, .object = s});
+        try testing.expectEqual(xs.hit(), .{ .t = 1.0, .object = s});
+    }
 
-    s = Sphere(f32).new();
-    var xs2 = Intersections(f32).new(allocator);
-    defer xs2.destroy();
-    try xs2.add(.{ .t = -1.0, .object = s});
-    try xs2.add(.{ .t = 1.0, .object = s});
+    {
+        var s = Sphere(f32).new();
+        var xs = Intersections(f32).new(allocator);
+        defer xs.destroy();
+        try xs.add(.{ .t = -1.0, .object = s});
+        try xs.add(.{ .t = 1.0, .object = s});
 
-    try testing.expectEqual(xs2.hit(), .{ .t = 1.0, .object = s});
+        try testing.expectEqual(xs.hit(), .{ .t = 1.0, .object = s});
+    }
 
-    s = Sphere(f32).new();
-    var xs3 = Intersections(f32).new(allocator);
-    defer xs3.destroy();
-    try xs3.add(.{ .t = -2.0, .object = s});
-    try xs3.add(.{ .t = -1.0, .object = s});
+    {
+        var s = Sphere(f32).new();
+        var xs = Intersections(f32).new(allocator);
+        defer xs.destroy();
+        try xs.add(.{ .t = -2.0, .object = s});
+        try xs.add(.{ .t = -1.0, .object = s});
 
-    try testing.expectEqual(xs3.hit(), null);
+        try testing.expectEqual(xs.hit(), null);
+    }
 
-    s = Sphere(f32).new();
-    var xs4 = Intersections(f32).new(allocator);
-    defer xs4.destroy();
-    try xs4.add(.{ .t = 5.0, .object = s});
-    try xs4.add(.{ .t = 7.0, .object = s});
-    try xs4.add(.{ .t = -3.0, .object = s});
-    try xs4.add(.{ .t = 2.0, .object = s});
+    {
+        var s = Sphere(f32).new();
+        var xs = Intersections(f32).new(allocator);
+        defer xs.destroy();
+        try xs.add(.{ .t = 5.0, .object = s});
+        try xs.add(.{ .t = 7.0, .object = s});
+        try xs.add(.{ .t = -3.0, .object = s});
+        try xs.add(.{ .t = 2.0, .object = s});
 
-    try testing.expectEqual(xs4.hit(), .{ .t = 2.0, .object = s});
+        try testing.expectEqual(xs.hit(), .{ .t = 2.0, .object = s});
+    }
 }
