@@ -7,6 +7,7 @@ const Tuple = @import("../tuple.zig").Tuple;
 const Matrix = @import("../matrix.zig").Matrix;
 const MatrixError = @import("../matrix.zig").MatrixError;
 const Ray = @import("../ray.zig").Ray;
+const Material = @import("../material.zig").Material;
 
 pub fn Intersection(comptime T: type) type {
     return struct {
@@ -79,6 +80,7 @@ pub fn Sphere(comptime T: type) type {
 
         id: usize,
         transform: Matrix(f32, 4) = Matrix(f32, 4).identity(),
+        material: Material(T) = Material(T).new(),
 
         pub fn new() Self {
             const static = struct {
