@@ -5,7 +5,7 @@ const print = std.debug.print;
 
 const Tuple = @import("tuple.zig").Tuple;
 
-const MatrixError = error { NotInvertible };
+pub const MatrixError = error { NotInvertible };
 
 pub fn Matrix(comptime T: type, comptime N: usize) type {
     return struct {

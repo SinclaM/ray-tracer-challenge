@@ -5,6 +5,7 @@ const PriorityQueue = std.PriorityQueue;
 
 const Tuple = @import("../tuple.zig").Tuple;
 const Matrix = @import("../matrix.zig").Matrix;
+const MatrixError = @import("../matrix.zig").MatrixError;
 const Ray = @import("../ray.zig").Ray;
 
 pub fn Intersection(comptime T: type) type {
@@ -90,8 +91,16 @@ pub fn Sphere(comptime T: type) type {
             return .{ .id = save };
         }
 
+        pub fn set_transform(self: *Self, matrix: Matrix(T, 4)) MatrixError!void {
+            if (matrix.det() == 0.0) {
+                return MatrixError.NotInvertible;
+            }
+
+            self.transform = matrix;
+        }
+
         pub fn intersect(self: Self, allocator: Alloctor, ray: Ray(T)) !Intersections(T) {
-            const ray_tr = ray.transform(try self.transform.inverse());
+            const ray_tr = ray.transform(self.transform.inverse() catch unreachable);
             const sphere_to_ray_tr = ray_tr.origin.sub(Tuple(T).new_point(0.0, 0.0, 0.0));
 
             const a = ray_tr.direction.dot(ray_tr.direction);
@@ -109,6 +118,15 @@ pub fn Sphere(comptime T: type) type {
                 try xs.add(.{ .t = t2, .object = self });
             }
             return xs;
+        }
+
+        pub fn normal_at(self: Self, world_point: Tuple(T)) Tuple(T) {
+            const inv_transform = self.transform.inverse() catch unreachable;
+            const object_point = inv_transform.tupleMul(world_point);
+            const object_normal = object_point.sub(Tuple(T).new_point(0.0, 0.0, 0.0));
+            var world_normal = inv_transform.transpose().tupleMul(object_normal);
+            world_normal.w = 0.0;
+            return world_normal.normalized();
         }
     };
 }
@@ -203,7 +221,7 @@ test "Intersections" {
     {
         const r = Ray(f32).new(Tuple(f32).new_point(0.0, 0.0, -5.0), Tuple(f32).new_vec3(0.0, 0.0, 1.0));
         var s = Sphere(f32).new();
-        s.transform = Matrix(f32, 4).identity().scale(2.0, 2.0, 2.0);
+        try s.set_transform(Matrix(f32, 4).identity().scale(2.0, 2.0, 2.0));
         var xs = try s.intersect(allocator, r);
         var it = xs.iterator();
         defer xs.destroy();
@@ -221,7 +239,7 @@ test "Intersections" {
     {
         const r = Ray(f32).new(Tuple(f32).new_point(0.0, 0.0, -5.0), Tuple(f32).new_vec3(0.0, 0.0, 1.0));
         var s = Sphere(f32).new();
-        s.transform = Matrix(f32, 4).identity().translate(5.0, 0.0, 0.0);
+        try s.set_transform(Matrix(f32, 4).identity().translate(5.0, 0.0, 0.0));
         var xs = try s.intersect(allocator, r);
         defer xs.destroy();
 
@@ -273,4 +291,18 @@ test "Hit" {
 
         try testing.expectEqual(xs.hit(), .{ .t = 2.0, .object = s});
     }
+}
+
+test "Surface normals" {
+    var s = Sphere(f32).new();
+    try s.set_transform(Matrix(f32, 4).identity().translate(0.0, 1.0, 0.0));
+    var n = s.normal_at(Tuple(f32).new_point(0, 1.70711, -0.70711));
+
+    try testing.expect(n.approx_equal(Tuple(f32).new_vec3(0, 0.70711, -0.70711)));
+
+    s = Sphere(f32).new();
+    try s.set_transform(Matrix(f32, 4).identity().rotate_z(std.math.pi / 5.0).scale(1.0, 0.5, 1.0));
+    n = s.normal_at(Tuple(f32).new_point(0.0, 1.0 / @sqrt(2.0), -1.0 / @sqrt(2.0)));
+
+    try testing.expect(n.approx_equal(Tuple(f32).new_vec3(0, 0.97014, -0.24254)));
 }

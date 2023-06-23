@@ -89,6 +89,10 @@ pub fn Tuple(comptime T: type) type {
             );
         }
 
+        pub inline fn reflect(self: Self, normal: Self) Self {
+            return self.sub(normal.mul(2.0 * self.dot(normal)));
+        }
+
     };
 }
 
@@ -153,4 +157,13 @@ test "Tuple ops" {
     a2 = Tuple(f32).new_vec3(2.0, 3.0, 4.0);
     try testing.expect(a1.cross(a2).approx_equal(Tuple(f32).new_vec3(-1.0, 2.0, -1.0)));
     try testing.expect(a2.cross(a1).approx_equal(a1.cross(a2).negate()));
+
+    // reflection
+    var v = Tuple(f32).new_vec3(1.0, -1.0, 0.0);
+    var n = Tuple(f32).new_vec3(0.0, 1.0, 0.0);
+    try testing.expect(v.reflect(n).approx_equal(Tuple(f32).new_vec3(1.0, 1.0, 0.0)));
+
+    v = Tuple(f32).new_vec3(0.0, -1.0, 0.0);
+    n = Tuple(f32).new_vec3(1.0 / @sqrt(2.0), 1.0 / @sqrt(2.0), 0.0);
+    try testing.expect(v.reflect(n).approx_equal(Tuple(f32).new_vec3(1.0, 0.0, 0.0)));
 }
