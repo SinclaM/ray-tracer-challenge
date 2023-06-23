@@ -5,7 +5,6 @@ const PriorityQueue = std.PriorityQueue;
 
 const Tuple = @import("../tuple.zig").Tuple;
 const Matrix = @import("../matrix.zig").Matrix;
-const MatrixError = @import("../matrix.zig").MatrixError;
 const Ray = @import("../ray.zig").Ray;
 const Material = @import("../material.zig").Material;
 
@@ -80,6 +79,8 @@ pub fn Sphere(comptime T: type) type {
 
         id: usize,
         transform: Matrix(f32, 4) = Matrix(f32, 4).identity(),
+        inverse_transform: Matrix(f32, 4) = Matrix(f32, 4).identity(),
+        inverse_transform_transpose: Matrix(f32, 4) = Matrix(f32, 4).identity(),
         material: Material(T) = Material(T).new(),
 
         pub fn new() Self {
@@ -93,16 +94,14 @@ pub fn Sphere(comptime T: type) type {
             return .{ .id = save };
         }
 
-        pub fn set_transform(self: *Self, matrix: Matrix(T, 4)) MatrixError!void {
-            if (matrix.det() == 0.0) {
-                return MatrixError.NotInvertible;
-            }
-
+        pub fn set_transform(self: *Self, matrix: Matrix(T, 4)) !void {
             self.transform = matrix;
+            self.inverse_transform = try self.transform.inverse();
+            self.inverse_transform_transpose = self.inverse_transform.transpose();
         }
 
         pub fn intersect(self: Self, allocator: Alloctor, ray: Ray(T)) !Intersections(T) {
-            const ray_tr = ray.transform(self.transform.inverse() catch unreachable);
+            const ray_tr = ray.transform(self.inverse_transform);
             const sphere_to_ray_tr = ray_tr.origin.sub(Tuple(T).new_point(0.0, 0.0, 0.0));
 
             const a = ray_tr.direction.dot(ray_tr.direction);
@@ -123,10 +122,10 @@ pub fn Sphere(comptime T: type) type {
         }
 
         pub fn normal_at(self: Self, world_point: Tuple(T)) Tuple(T) {
-            const inv_transform = self.transform.inverse() catch unreachable;
+            const inv_transform = self.inverse_transform;
             const object_point = inv_transform.tupleMul(world_point);
             const object_normal = object_point.sub(Tuple(T).new_point(0.0, 0.0, 0.0));
-            var world_normal = inv_transform.transpose().tupleMul(object_normal);
+            var world_normal = self.inverse_transform_transpose.tupleMul(object_normal);
             world_normal.w = 0.0;
             return world_normal.normalized();
         }
