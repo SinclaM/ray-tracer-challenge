@@ -31,7 +31,7 @@ This project is a simple [Zig](https://ziglang.org/) implementation of the ray t
 
 ## Performance profiling
 
-Not much effor has (yet) been put into optimizations. The ray tracer is not (yet) multithreaded and the
+Not much effort has (yet) been put into optimizations. The ray tracer is not (yet) multithreaded and the
 small vector math library it uses does not (yet) leverage Zig's SIMD builtins. Do not expect it to compete
 with a real ray tracer.
 
