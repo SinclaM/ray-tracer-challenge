@@ -45,6 +45,21 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
             return matrix;
         }
 
+        pub fn viewTransform(from: Tuple(f32), to: Tuple(f32), up: Tuple(f32)) Self {
+            const forward = to.sub(from).normalized();
+            const left = forward.cross(up.normalized());
+            const true_up = left.cross(forward);
+
+            const orientation = Matrix(f32, 4).new([4][4]f32{
+                [_]f32{ left.x    , left.y    ,  left.z    , 0.0 },
+                [_]f32{ true_up.x , true_up.y ,  true_up.z , 0.0 },
+                [_]f32{ -forward.x, -forward.y,  -forward.z, 0.0 },
+                [_]f32{    0.0    ,    0.0    ,     0.0    , 1.0 },
+            });
+
+            return orientation.mul(Matrix(f32, 4).identity().translate(-from.x, -from.y, -from.z));
+        }
+
         pub fn approxEqual(self: Self, other: Self) bool {
             var row: usize = 0;
             while (row < N) {
@@ -532,5 +547,65 @@ test "Transformations" {
     p = Tuple(f32).point(1.0, 0.0, 1.0);
 
     try testing.expect(transform.tupleMul(p).approxEqual(Tuple(f32).point(15.0, 0.0, 7.0)));
+}
+
+test "View transformation" {
+    {
+        const from = Tuple(f32).point(0.0, 0.0, 0.0);
+        const to = Tuple(f32).point(0.0, 0.0, -1.0);
+        const up = Tuple(f32).vec3(0.0, 1.0, 0.0);
+
+        try testing.expect(
+            Matrix(f32, 4)
+                .viewTransform(from, to, up)
+                .approxEqual(Matrix(f32, 4).identity())
+        );
+    }
+
+    {
+        const from = Tuple(f32).point(0.0, 0.0, 0.0);
+        const to = Tuple(f32).point(0.0, 0.0, 1.0);
+        const up = Tuple(f32).vec3(0.0, 1.0, 0.0);
+
+        try testing.expect(
+            Matrix(f32, 4)
+                .viewTransform(from, to, up)
+                .approxEqual(Matrix(f32, 4).identity().scale(-1.0, 1.0, -1.0))
+        );
+
+    }
+
+    {
+        const from = Tuple(f32).point(0.0, 0.0, 8.0);
+        const to = Tuple(f32).point(0.0, 0.0, 0.0);
+        const up = Tuple(f32).vec3(0.0, 1.0, 0.0);
+
+        try testing.expect(
+            Matrix(f32, 4)
+                .viewTransform(from, to, up)
+                .approxEqual(Matrix(f32, 4).identity().translate(0.0, 0.0, -8.0))
+        );
+
+    }
+
+    {
+        const from = Tuple(f32).point(1.0, 3.0, 2.0);
+        const to = Tuple(f32).point(4.0, -2.0, 8.0);
+        const up = Tuple(f32).vec3(1.0, 1.0, 0.0);
+
+        const expected = Matrix(f32, 4).new([4][4]f32{
+            [_]f32{ -0.50709, 0.50709,  0.67612, -2.36643 },
+            [_]f32{  0.76772, 0.60609,  0.12122, -2.82843 },
+            [_]f32{ -0.35857, 0.59761, -0.71714,  0.00000 },
+            [_]f32{  0.00000, 0.00000,  0.00000,  1.00000 },
+        });
+
+        try testing.expect(
+            Matrix(f32, 4)
+                .viewTransform(from, to, up)
+                .approxEqual(expected)
+        );
+
+    }
 }
 
