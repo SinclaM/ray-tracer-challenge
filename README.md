@@ -1,5 +1,3 @@
-# Ray Tracer
-
 This project is a simple [Zig](https://ziglang.org/) implementation of the ray tracer described in
 [The Ray Tracer Challenge](http://raytracerchallenge.com/).
 
@@ -26,8 +24,11 @@ This project is a simple [Zig](https://ziglang.org/) implementation of the ray t
 
 ## Examples
 
-### Lighting and shading on a sphere
-<img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/6f4e9293-c8f2-4efa-8868-408df31ebbfa width=400> 
+<img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/6f4e9293-c8f2-4efa-8868-408df31ebbfa width=400>
+
+<br/><br/>
+
+<img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/017fe6b5-31ef-42b7-b3ea-bb6bdc14fafd width=800> 
 
 ## Performance profiling
 
