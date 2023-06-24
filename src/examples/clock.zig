@@ -17,10 +17,10 @@ pub fn drawHours() !void {
     defer canvas.destroy();
 
     var i: usize = 0;
-    var transform = Matrix(f32, 4).identity().rotate_z(pi / 6.0);
-    var p = Tuple(f32).new_point(0.0, 45.0, 0.0);
+    var transform = Matrix(f32, 4).identity().rotateZ(pi / 6.0);
+    var p = Tuple(f32).point(0.0, 45.0, 0.0);
     while (i < 12) : (i += 1) {
-        canvas.get_pixel_pointer(
+        canvas.getPixelPointer(
             @floatToInt(usize, p.x + @intToFloat(f32, width / 2)),
             @floatToInt(usize, p.y + @intToFloat(f32, height / 2))
         ).?.* = Color(f32).new(1.0, 1.0, 1.0);
@@ -28,7 +28,7 @@ pub fn drawHours() !void {
         p = transform.tupleMul(p);
     }
 
-    const ppm = try canvas.as_ppm(allocator);
+    const ppm = try canvas.ppm(allocator);
     defer allocator.free(ppm);
 
     const file = try std.fs.cwd().createFile(

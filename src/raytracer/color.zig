@@ -14,7 +14,7 @@ pub fn Color(comptime T: type) type {
             return .{ .r = r, .g = g, .b = b };
         }
 
-        pub inline fn approx_equal(self: Self, other: Self) bool {
+        pub inline fn approxEqual(self: Self, other: Self) bool {
             return @fabs(self.r - other.r) < tolerance
                 and @fabs(self.g - other.g) < tolerance
                 and @fabs(self.b - other.b) < tolerance;
@@ -63,19 +63,19 @@ test "Color ops" {
     // add
     var c1 = Color(f32).new(0.9, 0.6, 0.75);
     var c2 = Color(f32).new(0.7, 0.1, 0.25);
-    try testing.expect(c1.add(c2).approx_equal(Color(f32).new(1.6, 0.7, 1.0)));
+    try testing.expect(c1.add(c2).approxEqual(Color(f32).new(1.6, 0.7, 1.0)));
 
     // sub
-    try testing.expect(c1.sub(c2).approx_equal(Color(f32).new(0.2, 0.5, 0.5)));
+    try testing.expect(c1.sub(c2).approxEqual(Color(f32).new(0.2, 0.5, 0.5)));
 
     // mul
     c1 = Color(f32).new(0.2, 0.3, 0.4);
-    try testing.expect(c1.mul(2.0).approx_equal(Color(f32).new(0.4, 0.6, 0.8)));
+    try testing.expect(c1.mul(2.0).approxEqual(Color(f32).new(0.4, 0.6, 0.8)));
 
     // elementwise mul
     c1 = Color(f32).new(1.0, 0.2, 0.4);
     c2 = Color(f32).new(0.9, 1.0, 0.1);
-    try testing.expect(c1.elementwiseMul(c2).approx_equal(Color(f32).new(0.9, 0.2, 0.04)));
+    try testing.expect(c1.elementwiseMul(c2).approxEqual(Color(f32).new(0.9, 0.2, 0.04)));
 
     // integer representation of channels
     try testing.expectEqual(scaledChannel(0.1), 26);

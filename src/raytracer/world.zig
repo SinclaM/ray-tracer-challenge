@@ -37,13 +37,13 @@ pub fn World(comptime T: type) type {
             sphere1.material.specular = 0.2;
 
             var sphere2 = Sphere(T).new();
-            sphere2.set_transform(Matrix(T, 4).identity().scale(0.5, 0.5, 0.5)) catch unreachable;
+            sphere2.setTransform(Matrix(T, 4).identity().scale(0.5, 0.5, 0.5)) catch unreachable;
 
             try world.objects.append(sphere1);
             try world.objects.append(sphere2);
 
-            var light = Light(T).point_light(
-                Tuple(T).new_point(-10.0, 10.0, -10.0),
+            var light = Light(T).pointLight(
+                Tuple(T).point(-10.0, 10.0, -10.0),
                 Color(T).new(1.0, 1.0, 1.0)
             );
 
@@ -71,7 +71,7 @@ pub fn World(comptime T: type) type {
             return all;
         }
 
-        pub fn shade_hit(self: Self, comps: PreComputations(T)) Color(T) {
+        pub fn shadeHit(self: Self, comps: PreComputations(T)) Color(T) {
             var color = Color(T).new(0.0, 0.0, 0.0);
 
             for (self.lights.items) |light| {
@@ -83,13 +83,13 @@ pub fn World(comptime T: type) type {
             return color;
         }
 
-        pub fn color_at(self: Self, allocator: Allocator, ray: Ray(T)) !Color(T) {
+        pub fn colorAt(self: Self, allocator: Allocator, ray: Ray(T)) !Color(T) {
             var xs = try self.intersect(allocator, ray);
             defer xs.deinit();
 
             if (hit(T, xs)) |hit_| {
                 const comps = PreComputations(T).new(hit_, ray);
-                return self.shade_hit(comps);
+                return self.shadeHit(comps);
             } else {
                 return Color(T).new(0.0, 0.0, 0.0);
             }
@@ -109,7 +109,7 @@ pub fn PreComputations(comptime T: type) type {
         pub fn new(intersection: Intersection(T), ray: Ray(T)) Self {
             const point = ray.position(intersection.t);
             const eyev = ray.direction.negate();
-            var normal = intersection.object.normal_at(point);
+            var normal = intersection.object.normalAt(point);
             var inside = false;
 
             if (normal.dot(eyev) < 0) {
@@ -135,7 +135,7 @@ test "Intersection" {
     var w = try World(f32).default(allocator);
     defer w.destroy();
 
-    const ray = Ray(f32).new(Tuple(f32).new_point(0.0, 0.0, -5.0), Tuple(f32).new_vec3(0.0, 0.0, 1.0));
+    const ray = Ray(f32).new(Tuple(f32).point(0.0, 0.0, -5.0), Tuple(f32).vec3(0.0, 0.0, 1.0));
     var xs = try w.intersect(allocator, ray);
     defer xs.deinit();
 
@@ -148,30 +148,30 @@ test "Intersection" {
 
 test "PreComputations" {
     {
-        const r = Ray(f32).new(Tuple(f32).new_point(0.0, 0.0, -5.0), Tuple(f32).new_vec3(0.0, 0.0, 1.0));
+        const r = Ray(f32).new(Tuple(f32).point(0.0, 0.0, -5.0), Tuple(f32).vec3(0.0, 0.0, 1.0));
         const shape = Sphere(f32).new();
         const i: Intersection(f32) = .{ .t = 4, .object = shape };
 
         const comps = PreComputations(f32).new(i, r);
 
         try testing.expectEqual(comps.intersection, i);
-        try testing.expect(comps.point.approx_equal(Tuple(f32).new_point(0.0, 0.0, -1.0)));
-        try testing.expect(comps.eyev.approx_equal(Tuple(f32).new_vec3(0.0, 0.0, -1.0)));
-        try testing.expect(comps.normal.approx_equal(Tuple(f32).new_vec3(0.0, 0.0, -1.0)));
+        try testing.expect(comps.point.approxEqual(Tuple(f32).point(0.0, 0.0, -1.0)));
+        try testing.expect(comps.eyev.approxEqual(Tuple(f32).vec3(0.0, 0.0, -1.0)));
+        try testing.expect(comps.normal.approxEqual(Tuple(f32).vec3(0.0, 0.0, -1.0)));
         try testing.expectEqual(comps.inside, false);
     }
 
     {
-        const r = Ray(f32).new(Tuple(f32).new_point(0.0, 0.0, 0.0), Tuple(f32).new_vec3(0.0, 0.0, 1.0));
+        const r = Ray(f32).new(Tuple(f32).point(0.0, 0.0, 0.0), Tuple(f32).vec3(0.0, 0.0, 1.0));
         const shape = Sphere(f32).new();
         const i =  Intersection(f32).new(1.0, shape);
 
         const comps = PreComputations(f32).new(i, r);
 
         try testing.expectEqual(comps.intersection, i);
-        try testing.expect(comps.point.approx_equal(Tuple(f32).new_point(0.0, 0.0, 1.0)));
-        try testing.expect(comps.eyev.approx_equal(Tuple(f32).new_vec3(0.0, 0.0, -1.0)));
-        try testing.expect(comps.normal.approx_equal(Tuple(f32).new_vec3(0.0, 0.0, -1.0)));
+        try testing.expect(comps.point.approxEqual(Tuple(f32).point(0.0, 0.0, 1.0)));
+        try testing.expect(comps.eyev.approxEqual(Tuple(f32).vec3(0.0, 0.0, -1.0)));
+        try testing.expect(comps.normal.approxEqual(Tuple(f32).vec3(0.0, 0.0, -1.0)));
         try testing.expectEqual(comps.inside, true);
     }
 }
@@ -183,26 +183,26 @@ test "Shading" {
         const w = try World(f32).default(allocator);
         defer w.destroy();
 
-        const r = Ray(f32).new(Tuple(f32).new_point(0.0, 0.0, -5.0), Tuple(f32).new_vec3(0.0, 0.0, 1.0));
+        const r = Ray(f32).new(Tuple(f32).point(0.0, 0.0, -5.0), Tuple(f32).vec3(0.0, 0.0, 1.0));
         const shape = w.objects.items[0];
         const i = Intersection(f32).new(4.0, shape);
         const comps = PreComputations(f32).new(i, r);
-        try testing.expect(w.shade_hit(comps).approx_equal(Color(f32).new(0.38066, 0.47583, 0.2855)));
+        try testing.expect(w.shadeHit(comps).approxEqual(Color(f32).new(0.38066, 0.47583, 0.2855)));
     }
 
     {
         const w = try World(f32).default(allocator);
         defer w.destroy();
 
-        w.lights.items[0] = Light(f32).point_light(
-            Tuple(f32).new_point(0.0, 0.25, 0.0), Color(f32).new(1.0, 1.0, 1.0)
+        w.lights.items[0] = Light(f32).pointLight(
+            Tuple(f32).point(0.0, 0.25, 0.0), Color(f32).new(1.0, 1.0, 1.0)
         );
 
-        const r = Ray(f32).new(Tuple(f32).new_point(0.0, 0.0, 0.0), Tuple(f32).new_vec3(0.0, 0.0, 1.0));
+        const r = Ray(f32).new(Tuple(f32).point(0.0, 0.0, 0.0), Tuple(f32).vec3(0.0, 0.0, 1.0));
         const shape = w.objects.items[1];
         const i = Intersection(f32).new(0.5, shape);
         const comps = PreComputations(f32).new(i, r);
-        try testing.expect(w.shade_hit(comps).approx_equal(Color(f32).new(0.90498, 0.90498, 0.90498)));
+        try testing.expect(w.shadeHit(comps).approxEqual(Color(f32).new(0.90498, 0.90498, 0.90498)));
     }
 }
 
@@ -214,10 +214,10 @@ test "Coloring" {
         defer w.destroy();
 
         const r = Ray(f32).new(
-            Tuple(f32).new_point(0.0, 0.0, -5.0), Tuple(f32).new_vec3(0.0, 1.0, 0.0)
+            Tuple(f32).point(0.0, 0.0, -5.0), Tuple(f32).vec3(0.0, 1.0, 0.0)
         );
 
-        try testing.expect((try w.color_at(allocator, r)).approx_equal(Color(f32).new(0.0, 0.0, 0.0)));
+        try testing.expect((try w.colorAt(allocator, r)).approxEqual(Color(f32).new(0.0, 0.0, 0.0)));
     }
 
     {
@@ -225,10 +225,10 @@ test "Coloring" {
         defer w.destroy();
 
         const r = Ray(f32).new(
-            Tuple(f32).new_point(0.0, 0.0, -5.0), Tuple(f32).new_vec3(0.0, 0.0, 1.0)
+            Tuple(f32).point(0.0, 0.0, -5.0), Tuple(f32).vec3(0.0, 0.0, 1.0)
         );
 
-        try testing.expect((try w.color_at(allocator, r)).approx_equal(Color(f32).new(0.38066, 0.47583, 0.2855)));
+        try testing.expect((try w.colorAt(allocator, r)).approxEqual(Color(f32).new(0.38066, 0.47583, 0.2855)));
     }
 
     {
@@ -241,9 +241,9 @@ test "Coloring" {
         inner.*.material.ambient = 1.0;
 
         const r = Ray(f32).new(
-            Tuple(f32).new_point(0.0, 0.0, 0.75), Tuple(f32).new_vec3(0.0, 0.0, -1.0)
+            Tuple(f32).point(0.0, 0.0, 0.75), Tuple(f32).vec3(0.0, 0.0, -1.0)
         );
 
-        try testing.expect((try w.color_at(allocator, r)).approx_equal(inner.material.color));
+        try testing.expect((try w.colorAt(allocator, r)).approxEqual(inner.material.color));
     }
 }

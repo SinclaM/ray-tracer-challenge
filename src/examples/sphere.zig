@@ -22,10 +22,10 @@ pub fn drawSphere() !void {
     var s = Sphere(f32).new();
     s.material.color = Color(f32).new(1.0, 0.2, 1.0);
 
-    const eye = Tuple(f32).new_point(0.0, 0.0, -5.0);
+    const eye = Tuple(f32).point(0.0, 0.0, -5.0);
 
-    const light = Light(f32).point_light(
-        Tuple(f32).new_point(-10.0, 10.0, -10.0), Color(f32).new(1.0, 1.0, 1.0)
+    const light = Light(f32).pointLight(
+        Tuple(f32).point(-10.0, 10.0, -10.0), Color(f32).new(1.0, 1.0, 1.0)
     );
 
     const wall_size: f32 = 7.0;
@@ -36,7 +36,7 @@ pub fn drawSphere() !void {
     while (x < canvas_size) : (x += 1) {
         var y: usize = 0;
         while (y < canvas_size) : (y += 1) {
-            const pos = Tuple(f32).new_point(
+            const pos = Tuple(f32).point(
                 - wall_size / 2.0 + pixel_size * @intToFloat(f32, x),
                 wall_size / 2.0 - pixel_size * @intToFloat(f32, y),
                 wall_z
@@ -48,17 +48,17 @@ pub fn drawSphere() !void {
             var xs = try s.intersect(allocator, ray);
             if (hit(f32, xs)) |hit_| {
                 const point = ray.position(hit_.t);
-                const normal = s.normal_at(point);
+                const normal = s.normalAt(point);
                 const eyev = ray.direction.negate();
                 const color = s.material.lighting(light, point, eyev, normal);
 
-                canvas.get_pixel_pointer(x, y).?.* = color;
+                canvas.getPixelPointer(x, y).?.* = color;
             }
 
         }
     }
 
-    const ppm = try canvas.as_ppm(allocator);
+    const ppm = try canvas.ppm(allocator);
 
     const file = try std.fs.cwd().createFile(
         "images/sphere.ppm",

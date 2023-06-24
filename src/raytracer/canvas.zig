@@ -28,14 +28,14 @@ pub fn Canvas(comptime T: type) type {
             self.allocator.free(self.pixels);
         }
 
-        pub fn get_pixel_pointer(self: *Self, x: usize, y: usize) ?*Color(T) {
+        pub fn getPixelPointer(self: *Self, x: usize, y: usize) ?*Color(T) {
             if (x >= self.width or y >= self.width) {
                 return null;
             }
             return &self.pixels[y * self.width + x];
         }
 
-        pub fn as_ppm(self: Self, allocator: Allocator) ![]u8 {
+        pub fn ppm(self: Self, allocator: Allocator) ![]u8 {
             var str = try std.ArrayList(u8).initCapacity(allocator, self.width * self.height * 12);
             var scratch: [32]u8 = undefined;
 
@@ -119,11 +119,11 @@ test "Canvas" {
     var c = try Canvas(f32).new(testing.allocator, 5, 3);
     defer c.destroy();
 
-    c.get_pixel_pointer(0, 0).?.*.r = 1.5;
-    c.get_pixel_pointer(2, 1).?.*.g = 0.5;
-    c.get_pixel_pointer(4, 2).?.* = Color(f32).new(-0.5, 0.0, 1.0);
+    c.getPixelPointer(0, 0).?.*.r = 1.5;
+    c.getPixelPointer(2, 1).?.*.g = 0.5;
+    c.getPixelPointer(4, 2).?.* = Color(f32).new(-0.5, 0.0, 1.0);
 
-    const ppm = try c.as_ppm(testing.allocator);
+    const ppm = try c.ppm(testing.allocator);
     defer testing.allocator.free(ppm);
 
     const expected_ppm =
@@ -145,7 +145,7 @@ test "Canvas" {
         pixel.* = Color(f32).new(1, 0.8, 0.6);
     }
 
-    const ppm2 = try c2.as_ppm(testing.allocator);
+    const ppm2 = try c2.ppm(testing.allocator);
     defer testing.allocator.free(ppm2);
 
     const expected_ppm2 = 

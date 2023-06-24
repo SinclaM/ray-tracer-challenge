@@ -11,7 +11,7 @@ pub fn Light(comptime T: type) type {
         position: Tuple(T),
         intensity: Color(T),
 
-        pub fn point_light(position: Tuple(T), intensity: Color(T)) Self {
+        pub fn pointLight(position: Tuple(T), intensity: Color(T)) Self {
             return .{ .position = position, .intensity = intensity };
         }
     };
