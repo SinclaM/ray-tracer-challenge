@@ -7,4 +7,5 @@ comptime {
     _ = @import("raytracer/shapes/sphere.zig");
     _ = @import("raytracer/light.zig");
     _ = @import("raytracer/material.zig");
+    _ = @import("raytracer/world.zig");
 }

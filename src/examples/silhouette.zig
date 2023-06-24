@@ -7,6 +7,7 @@ const Tuple = @import("../raytracer/tuple.zig").Tuple;
 const Matrix = @import("../raytracer/matrix.zig").Matrix;
 const Ray = @import("../raytracer/ray.zig").Ray;
 const Sphere = @import("../raytracer/shapes/sphere.zig").Sphere;
+const hit = @import("../raytracer/shapes/sphere.zig").hit;
 
 pub fn drawSilhouette() !void {
     comptime var canvas_size = 100;
@@ -39,7 +40,7 @@ pub fn drawSilhouette() !void {
 
             const ray = Ray(f32).new(source, direction);
             var xs = try s.intersect(allocator, ray);
-            if (xs.hit()) |_| {
+            if (hit(f32, &xs)) |_| {
                 canvas.get_pixel_pointer(x, y).?.* = Color(f32).new(1.0, 0.0, 0.0);
             }
 
