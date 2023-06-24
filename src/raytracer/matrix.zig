@@ -1,7 +1,6 @@
 const std = @import("std");
 const testing = std.testing;
 const pi = std.math.pi;
-const print = std.debug.print;
 
 const Tuple = @import("tuple.zig").Tuple;
 

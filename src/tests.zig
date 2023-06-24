@@ -8,4 +8,5 @@ comptime {
     _ = @import("raytracer/light.zig");
     _ = @import("raytracer/material.zig");
     _ = @import("raytracer/world.zig");
+    _ = @import("raytracer/camera.zig");
 }

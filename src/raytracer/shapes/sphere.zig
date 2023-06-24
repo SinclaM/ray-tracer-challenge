@@ -67,10 +67,10 @@ pub fn Sphere(comptime T: type) type {
         const Self = @This();
 
         id: usize,
-        transform: Matrix(f32, 4) = Matrix(f32, 4).identity(),
-        inverse_transform: Matrix(f32, 4) = Matrix(f32, 4).identity(),
-        inverse_transform_transpose: Matrix(f32, 4) = Matrix(f32, 4).identity(),
         material: Material(T) = Material(T).new(),
+        _transform: Matrix(f32, 4) = Matrix(f32, 4).identity(),
+        _inverse_transform: Matrix(f32, 4) = Matrix(f32, 4).identity(),
+        _inverse_transform_transpose: Matrix(f32, 4) = Matrix(f32, 4).identity(),
 
         pub fn new() Self {
             const static = struct {
@@ -84,13 +84,13 @@ pub fn Sphere(comptime T: type) type {
         }
 
         pub fn setTransform(self: *Self, matrix: Matrix(T, 4)) !void {
-            self.transform = matrix;
-            self.inverse_transform = try self.transform.inverse();
-            self.inverse_transform_transpose = self.inverse_transform.transpose();
+            self._transform = matrix;
+            self._inverse_transform = try matrix.inverse();
+            self._inverse_transform_transpose = self._inverse_transform.transpose();
         }
 
         pub fn intersect(self: Self, allocator: Allocator, ray: Ray(T)) !Intersections(T) {
-            const ray_tr = ray.transform(self.inverse_transform);
+            const ray_tr = ray.transform(self._inverse_transform);
             const sphere_to_ray_tr = ray_tr.origin.sub(Tuple(T).point(0.0, 0.0, 0.0));
 
             const a = ray_tr.direction.dot(ray_tr.direction);
@@ -112,10 +112,10 @@ pub fn Sphere(comptime T: type) type {
         }
 
         pub fn normalAt(self: Self, world_point: Tuple(T)) Tuple(T) {
-            const inv_transform = self.inverse_transform;
+            const inv_transform = self._inverse_transform;
             const object_point = inv_transform.tupleMul(world_point);
             const object_normal = object_point.sub(Tuple(T).point(0.0, 0.0, 0.0));
-            var world_normal = self.inverse_transform_transpose.tupleMul(object_normal);
+            var world_normal = self._inverse_transform_transpose.tupleMul(object_normal);
             world_normal.w = 0.0;
             return world_normal.normalized();
         }
