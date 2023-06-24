@@ -10,9 +10,15 @@ const Material = @import("../material.zig").Material;
 
 pub fn Intersection(comptime T: type) type {
     return struct {
+        const Self = @This();
         t: T,
         object: Sphere(T),
+
+        pub fn new(t: T, object: Sphere(T)) Self {
+            return .{ .t = t, .object = object };
+        }
     };
+
 }
 
 fn IntersectionCmp(comptime T: type) type {
@@ -22,6 +28,8 @@ fn IntersectionCmp(comptime T: type) type {
 
             if (a.t > 0.0 and b.t < 0.0) {
                 return true;
+            } else if (a.t < 0.0 and b.t > 0.0) {
+                return false;
             }
 
             return std.sort.asc(T)({}, a.t, b.t);
@@ -38,7 +46,7 @@ pub fn sortIntersections(comptime T: type, intersections: *Intersections(T)) voi
     std.sort.sort(Intersection(T), intersections.items[0..], {}, IntersectionCmp(T).call);
 }
 
-pub fn hit(comptime T: type, intersections: *Intersections(T)) ?Intersection(T) {
+pub fn hit(comptime T: type, intersections: Intersections(T)) ?Intersection(T) {
     var min: ?Intersection(T) = null;
 
     for (intersections.items) |item| {
@@ -96,8 +104,8 @@ pub fn Sphere(comptime T: type) type {
                 const t1 = (-b - @sqrt(discriminant)) / (2.0 * a);
                 const t2 = (-b + @sqrt(discriminant)) / (2.0 * a);
 
-                try xs.append(.{ .t = t1, .object = self });
-                try xs.append(.{ .t = t2, .object = self });
+                try xs.append(Intersection(T).new(t1, self));
+                try xs.append(Intersection(T).new(t2, self));
                 sortIntersections(T, &xs);
             }
             return xs;
@@ -235,7 +243,7 @@ test "Hit" {
         try xs.append(.{ .t = 1.0, .object = s});
         try xs.append(.{ .t = 2.0, .object = s});
 
-        try testing.expectEqual(hit(f32, &xs), .{ .t = 1.0, .object = s});
+        try testing.expectEqual(hit(f32, xs), .{ .t = 1.0, .object = s});
     }
 
     {
@@ -245,7 +253,7 @@ test "Hit" {
         try xs.append(.{ .t = -1.0, .object = s});
         try xs.append(.{ .t = 1.0, .object = s});
 
-        try testing.expectEqual(hit(f32, &xs), .{ .t = 1.0, .object = s});
+        try testing.expectEqual(hit(f32, xs), .{ .t = 1.0, .object = s});
     }
 
     {
@@ -255,7 +263,7 @@ test "Hit" {
         try xs.append(.{ .t = -2.0, .object = s});
         try xs.append(.{ .t = -1.0, .object = s});
 
-        try testing.expectEqual(hit(f32, &xs), null);
+        try testing.expectEqual(hit(f32, xs), null);
     }
 
     {
@@ -267,7 +275,7 @@ test "Hit" {
         try xs.append(.{ .t = -3.0, .object = s});
         try xs.append(.{ .t = 2.0, .object = s});
 
-        try testing.expectEqual(hit(f32, &xs), .{ .t = 2.0, .object = s});
+        try testing.expectEqual(hit(f32, xs), .{ .t = 2.0, .object = s});
     }
 }
 
