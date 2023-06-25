@@ -1,3 +1,4 @@
+This project is a simple [Zig](https://ziglang.org/) implementation of the ray tracer described in
 [The Ray Tracer Challenge](http://raytracerchallenge.com/).
 
 ## Status 
