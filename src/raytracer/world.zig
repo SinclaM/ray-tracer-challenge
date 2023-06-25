@@ -71,12 +71,13 @@ pub fn World(comptime T: type) type {
             return all;
         }
 
-        pub fn shadeHit(self: Self, comps: PreComputations(T)) Color(T) {
+        pub fn shadeHit(self: Self, allocator: Allocator, comps: PreComputations(T)) !Color(T) {
             var color = Color(T).new(0.0, 0.0, 0.0);
 
             for (self.lights.items) |light| {
+                const shadowed = try self.isShadowed(allocator, comps.over_point, light);
                 color = color.add(comps.intersection.object.material.lighting(
-                    light, comps.point, comps.eyev, comps.normal
+                    light, comps.point, comps.eyev, comps.normal, shadowed
                 ));
             }
 
@@ -89,10 +90,22 @@ pub fn World(comptime T: type) type {
 
             if (hit(T, xs)) |hit_| {
                 const comps = PreComputations(T).new(hit_, ray);
-                return self.shadeHit(comps);
+                return try self.shadeHit(allocator, comps);
             } else {
                 return Color(T).new(0.0, 0.0, 0.0);
             }
+        }
+
+        pub fn isShadowed(self: Self, allocator: Allocator, point: Tuple(T), light: Light(T)) !bool {
+            const direction = light.position.sub(point);
+            const distance = direction.magnitude();
+
+            const shadow_ray = Ray(T).new(point, direction.normalized());
+            const intersections = try self.intersect(allocator, shadow_ray);
+            defer intersections.deinit();
+
+            const hit_ = hit(T, intersections);
+            return hit_ != null and hit_.?.t < distance;
         }
     };
 }
@@ -100,8 +113,11 @@ pub fn World(comptime T: type) type {
 pub fn PreComputations(comptime T: type) type {
     return struct {
         const Self = @This();
+        const epsilon = 1e-5;
+
         intersection: Intersection(T),
         point: Tuple(T),
+        over_point: Tuple(T),
         eyev: Tuple(T),
         normal: Tuple(T),
         inside: bool,
@@ -116,10 +132,13 @@ pub fn PreComputations(comptime T: type) type {
                 normal = normal.negate();
                 inside = true;
             }
+
+            const over_point = point.add(normal.mul(PreComputations(T).epsilon));
             
             return .{
                 .intersection = intersection,
                 .point = point,
+                .over_point = over_point,
                 .eyev = eyev,
                 .normal = normal,
                 .inside = inside
@@ -174,6 +193,18 @@ test "PreComputations" {
         try testing.expect(comps.normal.approxEqual(Tuple(f32).vec3(0.0, 0.0, -1.0)));
         try testing.expectEqual(comps.inside, true);
     }
+
+    {
+        const r = Ray(f32).new(Tuple(f32).point(0.0, 0.0, -5.0), Tuple(f32).vec3(0.0, 0.0, 1.0));
+        var shape = Sphere(f32).new();
+        try shape.setTransform(Matrix(f32, 4).identity().translate(0.0, 0.0, 1.0));
+        const i =  Intersection(f32).new(5.0, shape);
+
+        const comps = PreComputations(f32).new(i, r);
+
+        try testing.expect(comps.over_point.z <  -PreComputations(f32).epsilon / 2.0);
+        try testing.expect(comps.point.z > comps.over_point.z);
+    }
 }
 
 test "Shading" {
@@ -187,7 +218,7 @@ test "Shading" {
         const shape = w.objects.items[0];
         const i = Intersection(f32).new(4.0, shape);
         const comps = PreComputations(f32).new(i, r);
-        try testing.expect(w.shadeHit(comps).approxEqual(Color(f32).new(0.38066, 0.47583, 0.2855)));
+        try testing.expect((try w.shadeHit(allocator, comps)).approxEqual(Color(f32).new(0.38066, 0.47583, 0.2855)));
     }
 
     {
@@ -202,7 +233,28 @@ test "Shading" {
         const shape = w.objects.items[1];
         const i = Intersection(f32).new(0.5, shape);
         const comps = PreComputations(f32).new(i, r);
-        try testing.expect(w.shadeHit(comps).approxEqual(Color(f32).new(0.90498, 0.90498, 0.90498)));
+        try testing.expect((try w.shadeHit(allocator, comps)).approxEqual(Color(f32).new(0.90498, 0.90498, 0.90498)));
+    }
+
+    {
+        var w = World(f32).new(allocator);
+        defer w.destroy();
+
+        try w.lights.append(Light(f32).pointLight(
+            Tuple(f32).point(0.0, 0.0, -10.0), Color(f32).new(1.0, 1.0, 1.0)
+        ));
+
+        const s1 = Sphere(f32).new();
+        try w.objects.append(s1);
+
+        var s2 = Sphere(f32).new();
+        try s2.setTransform(Matrix(f32, 4).identity().translate(0.0, 0.0, 10.0));
+        try w.objects.append(s2);
+
+        const r = Ray(f32).new(Tuple(f32).point(0.0, 0.0, 5.0), Tuple(f32).vec3(0.0, 0.0, 1.0));
+        const i = Intersection(f32).new(4.0, s2);
+        const comps = PreComputations(f32).new(i, r);
+        try testing.expect((try w.shadeHit(allocator, comps)).approxEqual(Color(f32).new(0.1, 0.1, 0.1)));
     }
 }
 
@@ -246,4 +298,23 @@ test "Coloring" {
 
         try testing.expect((try w.colorAt(allocator, r)).approxEqual(inner.material.color));
     }
+}
+
+test "isShadowed" {
+    const allocator = testing.allocator;
+
+    const w = try World(f32).default(allocator);
+    defer w.destroy();
+
+    var p = Tuple(f32).point(0.0, 10.0, 0.0);
+    try testing.expectEqual(w.isShadowed(allocator, p, w.lights.items[0]), false);
+
+    p = Tuple(f32).point(10.0, -10.0, 10.0);
+    try testing.expectEqual(w.isShadowed(allocator, p, w.lights.items[0]), true);
+
+    p = Tuple(f32).point(-20.0, 20.0, -20.0);
+    try testing.expectEqual(w.isShadowed(allocator, p, w.lights.items[0]), false);
+
+    p = Tuple(f32).point(-2.0, 2.0, -2.0);
+    try testing.expectEqual(w.isShadowed(allocator, p, w.lights.items[0]), false);
 }

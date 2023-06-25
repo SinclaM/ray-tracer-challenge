@@ -21,7 +21,11 @@ pub fn Material(comptime T: type) type {
         }
 
         pub fn lighting(
-            self: Self, light: Light(T), point: Tuple(T), point_to_eye: Tuple(T), normal: Tuple(T)
+            self: Self, light: Light(T),
+            point: Tuple(T),
+            point_to_eye: Tuple(T),
+            normal: Tuple(T),
+            in_shadow: bool,
         ) Color(T) {
             const effective_color = self.color.elementwiseMul(light.intensity);
             const point_to_light = light.position.sub(point).normalized();
@@ -29,6 +33,10 @@ pub fn Material(comptime T: type) type {
             const ambient = effective_color.mul(self.ambient);
             var diffuse = Color(T).new(0.0, 0.0, 0.0);
             var specular = Color(T).new(0.0, 0.0, 0.0);
+
+            if (in_shadow) {
+                return ambient.add(diffuse).add(specular);
+            }
 
             const light_dot_normal = point_to_light.dot(normal);
             if (light_dot_normal >= 0.0 ) {
@@ -54,7 +62,7 @@ test "Lighting" {
         const eyev = Tuple(f32).vec3(0.0, 0.0, -1.0);
         const normal = Tuple(f32).vec3(0.0, 0.0, -1.0);
         const light = Light(f32).pointLight(Tuple(f32).point(0.0, 0.0, -10.0), Color(f32).new(1.0, 1.0, 1.0));
-        const result = m.lighting(light, position, eyev, normal);
+        const result = m.lighting(light, position, eyev, normal, false);
 
         try testing.expect(result.approxEqual(Color(f32).new(1.9, 1.9, 1.9)));
     }
@@ -63,7 +71,7 @@ test "Lighting" {
         const eyev = Tuple(f32).vec3(0.0, 1.0 / @sqrt(2.0), -1.0 / @sqrt(2.0));
         const normal = Tuple(f32).vec3(0.0, 0.0, -1.0);
         const light = Light(f32).pointLight(Tuple(f32).point(0.0, 0.0, -10.0), Color(f32).new(1.0, 1.0, 1.0));
-        const result = m.lighting(light, position, eyev, normal);
+        const result = m.lighting(light, position, eyev, normal, false);
 
         try testing.expect(result.approxEqual(Color(f32).new(1.0, 1.0, 1.0)));
     }
@@ -72,7 +80,7 @@ test "Lighting" {
         const eyev = Tuple(f32).vec3(0.0, 0.0, -1.0);
         const normal = Tuple(f32).vec3(0.0, 0.0, -1.0);
         const light = Light(f32).pointLight(Tuple(f32).point(0.0, 10.0, -10.0), Color(f32).new(1.0, 1.0, 1.0));
-        const result = m.lighting(light, position, eyev, normal);
+        const result = m.lighting(light, position, eyev, normal, false);
 
         try testing.expect(result.approxEqual(Color(f32).new(0.7364, 0.7364, 0.7364)));
     }
@@ -81,7 +89,7 @@ test "Lighting" {
         const eyev = Tuple(f32).vec3(0.0, -1.0 / @sqrt(2.0), -1.0 / @sqrt(2.0));
         const normal = Tuple(f32).vec3(0.0, 0.0, -1.0);
         const light = Light(f32).pointLight(Tuple(f32).point(0.0, 10.0, -10.0), Color(f32).new(1.0, 1.0, 1.0));
-        const result = m.lighting(light, position, eyev, normal);
+        const result = m.lighting(light, position, eyev, normal, false);
 
         try testing.expect(result.approxEqual(Color(f32).new(1.63639, 1.63639, 1.63639)));
     }
@@ -90,7 +98,16 @@ test "Lighting" {
         const eyev = Tuple(f32).vec3(0.0, 0.0, -1.0);
         const normal = Tuple(f32).vec3(0.0, 0.0, -1.0);
         const light = Light(f32).pointLight(Tuple(f32).point(0.0, 0.0, 10.0), Color(f32).new(1.0, 1.0, 1.0));
-        const result = m.lighting(light, position, eyev, normal);
+        const result = m.lighting(light, position, eyev, normal, false);
+
+        try testing.expect(result.approxEqual(Color(f32).new(0.1, 0.1, 0.1)));
+    }
+
+    {
+        const eyev = Tuple(f32).vec3(0.0, 0.0, -1.0);
+        const normal = Tuple(f32).vec3(0.0, 0.0, -1.0);
+        const light = Light(f32).pointLight(Tuple(f32).point(0.0, 0.0, -10.0), Color(f32).new(1.0, 1.0, 1.0));
+        const result = m.lighting(light, position, eyev, normal, true);
 
         try testing.expect(result.approxEqual(Color(f32).new(0.1, 0.1, 0.1)));
     }
