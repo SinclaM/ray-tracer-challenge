@@ -30,7 +30,7 @@ pub fn renderSimpleWorld() !void {
             .rotateY(-pi / 4.0)
             .translate(0.0, 0.0, 5.0)
     );
-    left_wall.material.color = Color(f64).new(1, 0.9, 0.9);
+    left_wall.material.color = Color(f64).new(0.9, 1.0, 0.9);
     left_wall.material.specular = 0.0;
 
     var right_wall = Sphere(f64).new();
@@ -41,7 +41,7 @@ pub fn renderSimpleWorld() !void {
             .rotateY(pi / 4.0)
             .translate(0.0, 0.0, 5.0)
     );
-    right_wall.material.color = Color(f64).new(1, 0.9, 0.9);
+    right_wall.material.color = Color(f64).new(0.9, 0.9, 1.0);
     right_wall.material.specular = 0.0;
 
     var middle = Sphere(f64).new();
@@ -72,7 +72,10 @@ pub fn renderSimpleWorld() !void {
     try world.objects.append(left);
 
     try world.lights.append(Light(f64).pointLight(
-        Tuple(f64).point(-10.0, 10.0, -10.0), Color(f64).new(1.0, 1.0, 1.0)
+        Tuple(f64).point(-10.0, 10.0, -10.0), Color(f64).new(0.5, 0.5, 0.5)
+    ));
+    try world.lights.append(Light(f64).pointLight(
+        Tuple(f64).point(10.0, 10.0, -10.0), Color(f64).new(0.5, 0.5, 0.5)
     ));
 
     var camera = Camera(f64).new(1000, 500, pi / 3.0);
