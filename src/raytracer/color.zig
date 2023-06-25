@@ -46,7 +46,7 @@ pub fn Color(comptime T: type) type {
     };
 }
 
-pub fn scaledChannel(channel: f32) u8 {
+pub fn scaledChannel(comptime T: type, channel: T) u8 {
     var tmp = @floatToInt(i128, @round(channel * 255));
 
     if (tmp < 0) {

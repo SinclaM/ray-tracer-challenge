@@ -68,9 +68,9 @@ pub fn Sphere(comptime T: type) type {
 
         id: usize,
         material: Material(T) = Material(T).new(),
-        _transform: Matrix(f32, 4) = Matrix(f32, 4).identity(),
-        _inverse_transform: Matrix(f32, 4) = Matrix(f32, 4).identity(),
-        _inverse_transform_transpose: Matrix(f32, 4) = Matrix(f32, 4).identity(),
+        _transform: Matrix(T, 4) = Matrix(T, 4).identity(),
+        _inverse_transform: Matrix(T, 4) = Matrix(T, 4).identity(),
+        _inverse_transform_transpose: Matrix(T, 4) = Matrix(T, 4).identity(),
 
         pub fn new() Self {
             const static = struct {

@@ -44,19 +44,19 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
             return matrix;
         }
 
-        pub fn viewTransform(from: Tuple(f32), to: Tuple(f32), up: Tuple(f32)) Self {
+        pub fn viewTransform(from: Tuple(T), to: Tuple(T), up: Tuple(T)) Self {
             const forward = to.sub(from).normalized();
             const left = forward.cross(up.normalized());
             const true_up = left.cross(forward);
 
-            const orientation = Matrix(f32, 4).new([4][4]f32{
-                [_]f32{ left.x    , left.y    ,  left.z    , 0.0 },
-                [_]f32{ true_up.x , true_up.y ,  true_up.z , 0.0 },
-                [_]f32{ -forward.x, -forward.y,  -forward.z, 0.0 },
-                [_]f32{    0.0    ,    0.0    ,     0.0    , 1.0 },
+            const orientation = Matrix(T, 4).new([4][4]T{
+                [_]T{ left.x    , left.y    ,  left.z    , 0.0 },
+                [_]T{ true_up.x , true_up.y ,  true_up.z , 0.0 },
+                [_]T{ -forward.x, -forward.y,  -forward.z, 0.0 },
+                [_]T{    0.0    ,    0.0    ,     0.0    , 1.0 },
             });
 
-            return orientation.mul(Matrix(f32, 4).identity().translate(-from.x, -from.y, -from.z));
+            return orientation.mul(Matrix(T, 4).identity().translate(-from.x, -from.y, -from.z));
         }
 
         pub fn approxEqual(self: Self, other: Self) bool {
@@ -194,55 +194,55 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
         }
 
         pub fn translate(self: Self, x: T, y: T, z: T) Self {
-            const translation = Matrix(T, 4).new([4][4]f32{
-                [_]f32{ 1.0, 0.0, 0.0, x },
-                [_]f32{ 0.0, 1.0, 0.0, y },
-                [_]f32{ 0.0, 0.0, 1.0, z },
-                [_]f32{ 0.0, 0.0, 0.0, 1.0 },
+            const translation = Matrix(T, 4).new([4][4]T{
+                [_]T{ 1.0, 0.0, 0.0, x },
+                [_]T{ 0.0, 1.0, 0.0, y },
+                [_]T{ 0.0, 0.0, 1.0, z },
+                [_]T{ 0.0, 0.0, 0.0, 1.0 },
             });
 
             return translation.mul(self);
         }
 
         pub fn scale(self: Self, x: T, y: T, z: T) Self {
-            const scaling = Matrix(T, 4).new([4][4]f32{
-                [_]f32{  x , 0.0, 0.0, 0.0 },
-                [_]f32{ 0.0,  y , 0.0, 0.0 },
-                [_]f32{ 0.0, 0.0,  z , 0.0 },
-                [_]f32{ 0.0, 0.0, 0.0, 1.0 },
+            const scaling = Matrix(T, 4).new([4][4]T{
+                [_]T{  x , 0.0, 0.0, 0.0 },
+                [_]T{ 0.0,  y , 0.0, 0.0 },
+                [_]T{ 0.0, 0.0,  z , 0.0 },
+                [_]T{ 0.0, 0.0, 0.0, 1.0 },
             });
 
             return scaling.mul(self);
         }
 
         pub fn rotateX(self: Self, angle: T) Self {
-            const rotation = Matrix(T, 4).new([4][4]f32{
-                [_]f32{ 1.0,    0.0     ,     0.0     , 0.0 },
-                [_]f32{ 0.0, @cos(angle), -@sin(angle), 0.0 },
-                [_]f32{ 0.0, @sin(angle),  @cos(angle), 0.0 },
-                [_]f32{ 0.0,    0.0     ,     0.0     , 1.0 },
+            const rotation = Matrix(T, 4).new([4][4]T{
+                [_]T{ 1.0,    0.0     ,     0.0     , 0.0 },
+                [_]T{ 0.0, @cos(angle), -@sin(angle), 0.0 },
+                [_]T{ 0.0, @sin(angle),  @cos(angle), 0.0 },
+                [_]T{ 0.0,    0.0     ,     0.0     , 1.0 },
             });
 
             return rotation.mul(self);
         }
 
         pub fn rotateY(self: Self, angle: T) Self {
-            const rotation = Matrix(T, 4).new([4][4]f32{
-                [_]f32{ @cos(angle) , 0.0, @sin(angle), 0.0 },
-                [_]f32{    0.0      , 1.0,    0.0     , 0.0 },
-                [_]f32{ -@sin(angle), 0.0, @cos(angle), 0.0 },
-                [_]f32{    0.0      , 0.0,    0.0     , 1.0 },
+            const rotation = Matrix(T, 4).new([4][4]T{
+                [_]T{ @cos(angle) , 0.0, @sin(angle), 0.0 },
+                [_]T{    0.0      , 1.0,    0.0     , 0.0 },
+                [_]T{ -@sin(angle), 0.0, @cos(angle), 0.0 },
+                [_]T{    0.0      , 0.0,    0.0     , 1.0 },
             });
 
             return rotation.mul(self);
         }
 
         pub fn rotateZ(self: Self, angle: T) Self {
-            const rotation = Matrix(T, 4).new([4][4]f32{
-                [_]f32{@cos(angle), -@sin(angle), 0.0, 0.0 },
-                [_]f32{@sin(angle),  @cos(angle), 0.0, 0.0 },
-                [_]f32{   0.0     ,     0.0     , 1.0, 0.0 },
-                [_]f32{   0.0     ,     0.0     , 0.0, 1.0 },
+            const rotation = Matrix(T, 4).new([4][4]T{
+                [_]T{@cos(angle), -@sin(angle), 0.0, 0.0 },
+                [_]T{@sin(angle),  @cos(angle), 0.0, 0.0 },
+                [_]T{   0.0     ,     0.0     , 1.0, 0.0 },
+                [_]T{   0.0     ,     0.0     , 0.0, 1.0 },
             });
 
             return rotation.mul(self);
@@ -258,11 +258,11 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
         };
 
         pub fn shear(self: Self, args: ShearArgs) Self {
-            const shearing = Matrix(T, 4).new([4][4]f32{
-                [_]f32{ 1.0    , args.xy, args.xz, 0.0 },
-                [_]f32{ args.yx, 1.0    , args.yz, 0.0 },
-                [_]f32{ args.zx, args.zy, 1.0    , 0.0 },
-                [_]f32{ 0.0    , 0.0    , 0.0    , 1.0 },
+            const shearing = Matrix(T, 4).new([4][4]T{
+                [_]T{ 1.0    , args.xy, args.xz, 0.0 },
+                [_]T{ args.yx, 1.0    , args.yz, 0.0 },
+                [_]T{ args.zx, args.zy, 1.0    , 0.0 },
+                [_]T{ 0.0    , 0.0    , 0.0    , 1.0 },
             });
 
             return shearing.mul(self);
