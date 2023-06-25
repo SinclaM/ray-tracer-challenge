@@ -78,8 +78,8 @@ test "Color ops" {
     try testing.expect(c1.elementwiseMul(c2).approxEqual(Color(f32).new(0.9, 0.2, 0.04)));
 
     // integer representation of channels
-    try testing.expectEqual(scaledChannel(0.1), 26);
-    try testing.expectEqual(scaledChannel(0.5), 128);
-    try testing.expectEqual(scaledChannel(-0.1), 0);
-    try testing.expectEqual(scaledChannel(21.0), 255);
+    try testing.expectEqual(scaledChannel(f32, 0.1), 26);
+    try testing.expectEqual(scaledChannel(f32, 0.5), 128);
+    try testing.expectEqual(scaledChannel(f32, -0.1), 0);
+    try testing.expectEqual(scaledChannel(f32, 21.0), 255);
 }
