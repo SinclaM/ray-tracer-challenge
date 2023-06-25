@@ -1,4 +1,3 @@
-This project is a simple [Zig](https://ziglang.org/) implementation of the ray tracer described in
 [The Ray Tracer Challenge](http://raytracerchallenge.com/).
 
 ## Status 
@@ -10,7 +9,7 @@ This project is a simple [Zig](https://ziglang.org/) implementation of the ray t
 - [x] Chapter 5 - Ray-Sphere Intersections
 - [x] Chapter 6 - Light and Shading
 - [x] Chapter 7 - Making a Scene
-- [ ] Chapter 8 - Shadows
+- [x] Chapter 8 - Shadows
 - [ ] Chapter 9 - Planes
 - [ ] Chapter 10 - Patterns
 - [ ] Chapter 11 - Reflection and Refraction
@@ -28,7 +27,7 @@ This project is a simple [Zig](https://ziglang.org/) implementation of the ray t
 
 <br/><br/>
 
-<img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/017fe6b5-31ef-42b7-b3ea-bb6bdc14fafd width=800> 
+<img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/99bb3eb1-f128-4e54-a24c-9727ca7659fc width=800> 
 
 ## Performance profiling
 
