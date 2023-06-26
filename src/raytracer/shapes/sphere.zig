@@ -8,94 +8,24 @@ const Matrix = @import("../matrix.zig").Matrix;
 const Ray = @import("../ray.zig").Ray;
 const Material = @import("../material.zig").Material;
 
-pub fn Intersection(comptime T: type) type {
-    return struct {
-        const Self = @This();
-        t: T,
-        object: Sphere(T),
-
-        pub fn new(t: T, object: Sphere(T)) Self {
-            return .{ .t = t, .object = object };
-        }
-    };
-
-}
-
-fn IntersectionCmp(comptime T: type) type {
-    return struct {
-        fn call(context: void, a: Intersection(T), b: Intersection(T)) bool {
-            _ = context;
-
-            if (a.t > 0.0 and b.t < 0.0) {
-                return true;
-            } else if (a.t < 0.0 and b.t > 0.0) {
-                return false;
-            }
-
-            return std.sort.asc(T)({}, a.t, b.t);
-        }
-    };
-}
-
-pub fn Intersections(comptime T: type) type {
-    return ArrayList(Intersection(T));
-}
-
-
-pub fn sortIntersections(comptime T: type, intersections: *Intersections(T)) void {
-    std.sort.sort(Intersection(T), intersections.items[0..], {}, IntersectionCmp(T).call);
-}
-
-pub fn hit(comptime T: type, intersections: Intersections(T)) ?Intersection(T) {
-    var min: ?Intersection(T) = null;
-
-    for (intersections.items) |item| {
-        if (min) |_| {
-            if (IntersectionCmp(T).call({}, item, min.?)) {
-                min = item;
-            }
-        } else if (item.t >= 0.0) {
-            min = item;
-        }
-    }
-
-    return min;
-}
+const shape = @import("shape.zig");
+const Intersection = shape.Intersection;
+const Intersections = shape.Intersections;
+const sortIntersections = shape.sortIntersections;
+const hit = shape.hit;
+const Shape = shape.Shape;
 
 pub fn Sphere(comptime T: type) type {
     return struct {
         const Self = @This();
 
-        id: usize,
-        material: Material(T) = Material(T).new(),
-        _transform: Matrix(T, 4) = Matrix(T, 4).identity(),
-        _inverse_transform: Matrix(T, 4) = Matrix(T, 4).identity(),
-        _inverse_transform_transpose: Matrix(T, 4) = Matrix(T, 4).identity(),
+        pub fn localIntersect(self: Self, allocator: Allocator, super: Shape(T), ray: Ray(T)) !Intersections(T) {
+            _ = self;
+            const sphere_to_ray = ray.origin.sub(Tuple(T).point(0.0, 0.0, 0.0));
 
-        pub fn new() Self {
-            const static = struct {
-                var id: usize = 0;
-            };
-
-            const save = static.id;
-            static.id += 1;
-
-            return .{ .id = save };
-        }
-
-        pub fn setTransform(self: *Self, matrix: Matrix(T, 4)) !void {
-            self._transform = matrix;
-            self._inverse_transform = try matrix.inverse();
-            self._inverse_transform_transpose = self._inverse_transform.transpose();
-        }
-
-        pub fn intersect(self: Self, allocator: Allocator, ray: Ray(T)) !Intersections(T) {
-            const ray_tr = ray.transform(self._inverse_transform);
-            const sphere_to_ray_tr = ray_tr.origin.sub(Tuple(T).point(0.0, 0.0, 0.0));
-
-            const a = ray_tr.direction.dot(ray_tr.direction);
-            const b = 2.0 * sphere_to_ray_tr.dot(ray_tr.direction);
-            const c = sphere_to_ray_tr.dot(sphere_to_ray_tr) - 1.0;
+            const a = ray.direction.dot(ray.direction);
+            const b = 2.0 * sphere_to_ray.dot(ray.direction);
+            const c = sphere_to_ray.dot(sphere_to_ray) - 1.0;
 
             const discriminant = b * b - 4.0 * a * c;
             
@@ -104,27 +34,25 @@ pub fn Sphere(comptime T: type) type {
                 const t1 = (-b - @sqrt(discriminant)) / (2.0 * a);
                 const t2 = (-b + @sqrt(discriminant)) / (2.0 * a);
 
-                try xs.append(Intersection(T).new(t1, self));
-                try xs.append(Intersection(T).new(t2, self));
+                try xs.append(Intersection(T).new(t1, super));
+                try xs.append(Intersection(T).new(t2, super));
                 sortIntersections(T, &xs);
             }
             return xs;
         }
 
-        pub fn normalAt(self: Self, world_point: Tuple(T)) Tuple(T) {
-            const inv_transform = self._inverse_transform;
-            const object_point = inv_transform.tupleMul(world_point);
-            const object_normal = object_point.sub(Tuple(T).point(0.0, 0.0, 0.0));
-            var world_normal = self._inverse_transform_transpose.tupleMul(object_normal);
-            world_normal.w = 0.0;
-            return world_normal.normalized();
+        pub fn localNormalAt(self: Self, super: Shape(T), point: Tuple(T)) Tuple(T) {
+            _ = self;
+            _ = super;
+            const ret = point.sub(Tuple(T).point(0.0, 0.0, 0.0));
+            return ret;
         }
     };
 }
 
 test "Id uniqueness" {
-    var s1 = Sphere(f32).new();
-    var s2 = Sphere(f32).new();
+    var s1 = Shape(f32).sphere();
+    var s2 = Shape(f32).sphere();
     try testing.expect(s1.id != s2.id);
 }
 
@@ -134,14 +62,14 @@ test "Intersections" {
 
     {
         const r = Ray(f32).new(Tuple(f32).point(0.0, 0.0, -5.0), Tuple(f32).vec3(0.0, 0.0, 1.0));
-        const s = Sphere(f32).new();
+        var s = Shape(f32).sphere();
         var xs = try s.intersect(allocator, r);
         defer xs.deinit();
 
         try testing.expectEqual(xs.items.len, 2);
 
         const first  = xs.items[0];
-        const second = xs.items[1];
+        var second = xs.items[1];
         try testing.expectApproxEqAbs(first.t, 4.0, tolerance);
         try testing.expectApproxEqAbs(second.t, 6.0, tolerance);
         try testing.expectEqual(first.object, s);
@@ -150,14 +78,14 @@ test "Intersections" {
 
     {
         const r = Ray(f32).new(Tuple(f32).point(0.0, 1.0, -5.0), Tuple(f32).vec3(0.0, 0.0, 1.0));
-        const s = Sphere(f32).new();
+        var s = Shape(f32).sphere();
         var xs = try s.intersect(allocator, r);
         defer xs.deinit();
 
         try testing.expectEqual(xs.items.len, 2);
 
         const first  = xs.items[0];
-        const second = xs.items[1];
+        var second = xs.items[1];
         try testing.expectApproxEqAbs(first.t, 5.0, tolerance);
         try testing.expectApproxEqAbs(second.t, 5.0, tolerance);
         try testing.expectEqual(first.object, s);
@@ -166,7 +94,7 @@ test "Intersections" {
 
     {
         const r = Ray(f32).new(Tuple(f32).point(0.0, 2.0, -5.0), Tuple(f32).vec3(0.0, 0.0, 1.0));
-        const s = Sphere(f32).new();
+        var s = Shape(f32).sphere();
         var xs = try s.intersect(allocator, r);
         defer xs.deinit();
 
@@ -175,14 +103,14 @@ test "Intersections" {
 
     {
         const r = Ray(f32).new(Tuple(f32).point(0.0, 0.0, 0.0), Tuple(f32).vec3(0.0, 0.0, 1.0));
-        const s = Sphere(f32).new();
+        var s = Shape(f32).sphere();
         var xs = try s.intersect(allocator, r);
         defer xs.deinit();
 
         try testing.expectEqual(xs.items.len, 2);
 
         const first =  xs.items[0];
-        const second = xs.items[1];
+        var second = xs.items[1];
         try testing.expectApproxEqAbs(first.t, 1.0, tolerance);
         try testing.expectApproxEqAbs(second.t, -1.0, tolerance);
         try testing.expectEqual(first.object, s);
@@ -191,14 +119,14 @@ test "Intersections" {
 
     {
         const r = Ray(f32).new(Tuple(f32).point(0.0, 0.0, 5.0), Tuple(f32).vec3(0.0, 0.0, 1.0));
-        const s = Sphere(f32).new();
+        var s = Shape(f32).sphere();
         var xs = try s.intersect(allocator, r);
         defer xs.deinit();
 
         try testing.expectEqual(xs.items.len, 2);
 
         const first  = xs.items[0];
-        const second = xs.items[1];
+        var second = xs.items[1];
         try testing.expectApproxEqAbs(first.t, -6.0, tolerance);
         try testing.expectApproxEqAbs(second.t, -4.0, tolerance);
         try testing.expectEqual(first.object, s);
@@ -207,7 +135,7 @@ test "Intersections" {
 
     {
         const r = Ray(f32).new(Tuple(f32).point(0.0, 0.0, -5.0), Tuple(f32).vec3(0.0, 0.0, 1.0));
-        var s = Sphere(f32).new();
+        var s = Shape(f32).sphere();
         try s.setTransform(Matrix(f32, 4).identity().scale(2.0, 2.0, 2.0));
         var xs = try s.intersect(allocator, r);
         defer xs.deinit();
@@ -215,7 +143,7 @@ test "Intersections" {
         try testing.expectEqual(xs.items.len, 2);
 
         const first =  xs.items[0];
-        const second = xs.items[1];
+        var second = xs.items[1];
         try testing.expectApproxEqAbs(first.t, 3.0, tolerance);
         try testing.expectApproxEqAbs(second.t, 7.0, tolerance);
         try testing.expectEqual(first.object, s);
@@ -224,7 +152,7 @@ test "Intersections" {
 
     {
         const r = Ray(f32).new(Tuple(f32).point(0.0, 0.0, -5.0), Tuple(f32).vec3(0.0, 0.0, 1.0));
-        var s = Sphere(f32).new();
+        var s = Shape(f32).sphere();
         try s.setTransform(Matrix(f32, 4).identity().translate(5.0, 0.0, 0.0));
         var xs = try s.intersect(allocator, r);
         defer xs.deinit();
@@ -237,7 +165,7 @@ test "Hit" {
     const allocator = testing.allocator;
 
     {
-        var s = Sphere(f32).new();
+        var s = Shape(f32).sphere();
         var xs = Intersections(f32).init(allocator);
         defer xs.deinit();
         try xs.append(.{ .t = 1.0, .object = s});
@@ -247,7 +175,7 @@ test "Hit" {
     }
 
     {
-        var s = Sphere(f32).new();
+        var s = Shape(f32).sphere();
         var xs = Intersections(f32).init(allocator);
         defer xs.deinit();
         try xs.append(.{ .t = -1.0, .object = s});
@@ -257,7 +185,7 @@ test "Hit" {
     }
 
     {
-        var s = Sphere(f32).new();
+        var s = Shape(f32).sphere();
         var xs = Intersections(f32).init(allocator);
         defer xs.deinit();
         try xs.append(.{ .t = -2.0, .object = s});
@@ -267,7 +195,7 @@ test "Hit" {
     }
 
     {
-        var s = Sphere(f32).new();
+        var s = Shape(f32).sphere();
         var xs = Intersections(f32).init(allocator);
         defer xs.deinit();
         try xs.append(.{ .t = 5.0, .object = s});
@@ -280,13 +208,13 @@ test "Hit" {
 }
 
 test "Surface normals" {
-    var s = Sphere(f32).new();
+    var s = Shape(f32).sphere();
     try s.setTransform(Matrix(f32, 4).identity().translate(0.0, 1.0, 0.0));
     var n = s.normalAt(Tuple(f32).point(0, 1.70711, -0.70711));
 
     try testing.expect(n.approxEqual(Tuple(f32).vec3(0, 0.70711, -0.70711)));
 
-    s = Sphere(f32).new();
+    s = Shape(f32).sphere();
     try s.setTransform(Matrix(f32, 4).identity().rotateZ(std.math.pi / 5.0).scale(1.0, 0.5, 1.0));
     n = s.normalAt(Tuple(f32).point(0.0, 1.0 / @sqrt(2.0), -1.0 / @sqrt(2.0)));
 
