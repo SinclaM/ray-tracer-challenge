@@ -5,7 +5,7 @@ const Tuple = @import("../raytracer/tuple.zig").Tuple;
 const Matrix = @import("../raytracer/matrix.zig").Matrix;
 const Color = @import("../raytracer/color.zig").Color;
 const Material = @import("../raytracer/material.zig").Material;
-const Sphere = @import("../raytracer/shapes/sphere.zig").Sphere;
+const Shape = @import("../raytracer/shapes/shape.zig").Shape;
 const Light = @import("../raytracer/light.zig").Light;
 const World = @import("../raytracer/world.zig").World;
 const Camera = @import("../raytracer/camera.zig").Camera;
@@ -17,12 +17,12 @@ pub fn renderSimpleWorld() !void {
 
     const identity = Matrix(f64, 4).identity();
 
-    var floor = Sphere(f64).new();
+    var floor = Shape(f64).sphere();
     try floor.setTransform(identity.scale(10.0, 0.01, 10.0));
     floor.material.color = Color(f64).new(1, 0.9, 0.9);
     floor.material.specular = 0.0;
 
-    var left_wall = Sphere(f64).new();
+    var left_wall = Shape(f64).sphere();
     try left_wall.setTransform(
         identity
             .scale(10.0, 0.01, 10.0)
@@ -33,7 +33,7 @@ pub fn renderSimpleWorld() !void {
     left_wall.material.color = Color(f64).new(0.9, 1.0, 0.9);
     left_wall.material.specular = 0.0;
 
-    var right_wall = Sphere(f64).new();
+    var right_wall = Shape(f64).sphere();
     try right_wall.setTransform(
         identity
             .scale(10.0, 0.01, 10.0)
@@ -44,19 +44,19 @@ pub fn renderSimpleWorld() !void {
     right_wall.material.color = Color(f64).new(0.9, 0.9, 1.0);
     right_wall.material.specular = 0.0;
 
-    var middle = Sphere(f64).new();
+    var middle = Shape(f64).sphere();
     try middle.setTransform(identity.translate(-0.5, 1.0, 0.5));
     middle.material.color = Color(f64).new(0.1, 1.0, 0.5);
     middle.material.diffuse = 0.7;
     middle.material.specular = 0.3;
 
-    var right = Sphere(f64).new();
+    var right = Shape(f64).sphere();
     try right.setTransform(identity.scale(0.5, 0.5, 0.5).translate(1.5, 0.5, -0.5));
     right.material.color = Color(f64).new(0.5, 1.0, 0.1);
     right.material.diffuse = 0.7;
     right.material.specular = 0.3;
 
-    var left = Sphere(f64).new();
+    var left = Shape(f64).sphere();
     try left.setTransform(identity.scale(0.33, 0.33, 0.33).translate(-1.5, 0.33, -0.75));
     left.material.color = Color(f64).new(1.0, 0.8, 0.1);
     left.material.diffuse = 0.7;

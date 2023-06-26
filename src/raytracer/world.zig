@@ -8,22 +8,22 @@ const Matrix = @import("matrix.zig").Matrix;
 const Ray = @import("ray.zig").Ray;
 const Color = @import("color.zig").Color;
 const Light = @import("light.zig").Light;
-const Intersection = @import("shapes/sphere.zig").Intersection;
-const Intersections = @import("shapes/sphere.zig").Intersections;
-const sortIntersections = @import("shapes/sphere.zig").sortIntersections;
-const hit = @import("shapes/sphere.zig").hit;
-const Sphere = @import("shapes/sphere.zig").Sphere;
+const Intersection = @import("shapes/shape.zig").Intersection;
+const Intersections = @import("shapes/shape.zig").Intersections;
+const sortIntersections = @import("shapes/shape.zig").sortIntersections;
+const hit = @import("shapes/shape.zig").hit;
+const Shape = @import("shapes/shape.zig").Shape;
 
 pub fn World(comptime T: type) type {
     return struct {
         const Self = @This();
 
-        objects: ArrayList(Sphere(T)),
+        objects: ArrayList(Shape(T)),
         lights: ArrayList(Light(T)),
 
         pub fn new(allocator: Allocator) Self {
             return .{ 
-                .objects = ArrayList(Sphere(T)).init(allocator),
+                .objects = ArrayList(Shape(T)).init(allocator),
                 .lights = ArrayList(Light(T)).init(allocator)
             };
         }
@@ -31,12 +31,12 @@ pub fn World(comptime T: type) type {
         pub fn default(allocator: Allocator) !Self {
             var world = Self.new(allocator);
 
-            var sphere1 = Sphere(T).new();
+            var sphere1 = Shape(T).sphere();
             sphere1.material.color = Color(T).new(0.8, 1.0, 0.6);
             sphere1.material.diffuse = 0.7;
             sphere1.material.specular = 0.2;
 
-            var sphere2 = Sphere(T).new();
+            var sphere2 = Shape(T).sphere();
             sphere2.setTransform(Matrix(T, 4).identity().scale(0.5, 0.5, 0.5)) catch unreachable;
 
             try world.objects.append(sphere1);
@@ -60,7 +60,7 @@ pub fn World(comptime T: type) type {
         pub fn intersect(self: Self, allocator: Allocator, ray: Ray(T)) !Intersections(T) {
             var all = Intersections(T).init(allocator);
 
-            for (self.objects.items) |object| {
+            for (self.objects.items) |*object| {
                 var xs: Intersections(T) = try object.intersect(allocator, ray);
                 defer xs.deinit();
 
@@ -168,7 +168,7 @@ test "Intersection" {
 test "PreComputations" {
     {
         const r = Ray(f32).new(Tuple(f32).point(0.0, 0.0, -5.0), Tuple(f32).vec3(0.0, 0.0, 1.0));
-        const shape = Sphere(f32).new();
+        const shape = Shape(f32).sphere();
         const i: Intersection(f32) = .{ .t = 4, .object = shape };
 
         const comps = PreComputations(f32).new(i, r);
@@ -182,7 +182,7 @@ test "PreComputations" {
 
     {
         const r = Ray(f32).new(Tuple(f32).point(0.0, 0.0, 0.0), Tuple(f32).vec3(0.0, 0.0, 1.0));
-        const shape = Sphere(f32).new();
+        const shape = Shape(f32).sphere();
         const i =  Intersection(f32).new(1.0, shape);
 
         const comps = PreComputations(f32).new(i, r);
@@ -196,7 +196,7 @@ test "PreComputations" {
 
     {
         const r = Ray(f32).new(Tuple(f32).point(0.0, 0.0, -5.0), Tuple(f32).vec3(0.0, 0.0, 1.0));
-        var shape = Sphere(f32).new();
+        var shape = Shape(f32).sphere();
         try shape.setTransform(Matrix(f32, 4).identity().translate(0.0, 0.0, 1.0));
         const i =  Intersection(f32).new(5.0, shape);
 
@@ -244,10 +244,10 @@ test "Shading" {
             Tuple(f32).point(0.0, 0.0, -10.0), Color(f32).new(1.0, 1.0, 1.0)
         ));
 
-        const s1 = Sphere(f32).new();
+        const s1 = Shape(f32).sphere();
         try w.objects.append(s1);
 
-        var s2 = Sphere(f32).new();
+        var s2 = Shape(f32).sphere();
         try s2.setTransform(Matrix(f32, 4).identity().translate(0.0, 0.0, 10.0));
         try w.objects.append(s2);
 
