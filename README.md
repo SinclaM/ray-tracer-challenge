@@ -13,7 +13,7 @@ This project is a simple [Zig](https://ziglang.org/) implementation of the ray t
 - [x] Chapter 6 - Light and Shading
 - [x] Chapter 7 - Making a Scene
 - [x] Chapter 8 - Shadows
-- [ ] Chapter 9 - Planes
+- [x] Chapter 9 - Planes
 - [ ] Chapter 10 - Patterns
 - [ ] Chapter 11 - Reflection and Refraction
 - [ ] Chapter 12 - Cubes
