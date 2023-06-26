@@ -2,7 +2,7 @@ const std = @import("std");
 const testing = std.testing;
 
 pub fn Tuple(comptime T: type) type {
-    return packed struct {
+    return extern struct {
         const Self = @This();
         const tolerance: T = 1e-5;
 

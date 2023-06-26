@@ -7,7 +7,7 @@ const Tuple = @import("tuple.zig").Tuple;
 pub const MatrixError = error { NotInvertible };
 
 pub fn Matrix(comptime T: type, comptime N: usize) type {
-    return struct {
+    return extern struct {
         const Self = @This();
         const tolerance: T = 1e-5;
 

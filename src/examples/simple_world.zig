@@ -18,58 +18,58 @@ pub fn renderSimpleWorld() !void {
     const identity = Matrix(f64, 4).identity();
 
     var floor = Sphere(f64).new();
-    try floor.setTransform(identity.scale(10.0, 0.01, 10.0));
-    floor.material.color = Color(f64).new(1, 0.9, 0.9);
-    floor.material.specular = 0.0;
+    try floor.shape.setTransform(identity.scale(10.0, 0.01, 10.0));
+    floor.shape.material.color = Color(f64).new(1, 0.9, 0.9);
+    floor.shape.material.specular = 0.0;
 
     var left_wall = Sphere(f64).new();
-    try left_wall.setTransform(
+    try left_wall.shape.setTransform(
         identity
             .scale(10.0, 0.01, 10.0)
             .rotateX(pi / 2.0)
             .rotateY(-pi / 4.0)
             .translate(0.0, 0.0, 5.0)
     );
-    left_wall.material.color = Color(f64).new(0.9, 1.0, 0.9);
-    left_wall.material.specular = 0.0;
+    left_wall.shape.material.color = Color(f64).new(0.9, 1.0, 0.9);
+    left_wall.shape.material.specular = 0.0;
 
     var right_wall = Sphere(f64).new();
-    try right_wall.setTransform(
+    try right_wall.shape.setTransform(
         identity
             .scale(10.0, 0.01, 10.0)
             .rotateX(pi / 2.0)
             .rotateY(pi / 4.0)
             .translate(0.0, 0.0, 5.0)
     );
-    right_wall.material.color = Color(f64).new(0.9, 0.9, 1.0);
-    right_wall.material.specular = 0.0;
+    right_wall.shape.material.color = Color(f64).new(0.9, 0.9, 1.0);
+    right_wall.shape.material.specular = 0.0;
 
     var middle = Sphere(f64).new();
-    try middle.setTransform(identity.translate(-0.5, 1.0, 0.5));
-    middle.material.color = Color(f64).new(0.1, 1.0, 0.5);
-    middle.material.diffuse = 0.7;
-    middle.material.specular = 0.3;
+    try middle.shape.setTransform(identity.translate(-0.5, 1.0, 0.5));
+    middle.shape.material.color = Color(f64).new(0.1, 1.0, 0.5);
+    middle.shape.material.diffuse = 0.7;
+    middle.shape.material.specular = 0.3;
 
     var right = Sphere(f64).new();
-    try right.setTransform(identity.scale(0.5, 0.5, 0.5).translate(1.5, 0.5, -0.5));
-    right.material.color = Color(f64).new(0.5, 1.0, 0.1);
-    right.material.diffuse = 0.7;
-    right.material.specular = 0.3;
+    try right.shape.setTransform(identity.scale(0.5, 0.5, 0.5).translate(1.5, 0.5, -0.5));
+    right.shape.material.color = Color(f64).new(0.5, 1.0, 0.1);
+    right.shape.material.diffuse = 0.7;
+    right.shape.material.specular = 0.3;
 
     var left = Sphere(f64).new();
-    try left.setTransform(identity.scale(0.33, 0.33, 0.33).translate(-1.5, 0.33, -0.75));
-    left.material.color = Color(f64).new(1.0, 0.8, 0.1);
-    left.material.diffuse = 0.7;
-    left.material.specular = 0.3;
+    try left.shape.setTransform(identity.scale(0.33, 0.33, 0.33).translate(-1.5, 0.33, -0.75));
+    left.shape.material.color = Color(f64).new(1.0, 0.8, 0.1);
+    left.shape.material.diffuse = 0.7;
+    left.shape.material.specular = 0.3;
 
 
     var world = World(f64).new(allocator);
-    try world.objects.append(floor);
-    try world.objects.append(left_wall);
-    try world.objects.append(right_wall);
-    try world.objects.append(middle);
-    try world.objects.append(right);
-    try world.objects.append(left);
+    try world.objects.append(floor.shape);
+    try world.objects.append(left_wall.shape);
+    try world.objects.append(right_wall.shape);
+    try world.objects.append(middle.shape);
+    try world.objects.append(right.shape);
+    try world.objects.append(left.shape);
 
     try world.lights.append(Light(f64).pointLight(
         Tuple(f64).point(-10.0, 10.0, -10.0), Color(f64).new(0.5, 0.5, 0.5)

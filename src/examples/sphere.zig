@@ -7,7 +7,7 @@ const Tuple = @import("../raytracer/tuple.zig").Tuple;
 const Matrix = @import("../raytracer/matrix.zig").Matrix;
 const Ray = @import("../raytracer/ray.zig").Ray;
 const Sphere = @import("../raytracer/shapes/sphere.zig").Sphere;
-const hit = @import("../raytracer/shapes/sphere.zig").hit;
+const hit = @import("../raytracer/shapes/shape.zig").hit;
 const Light = @import("../raytracer/light.zig").Light;
 
 pub fn drawSphere() !void {
@@ -20,7 +20,7 @@ pub fn drawSphere() !void {
     var canvas = try Canvas(f32).new(allocator, canvas_size, canvas_size);
 
     var s = Sphere(f32).new();
-    s.material.color = Color(f32).new(1.0, 0.2, 1.0);
+    s.shape.material.color = Color(f32).new(1.0, 0.2, 1.0);
 
     const eye = Tuple(f32).point(0.0, 0.0, -5.0);
 
@@ -45,12 +45,12 @@ pub fn drawSphere() !void {
             const direction = pos.sub(eye).normalized();
 
             const ray = Ray(f32).new(eye, direction);
-            var xs = try s.intersect(allocator, ray);
+            var xs = try s.shape.intersect(allocator, ray);
             if (hit(f32, xs)) |hit_| {
                 const point = ray.position(hit_.t);
-                const normal = s.normalAt(point);
+                const normal = s.shape.normalAt(point);
                 const eyev = ray.direction.negate();
-                const color = s.material.lighting(light, point, eyev, normal, false);
+                const color = s.shape.material.lighting(light, point, eyev, normal, false);
 
                 canvas.getPixelPointer(x, y).?.* = color;
             }

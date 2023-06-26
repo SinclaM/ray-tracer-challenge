@@ -5,7 +5,7 @@ const Tuple = @import("tuple.zig").Tuple;
 const Matrix = @import("matrix.zig").Matrix;
 
 pub fn Ray(comptime T: type) type {
-    return struct {
+    return extern struct {
         const Self = @This();
 
         origin: Tuple(T),

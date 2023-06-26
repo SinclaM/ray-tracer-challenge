@@ -7,7 +7,7 @@ const Color = @import("color.zig").Color;
 const Light = @import("light.zig").Light;
 
 pub fn Material(comptime T: type) type {
-    return struct {
+    return extern struct {
         const Self = @This();
 
         color: Color(T) = Color(T).new(1.0, 1.0, 1.0),
