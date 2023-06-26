@@ -32,6 +32,10 @@ This project is a simple [Zig](https://ziglang.org/) implementation of the ray t
 
 <img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/99bb3eb1-f128-4e54-a24c-9727ca7659fc width=800> 
 
+<br/><br/>
+
+<img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/1a9eb6be-8081-434d-a0ec-6dad4cb1c309 width=800> 
+
 ## Performance profiling
 
 Not much effort has (yet) been put into optimizations, although I do try to avoid unnecessary performance hits.
