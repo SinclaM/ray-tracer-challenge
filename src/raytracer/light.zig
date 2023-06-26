@@ -1,5 +1,4 @@
 const std = @import("std");
-const testing = std.testing;
 
 const Color = @import("color.zig").Color;
 const Tuple = @import("tuple.zig").Tuple;

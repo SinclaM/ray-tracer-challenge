@@ -1,5 +1,4 @@
 const std = @import("std");
-const print = std.debug.print;
 
 const Color = @import("../raytracer/color.zig").Color;
 const Canvas = @import("../raytracer/canvas.zig").Canvas;

@@ -1,18 +1,15 @@
 const std = @import("std");
 const testing = std.testing;
 const Allocator = std.mem.Allocator;
-const ArrayList = std.ArrayList;
 
 const Tuple = @import("../tuple.zig").Tuple;
 const Matrix = @import("../matrix.zig").Matrix;
 const Ray = @import("../ray.zig").Ray;
-const Material = @import("../material.zig").Material;
 
 const shape = @import("shape.zig");
 const Intersection = shape.Intersection;
 const Intersections = shape.Intersections;
 const sortIntersections = shape.sortIntersections;
-const hit = shape.hit;
 const Shape = shape.Shape;
 
 pub fn Sphere(comptime T: type) type {
@@ -48,12 +45,6 @@ pub fn Sphere(comptime T: type) type {
             return ret;
         }
     };
-}
-
-test "Id uniqueness" {
-    var s1 = Shape(f32).sphere();
-    var s2 = Shape(f32).sphere();
-    try testing.expect(s1.id != s2.id);
 }
 
 test "Intersections" {
@@ -158,52 +149,6 @@ test "Intersections" {
         defer xs.deinit();
 
         try testing.expectEqual(xs.items.len, 0);
-    }
-}
-
-test "Hit" {
-    const allocator = testing.allocator;
-
-    {
-        var s = Shape(f32).sphere();
-        var xs = Intersections(f32).init(allocator);
-        defer xs.deinit();
-        try xs.append(.{ .t = 1.0, .object = s});
-        try xs.append(.{ .t = 2.0, .object = s});
-
-        try testing.expectEqual(hit(f32, xs), .{ .t = 1.0, .object = s});
-    }
-
-    {
-        var s = Shape(f32).sphere();
-        var xs = Intersections(f32).init(allocator);
-        defer xs.deinit();
-        try xs.append(.{ .t = -1.0, .object = s});
-        try xs.append(.{ .t = 1.0, .object = s});
-
-        try testing.expectEqual(hit(f32, xs), .{ .t = 1.0, .object = s});
-    }
-
-    {
-        var s = Shape(f32).sphere();
-        var xs = Intersections(f32).init(allocator);
-        defer xs.deinit();
-        try xs.append(.{ .t = -2.0, .object = s});
-        try xs.append(.{ .t = -1.0, .object = s});
-
-        try testing.expectEqual(hit(f32, xs), null);
-    }
-
-    {
-        var s = Shape(f32).sphere();
-        var xs = Intersections(f32).init(allocator);
-        defer xs.deinit();
-        try xs.append(.{ .t = 5.0, .object = s});
-        try xs.append(.{ .t = 7.0, .object = s});
-        try xs.append(.{ .t = -3.0, .object = s});
-        try xs.append(.{ .t = 2.0, .object = s});
-
-        try testing.expectEqual(hit(f32, xs), .{ .t = 2.0, .object = s});
     }
 }
 

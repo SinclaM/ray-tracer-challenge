@@ -1,5 +1,4 @@
 const std = @import("std");
-const print = std.debug.print;
 const pi = std.math.pi;
 
 const Color = @import("../raytracer/color.zig").Color;

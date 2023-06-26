@@ -1,5 +1,4 @@
 const std = @import("std");
-const print = std.debug.print;
 
 const Canvas = @import("../raytracer/canvas.zig").Canvas;
 const Tuple = @import("../raytracer/tuple.zig").Tuple;
