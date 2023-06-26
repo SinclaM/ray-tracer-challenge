@@ -32,11 +32,13 @@ This project is a simple [Zig](https://ziglang.org/) implementation of the ray t
 
 ## Performance profiling
 
-Not much effort has (yet) been put into optimizations. The ray tracer is not (yet) multithreaded and the
-small vector math library it uses does not (yet) leverage Zig's SIMD builtins. Do not expect it to compete
-with a real ray tracer.
+Not much effort has (yet) been put into optimizations, although I do try to avoid unnecessary performance hits.
+The ray tracer is not (yet) multithreaded and the small vector math library it uses does not (yet) leverage Zig's
+SIMD builtins. Do not expect it to compete with a real ray tracer.
 
 What optimizations I do make are largely informed by profilers. The binary is profiled with `valgrind --tool=callgrind`
 and the results are inspected with `qcachegrind`, which works well enough.
 
 Unfortunately, Zig does not have first-class profiler support in its current ecosystem.
+
+I also use [hyperfine](https://github.com/sharkdp/hyperfine) for benchmarking.
