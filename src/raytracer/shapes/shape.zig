@@ -8,6 +8,7 @@ const Matrix = @import("../matrix.zig").Matrix;
 const Material = @import("../material.zig").Material;
 const Ray = @import("../ray.zig").Ray;
 const Sphere = @import("sphere.zig").Sphere;
+const Plane = @import("plane.zig").Plane;
 
 const global = struct {
     var id: usize = 0;
@@ -74,6 +75,7 @@ pub fn Shape(comptime T: type) type {
         const Variant = union(enum) {
             test_shape: TestShape(T),
             sphere: Sphere(T),
+            plane: Plane(T),
         };
 
         id: usize,
@@ -97,6 +99,10 @@ pub fn Shape(comptime T: type) type {
 
         pub fn sphere() Self {
             return Shape(T).new(Shape(T).Variant { .sphere = Sphere(T) {} });
+        }
+
+        pub fn plane() Self {
+            return Shape(T).new(Shape(T).Variant { .plane = Plane(T) {} });
         }
 
         pub fn setTransform(self: *Self, matrix: Matrix(T, 4)) !void {
