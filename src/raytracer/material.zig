@@ -130,7 +130,7 @@ test "Lighting with pattern" {
     const black = Color(f32).new(0.0, 0.0, 0.0);
 
     var m = Material(f32).new();
-    m.pattern = Pattern(f32).stripe(Color(f32).new(1.0, 1.0, 1.0), Color(f32).new(0.0, 0.0, 0.0));
+    m.pattern = Pattern(f32).stripes(Color(f32).new(1.0, 1.0, 1.0), Color(f32).new(0.0, 0.0, 0.0));
     m.ambient = 1.0;
     m.diffuse = 0.0;
     m.specular = 0.0;

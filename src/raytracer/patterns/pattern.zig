@@ -5,7 +5,10 @@ const Tuple = @import("../tuple.zig").Tuple;
 const Matrix = @import("../matrix.zig").Matrix;
 const Color = @import("../color.zig").Color;
 const Shape = @import("../shapes/shape.zig").Shape;
-const StripePattern = @import("stripe.zig").StripePattern;
+const StripesPattern = @import("stripes.zig").StripesPattern;
+const GradientPattern = @import("gradient.zig").GradientPattern;
+const RingsPattern = @import("rings.zig").RingsPattern;
+const CheckersPattern = @import("checkers.zig").CheckersPattern;
 
 pub fn Pattern(comptime T: type) type {
     return struct {
@@ -13,7 +16,10 @@ pub fn Pattern(comptime T: type) type {
 
         const Variant = union(enum) {
             test_pattern: TestPattern(T),
-            stripe: StripePattern(T),
+            stripes: StripesPattern(T),
+            gradient: GradientPattern(T),
+            rings: RingsPattern(T),
+            checkers: CheckersPattern(T),
         };
 
         _transform: Matrix(T, 4) = Matrix(T, 4).identity(),
@@ -28,8 +34,20 @@ pub fn Pattern(comptime T: type) type {
             return Self.new(Self.Variant { .test_pattern = TestPattern(T).new() });
         }
 
-        pub fn stripe(a: Color(T), b: Color(T)) Self {
-            return Self.new(Self.Variant { .stripe = StripePattern(T).new(a, b) });
+        pub fn stripes(a: Color(T), b: Color(T)) Self {
+            return Self.new(Self.Variant { .stripes = StripesPattern(T).new(a, b) });
+        }
+
+        pub fn gradient(a: Color(T), b: Color(T)) Self {
+            return Self.new(Self.Variant { .gradient = GradientPattern(T).new(a, b) });
+        }
+
+        pub fn rings(a: Color(T), b: Color(T)) Self {
+            return Self.new(Self.Variant { .rings = RingsPattern(T).new(a, b) });
+        }
+
+        pub fn checkers(a: Color(T), b: Color(T)) Self {
+            return Self.new(Self.Variant { .checkers = CheckersPattern(T).new(a, b) });
         }
 
         pub fn setTransform(self: *Self, matrix: Matrix(T, 4)) !void {

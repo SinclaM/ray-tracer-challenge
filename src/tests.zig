@@ -12,5 +12,8 @@ comptime {
     _ = @import("raytracer/shapes/sphere.zig");
     _ = @import("raytracer/shapes/plane.zig");
     _ = @import("raytracer/patterns/pattern.zig");
-    _ = @import("raytracer/patterns/stripe.zig");
+    _ = @import("raytracer/patterns/stripes.zig");
+    _ = @import("raytracer/patterns/gradient.zig");
+    _ = @import("raytracer/patterns/rings.zig");
+    _ = @import("raytracer/patterns/checkers.zig");
 }

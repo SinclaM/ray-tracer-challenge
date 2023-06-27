@@ -3,7 +3,7 @@ const testing = std.testing;
 const Tuple = @import("../tuple.zig").Tuple;
 const Color = @import("../color.zig").Color;
 
-pub fn StripePattern(comptime T: type) type {
+pub fn StripesPattern(comptime T: type) type {
     return struct {
         const Self = @This();
 
@@ -20,10 +20,10 @@ pub fn StripePattern(comptime T: type) type {
     };
 }
 
-test "Stripes" {
+test "StripesPattern" {
     const white = Color(f32).new(1.0, 1.0, 1.0);
     const black = Color(f32).new(0.0, 0.0, 0.0);
-    const pattern = StripePattern(f32).new(white, black);
+    const pattern = StripesPattern(f32).new(white, black);
 
     try testing.expectEqual(pattern.patternAt(Tuple(f32).point(0.0, 0.0, 0.0)), white);
     try testing.expectEqual(pattern.patternAt(Tuple(f32).point(0.9, 0.0, 0.0)), white);
