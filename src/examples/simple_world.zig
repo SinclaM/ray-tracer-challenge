@@ -9,6 +9,7 @@ const Shape = @import("../raytracer/shapes/shape.zig").Shape;
 const Light = @import("../raytracer/light.zig").Light;
 const World = @import("../raytracer/world.zig").World;
 const Camera = @import("../raytracer/camera.zig").Camera;
+const Pattern = @import("../raytracer/patterns/pattern.zig").Pattern;
 
 pub fn renderSimpleWorld() !void {
     const allocator = std.heap.c_allocator;
@@ -47,6 +48,9 @@ pub fn renderSimpleWorld() !void {
     middle.material.color = Color(f64).new(0.1, 1.0, 0.5);
     middle.material.diffuse = 0.7;
     middle.material.specular = 0.3;
+    var pattern = Pattern(f64).stripe(Color(f64).new(0.33, 0.4, 0.67), Color(f64).new(0.67, 0.6, 0.33));
+    try pattern.setTransform(identity.rotateZ(pi / 1.5).scale(0.25, 0.25, 0.25));
+    middle.material.pattern = pattern;
 
     var right = Shape(f64).sphere();
     try right.setTransform(identity.scale(0.5, 0.5, 0.5).translate(1.5, 0.5, -0.5));

@@ -49,7 +49,7 @@ pub fn drawSphere() !void {
                 const point = ray.position(hit_.t);
                 const normal = s.normalAt(point);
                 const eyev = ray.direction.negate();
-                const color = s.material.lighting(light, point, eyev, normal, false);
+                const color = s.material.lighting(light, s, point, eyev, normal, false);
                 canvas.getPixelPointer(x, y).?.* = color;
             }
 

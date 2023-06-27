@@ -94,15 +94,15 @@ pub fn Shape(comptime T: type) type {
         }
 
         pub fn testShape() Self {
-            return Shape(T).new(Shape(T).Variant { .test_shape = TestShape(T).new() });
+            return Self.new(Self.Variant { .test_shape = TestShape(T).new() });
         }
 
         pub fn sphere() Self {
-            return Shape(T).new(Shape(T).Variant { .sphere = Sphere(T) {} });
+            return Self.new(Self.Variant { .sphere = Sphere(T) {} });
         }
 
         pub fn plane() Self {
-            return Shape(T).new(Shape(T).Variant { .plane = Plane(T) {} });
+            return Self.new(Self.Variant { .plane = Plane(T) {} });
         }
 
         pub fn setTransform(self: *Self, matrix: Matrix(T, 4)) !void {
@@ -141,18 +141,18 @@ fn TestShape(comptime T: type) type {
     return struct {
         const Self = @This();
 
-        pub fn new() Self {
+        fn new() Self {
             return .{};
         }
 
-        pub fn localIntersect(self: Self, allocator: Allocator, super: Shape(T), ray: Ray(T)) !Intersections(T) {
+        fn localIntersect(self: Self, allocator: Allocator, super: Shape(T), ray: Ray(T)) !Intersections(T) {
             _ = self;
             _ = super;
             _ = ray;
             return Intersections(T).init(allocator);
         }
 
-        pub fn localNormalAt(self: Self, super: Shape(T), point: Tuple(T)) Tuple(T) {
+        fn localNormalAt(self: Self, super: Shape(T), point: Tuple(T)) Tuple(T) {
             _ = self;
             _ = super;
             _ = point;
