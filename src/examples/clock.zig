@@ -16,7 +16,7 @@ pub fn drawHours() !void {
     defer canvas.destroy();
 
     var i: usize = 0;
-    var transform = Matrix(f32, 4).identity().rotateZ(pi / 6.0);
+    const transform = Matrix(f32, 4).identity().rotateZ(pi / 6.0);
     var p = Tuple(f32).point(0.0, 45.0, 0.0);
     while (i < 12) : (i += 1) {
         canvas.getPixelPointer(

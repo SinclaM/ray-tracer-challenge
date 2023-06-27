@@ -37,7 +37,7 @@ pub fn drawSilhouette() !void {
             const direction = pos.sub(source).normalized();
 
             const ray = Ray(f32).new(source, direction);
-            var xs = try s.intersect(allocator, ray);
+            const xs = try s.intersect(allocator, ray);
             defer xs.deinit();
             if (hit(f32, xs)) |_| {
                 canvas.getPixelPointer(x, y).?.* = Color(f32).new(1.0, 0.0, 0.0);

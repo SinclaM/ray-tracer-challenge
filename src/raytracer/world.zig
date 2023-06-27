@@ -61,7 +61,7 @@ pub fn World(comptime T: type) type {
             var all = Intersections(T).init(allocator);
 
             for (self.objects.items) |*object| {
-                var xs: Intersections(T) = try object.intersect(allocator, ray);
+                const xs: Intersections(T) = try object.intersect(allocator, ray);
                 defer xs.deinit();
 
                 try all.appendSlice(xs.items);
@@ -85,7 +85,7 @@ pub fn World(comptime T: type) type {
         }
 
         pub fn colorAt(self: Self, allocator: Allocator, ray: Ray(T)) !Color(T) {
-            var xs = try self.intersect(allocator, ray);
+            const xs = try self.intersect(allocator, ray);
             defer xs.deinit();
 
             if (hit(T, xs)) |hit_| {
@@ -151,11 +151,11 @@ test "Intersection" {
     const allocator = testing.allocator;
     const tolerance = 1e-5;
 
-    var w = try World(f32).default(allocator);
+    const w = try World(f32).default(allocator);
     defer w.destroy();
 
     const ray = Ray(f32).new(Tuple(f32).point(0.0, 0.0, -5.0), Tuple(f32).vec3(0.0, 0.0, 1.0));
-    var xs = try w.intersect(allocator, ray);
+    const xs = try w.intersect(allocator, ray);
     defer xs.deinit();
 
     try testing.expectEqual(xs.items.len, 4);

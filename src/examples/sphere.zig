@@ -43,7 +43,7 @@ pub fn drawSphere() !void {
             const direction = pos.sub(eye).normalized();
 
             const ray = Ray(f32).new(eye, direction);
-            var xs = try s.intersect(allocator, ray);
+            const xs = try s.intersect(allocator, ray);
             defer xs.deinit();
             if (hit(f32, xs)) |hit_| {
                 const point = ray.position(hit_.t);

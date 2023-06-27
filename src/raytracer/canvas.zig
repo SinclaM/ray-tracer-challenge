@@ -4,7 +4,7 @@ const testing = std.testing;
 
 const Allocator = std.mem.Allocator;
 const Color = @import("color.zig").Color;
-const scaledChannel = @import("color.zig").scaledChannel;
+const clamp = @import("color.zig").clamp;
 
 pub fn Canvas(comptime T: type) type {
     return struct {
@@ -50,7 +50,7 @@ pub fn Canvas(comptime T: type) type {
             var col = @intCast(usize, 0);
             for (self.pixels) |pixel| {
                 // ------ Red channel ------
-                slice = (try std.fmt.bufPrint(&scratch, "{}", .{ scaledChannel(T, pixel.r) }));
+                slice = (try std.fmt.bufPrint(&scratch, "{}", .{ clamp(T, pixel.r) }));
 
                 if (col + slice.len >= 70) {
                     // If the red channel can't fit on the current line, break the
@@ -68,7 +68,7 @@ pub fn Canvas(comptime T: type) type {
                 col += slice.len;
 
                 // ----- Green channel -----
-                slice = (try std.fmt.bufPrint(&scratch, "{}", .{ scaledChannel(T, pixel.g) }));
+                slice = (try std.fmt.bufPrint(&scratch, "{}", .{ clamp(T, pixel.g) }));
 
                 if (col + slice.len >= 70) {
                     // If the green channel can't fit on the current line, break the
@@ -85,7 +85,7 @@ pub fn Canvas(comptime T: type) type {
                 col += slice.len;
 
                 // ----- Blue channel -----
-                slice = (try std.fmt.bufPrint(&scratch, "{}", .{ scaledChannel(T, pixel.b) }));
+                slice = (try std.fmt.bufPrint(&scratch, "{}", .{ clamp(T, pixel.b) }));
 
                 if (col + slice.len >= 70) {
                     // If the blue channel can't fit on the current line, break the
