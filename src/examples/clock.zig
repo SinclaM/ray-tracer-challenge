@@ -10,7 +10,7 @@ pub fn drawHours() !void {
     comptime var width = 100;
     comptime var height = 100;
 
-    const allocator = std.heap.page_allocator;
+    const allocator = std.heap.c_allocator;
 
     var canvas = try Canvas(f32).new(allocator, width, height);
     defer canvas.destroy();

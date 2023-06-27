@@ -12,11 +12,10 @@ const Light = @import("../raytracer/light.zig").Light;
 pub fn drawSphere() !void {
     comptime var canvas_size = 1000;
 
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-    defer arena.deinit();
-    const allocator = arena.allocator();
+    const allocator = std.heap.c_allocator;
 
     var canvas = try Canvas(f32).new(allocator, canvas_size, canvas_size);
+    defer canvas.destroy();
 
     var s = Shape(f32).sphere();
     s.material.color = Color(f32).new(1.0, 0.2, 1.0);
@@ -45,6 +44,7 @@ pub fn drawSphere() !void {
 
             const ray = Ray(f32).new(eye, direction);
             var xs = try s.intersect(allocator, ray);
+            defer xs.deinit();
             if (hit(f32, xs)) |hit_| {
                 const point = ray.position(hit_.t);
                 const normal = s.normalAt(point);
@@ -57,6 +57,7 @@ pub fn drawSphere() !void {
     }
 
     const ppm = try canvas.ppm(allocator);
+    defer allocator.free(ppm);
 
     const file = try std.fs.cwd().createFile(
         "images/sphere.ppm",

@@ -11,9 +11,7 @@ const World = @import("../raytracer/world.zig").World;
 const Camera = @import("../raytracer/camera.zig").Camera;
 
 pub fn renderSimpleSuperflat() !void {
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-    defer arena.deinit();
-    const allocator = arena.allocator();
+    const allocator = std.heap.c_allocator;
 
     const identity = Matrix(f64, 4).identity();
 
@@ -45,6 +43,7 @@ pub fn renderSimpleSuperflat() !void {
 
 
     var world = World(f64).new(allocator);
+    defer world.destroy();
     try world.objects.append(floor);
     try world.objects.append(large);
     try world.objects.append(small);
@@ -62,8 +61,10 @@ pub fn renderSimpleSuperflat() !void {
     );
 
     const canvas = try camera.render(allocator, world);
+    defer canvas.destroy();
 
     const ppm = try canvas.ppm(allocator);
+    defer allocator.free(ppm);
 
     const file = try std.fs.cwd().createFile(
         "images/simple_superflat.ppm",

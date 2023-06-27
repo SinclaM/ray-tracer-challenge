@@ -11,11 +11,10 @@ const hit = @import("../raytracer/shapes/shape.zig").hit;
 pub fn drawSilhouette() !void {
     comptime var canvas_size = 100;
 
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-    defer arena.deinit();
-    const allocator = arena.allocator();
+    const allocator = std.heap.c_allocator;
 
     var canvas = try Canvas(f32).new(allocator, canvas_size, canvas_size);
+    defer canvas.destroy();
 
     var s = Shape(f32).sphere();
     try s.setTransform(Matrix(f32, 4).identity().scale(1.3, 1.0, 1.0).translate(0.5, 0.5, 0.0));
@@ -39,6 +38,7 @@ pub fn drawSilhouette() !void {
 
             const ray = Ray(f32).new(source, direction);
             var xs = try s.intersect(allocator, ray);
+            defer xs.deinit();
             if (hit(f32, xs)) |_| {
                 canvas.getPixelPointer(x, y).?.* = Color(f32).new(1.0, 0.0, 0.0);
             }
@@ -47,6 +47,7 @@ pub fn drawSilhouette() !void {
     }
 
     const ppm = try canvas.ppm(allocator);
+    defer allocator.free(ppm);
 
     const file = try std.fs.cwd().createFile(
         "images/silhouette.ppm",
