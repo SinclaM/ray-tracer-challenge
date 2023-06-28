@@ -8,6 +8,7 @@ const Shape = @import("../shapes/shape.zig").Shape;
 const Solid = @import("solid.zig").Solid;
 const Stripes = @import("stripes.zig").Stripes;
 const Gradient = @import("gradient.zig").Gradient;
+const RadialGradient = @import("gradient.zig").RadialGradient;
 const Rings = @import("rings.zig").Rings;
 const Checkers = @import("checkers.zig").Checkers;
 
@@ -29,6 +30,7 @@ pub fn Pattern(comptime T: type) type {
             solid: Solid(T),
             stripes: Stripes(T),
             gradient: Gradient(T),
+            radial_gradient: RadialGradient(T),
             rings: Rings(T),
             checkers: Checkers(T),
         };
@@ -55,6 +57,10 @@ pub fn Pattern(comptime T: type) type {
         /// Creates a new gradient pattern.
         pub fn gradient(a: *const Self, b: *const Self) Self {
             return Self.new(Self.Variant { .gradient = Gradient(T).new(a, b) });
+        }
+
+        pub fn radialGradient(a: *const Self, b: *const Self) Self {
+            return Self.new(Self.Variant { .radial_gradient = RadialGradient(T).new(a, b) });
         }
 
         /// Creates a new pattern of rings.

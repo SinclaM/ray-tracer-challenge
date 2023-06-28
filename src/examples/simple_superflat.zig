@@ -21,11 +21,12 @@ pub fn renderSimpleSuperflat() !void {
     floor.material.specular = 0.0;
     const solid_white = Pattern(f64).solid(Color(f64).new(1.0, 1.0, 1.0));
     const solid_black = Pattern(f64).solid(Color(f64).new(0.0, 0.0, 0.0));
-    var white_black_stripes = Pattern(f64).stripes(&solid_white, &solid_black);
+    var white_black_stripes = Pattern(f64).radialGradient(&solid_white, &solid_black);
     try white_black_stripes.setTransform(identity.scale(0.25, 0.25, 0.25).rotateY(pi / 2.0));
 
     const solid_blue = Pattern(f64).solid(Color(f64).new(0.0, 0.0, 1.0));
     var pattern = Pattern(f64).stripes(&white_black_stripes, &solid_blue);
+    try pattern.setTransform(identity.translate(-0.5, 0.0, 0.0));
     floor.material.pattern = pattern;
 
     var large = Shape(f64).sphere();

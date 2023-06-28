@@ -33,6 +33,29 @@ pub fn Gradient(comptime T: type) type {
     };
 }
 
+
+pub fn RadialGradient(comptime T: type) type {
+    return struct {
+        const Self = @This();
+
+        // a and b must live at least as long as the struct
+        a: *const Pattern(T),
+        b: *const Pattern(T),
+
+        pub fn new(a: *const Pattern(T), b: *const Pattern(T)) Self {
+            return .{ .a = a, .b = b };
+        }
+
+        pub fn patternAt(self: Self, pattern_point: Tuple(T), object_point: Tuple(T)) Color(T) {
+            const mag = @sqrt(pattern_point.x * pattern_point.x + pattern_point.z * pattern_point.z);
+            const fpart = mag - @floor(mag);
+            const a_color = self.a.patternAt(object_point);
+            const b_color = self.b.patternAt(object_point);
+            return a_color.add(b_color.sub(a_color).mul(fpart));
+        }
+    };
+}
+
 test "Gradient" {
     const white = Color(f32).new(1.0, 1.0, 1.0);
     const black = Color(f32).new(0.0, 0.0, 0.0);
@@ -51,4 +74,30 @@ test "Gradient" {
                             Color(f32).new(0.5, 0.5, 0.5));
     try testing.expectEqual(pattern.patternAt(Tuple(f32).point(0.75, 0.0, 0.0), o),
                             Color(f32).new(0.25, 0.25, 0.25));
+}
+
+test "RadialGradient" {
+    const white = Color(f32).new(1.0, 1.0, 1.0);
+    const black = Color(f32).new(0.0, 0.0, 0.0);
+    const solid_white = Pattern(f32).solid(white);
+    const solid_black = Pattern(f32).solid(black);
+    const pattern = RadialGradient(f32).new(&solid_white, &solid_black);
+
+    // placeholder
+    const o = Tuple(f32).point(0.0, 0.0, 0.0);
+
+    try testing.expectEqual(pattern.patternAt(Tuple(f32).point(0.0, 0.0, 0.0), o),
+                            white);
+    try testing.expectEqual(pattern.patternAt(Tuple(f32).point(0.25, 0.0, 0.0), o),
+                            Color(f32).new(0.75, 0.75, 0.75));
+    try testing.expectEqual(pattern.patternAt(Tuple(f32).point(0.5, 0.0, 0.0), o),
+                            Color(f32).new(0.5, 0.5, 0.5));
+    try testing.expectEqual(pattern.patternAt(Tuple(f32).point(0.75, 0.0, 0.0), o),
+                            Color(f32).new(0.25, 0.25, 0.25));
+    try testing.expectEqual(pattern.patternAt(Tuple(f32).point(0.0, 0.0, 0.25), o),
+                            Color(f32).new(0.75, 0.75, 0.75));
+    try testing.expectEqual(pattern.patternAt(Tuple(f32).point(0.0, 0.0, 0.5), o),
+                            Color(f32).new(0.5, 0.5, 0.5));
+    try testing.expect(pattern.patternAt(Tuple(f32).point(0.353553, 0.0, 0.353553), o)
+                            .approxEqual(Color(f32).new(0.5, 0.5, 0.5)));
 }
