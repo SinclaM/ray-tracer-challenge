@@ -25,7 +25,7 @@ pub fn renderSimpleSuperflat() !void {
     try white_black_stripes.setTransform(identity.scale(0.25, 0.25, 0.25).rotateY(pi / 2.0));
 
     const solid_blue = Pattern(f64).solid(Color(f64).new(0.0, 0.0, 1.0));
-    var pattern = Pattern(f64).stripes(&white_black_stripes, &solid_blue);
+    var pattern = Pattern(f64).blend(&white_black_stripes, &solid_blue);
     try pattern.setTransform(identity.translate(-0.5, 0.0, 0.0));
     floor.material.pattern = pattern;
 

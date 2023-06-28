@@ -13,6 +13,7 @@ comptime {
     _ = @import("raytracer/shapes/plane.zig");
     _ = @import("raytracer/patterns/pattern.zig");
     _ = @import("raytracer/patterns/solid.zig");
+    _ = @import("raytracer/patterns/blend.zig");
     _ = @import("raytracer/patterns/stripes.zig");
     _ = @import("raytracer/patterns/gradient.zig");
     _ = @import("raytracer/patterns/rings.zig");
