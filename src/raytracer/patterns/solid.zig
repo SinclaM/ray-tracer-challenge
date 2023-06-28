@@ -7,7 +7,7 @@ const Color = @import("../color.zig").Color;
 ///
 /// This pattern is useless on its own, but can form the
 /// base pattern for other higher-order patterns.
-pub fn SolidPattern(comptime T: type) type {
+pub fn Solid(comptime T: type) type {
     return struct {
         const Self = @This();
 
@@ -25,9 +25,9 @@ pub fn SolidPattern(comptime T: type) type {
     };
 }
 
-test "SolidPattern" {
+test "Solid" {
     const white = Color(f32).new(1.0, 1.0, 1.0);
-    const pattern = SolidPattern(f32).new(white);
+    const pattern = Solid(f32).new(white);
 
     // placeholder
     const o = Tuple(f32).point(0.0, 0.0, 0.0);

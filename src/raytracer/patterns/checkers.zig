@@ -8,7 +8,7 @@ const Pattern = @import("pattern.zig").Pattern;
 ///
 /// This is a higher-order pattern, meaning the checkered areas
 /// may themselves be complex patterns.
-pub fn CheckersPattern(comptime T: type) type {
+pub fn Checkers(comptime T: type) type {
     return struct {
         const Self = @This();
 
@@ -30,12 +30,12 @@ pub fn CheckersPattern(comptime T: type) type {
     };
 }
 
-test "CheckersPattern" {
+test "Checkers" {
     const white = Color(f32).new(1.0, 1.0, 1.0);
     const black = Color(f32).new(0.0, 0.0, 0.0);
     const solid_white = Pattern(f32).solid(white);
     const solid_black = Pattern(f32).solid(black);
-    const pattern = CheckersPattern(f32).new(&solid_white, &solid_black);
+    const pattern = Checkers(f32).new(&solid_white, &solid_black);
 
     // placeholder
     const o = Tuple(f32).point(0.0, 0.0, 0.0);

@@ -5,11 +5,11 @@ const Tuple = @import("../tuple.zig").Tuple;
 const Matrix = @import("../matrix.zig").Matrix;
 const Color = @import("../color.zig").Color;
 const Shape = @import("../shapes/shape.zig").Shape;
-const SolidPattern = @import("solid.zig").SolidPattern;
-const StripesPattern = @import("stripes.zig").StripesPattern;
-const GradientPattern = @import("gradient.zig").GradientPattern;
-const RingsPattern = @import("rings.zig").RingsPattern;
-const CheckersPattern = @import("checkers.zig").CheckersPattern;
+const Solid = @import("solid.zig").Solid;
+const Stripes = @import("stripes.zig").Stripes;
+const Gradient = @import("gradient.zig").Gradient;
+const Rings = @import("rings.zig").Rings;
+const Checkers = @import("checkers.zig").Checkers;
 
 /// A pattern to be put on a `Material`, backed by floats of type `T`.
 pub fn Pattern(comptime T: type) type {
@@ -26,11 +26,11 @@ pub fn Pattern(comptime T: type) type {
         /// used for higher-order patterns.
         const Variant = union(enum) {
             test_pattern: TestPattern(T),
-            solid: SolidPattern(T),
-            stripes: StripesPattern(T),
-            gradient: GradientPattern(T),
-            rings: RingsPattern(T),
-            checkers: CheckersPattern(T),
+            solid: Solid(T),
+            stripes: Stripes(T),
+            gradient: Gradient(T),
+            rings: Rings(T),
+            checkers: Checkers(T),
         };
 
         _transform: Matrix(T, 4) = Matrix(T, 4).identity(),
@@ -49,27 +49,27 @@ pub fn Pattern(comptime T: type) type {
 
         /// Creates a new pattern of stripes.
         pub fn stripes(a: *const Self, b: *const Self) Self {
-            return Self.new(Self.Variant { .stripes = StripesPattern(T).new(a, b) });
+            return Self.new(Self.Variant { .stripes = Stripes(T).new(a, b) });
         }
 
         /// Creates a new gradient pattern.
         pub fn gradient(a: *const Self, b: *const Self) Self {
-            return Self.new(Self.Variant { .gradient = GradientPattern(T).new(a, b) });
+            return Self.new(Self.Variant { .gradient = Gradient(T).new(a, b) });
         }
 
         /// Creates a new pattern of rings.
         pub fn rings(a: *const Self, b: *const Self) Self {
-            return Self.new(Self.Variant { .rings = RingsPattern(T).new(a, b) });
+            return Self.new(Self.Variant { .rings = Rings(T).new(a, b) });
         }
 
         /// Creates a new checkered pattern.
         pub fn checkers(a: *const Self, b: *const Self) Self {
-            return Self.new(Self.Variant { .checkers = CheckersPattern(T).new(a, b) });
+            return Self.new(Self.Variant { .checkers = Checkers(T).new(a, b) });
         }
 
         /// Creates a new pattern of just one color.
         pub fn solid(a: Color(T)) Self {
-            return Self.new(Self.Variant { .solid = SolidPattern(T).new(a) });
+            return Self.new(Self.Variant { .solid = Solid(T).new(a) });
         }
 
         /// Transforms a pattern relative to shape on which it lies.
