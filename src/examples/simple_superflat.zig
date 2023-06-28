@@ -9,6 +9,7 @@ const Shape = @import("../raytracer/shapes/shape.zig").Shape;
 const Light = @import("../raytracer/light.zig").Light;
 const World = @import("../raytracer/world.zig").World;
 const Camera = @import("../raytracer/camera.zig").Camera;
+const Pattern = @import("../raytracer/patterns/pattern.zig").Pattern;
 
 pub fn renderSimpleSuperflat() !void {
     const allocator = std.heap.c_allocator;
@@ -18,6 +19,14 @@ pub fn renderSimpleSuperflat() !void {
     var floor = Shape(f64).plane();
     floor.material.color = Color(f64).new(1, 0.9, 0.9);
     floor.material.specular = 0.0;
+    const solid_white = Pattern(f64).solid(Color(f64).new(1.0, 1.0, 1.0));
+    const solid_black = Pattern(f64).solid(Color(f64).new(0.0, 0.0, 0.0));
+    var white_black_stripes = Pattern(f64).stripes(&solid_white, &solid_black);
+    try white_black_stripes.setTransform(identity.scale(0.25, 0.25, 0.25).rotateY(pi / 2.0));
+
+    const solid_blue = Pattern(f64).solid(Color(f64).new(0.0, 0.0, 1.0));
+    var pattern = Pattern(f64).stripes(&white_black_stripes, &solid_blue);
+    floor.material.pattern = pattern;
 
     var large = Shape(f64).sphere();
     try large.setTransform(identity.translate(-0.5, 1.0, 0.5).scale(1.0, 0.5, 1.0));
@@ -50,13 +59,13 @@ pub fn renderSimpleSuperflat() !void {
     try world.objects.append(tiny);
 
     try world.lights.append(Light(f64).pointLight(
-        Tuple(f64).point(-10.0, 10.0, -10.0), Color(f64).new(0.953, 0.51, 0.208)
+        Tuple(f64).point(-10.0, 10.0, -10.0), Color(f64).new(1.0, 1.0, 1.0)
     ));
 
     var camera = Camera(f64).new(1000, 500, pi / 3.0);
     try camera.setTransform(
         Matrix(f64, 4).viewTransform(
-            Tuple(f64).point(0.0, 1.3, -5.0), Tuple(f64).point(1.0, 1.0, 0.0), Tuple(f64).vec3(0.0, 1.0, 0.0)
+            Tuple(f64).point(0.0, 1.3, -5.0), Tuple(f64).point(1.0, 0.6, 0.0), Tuple(f64).vec3(0.0, 1.0, 0.0)
         )
     );
 

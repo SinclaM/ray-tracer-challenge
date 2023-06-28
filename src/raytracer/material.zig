@@ -128,9 +128,11 @@ test "Lighting" {
 test "Lighting with pattern" {
     const white = Color(f32).new(1.0, 1.0, 1.0);
     const black = Color(f32).new(0.0, 0.0, 0.0);
+    const solid_white = Pattern(f32).solid(white);
+    const solid_black = Pattern(f32).solid(black);
 
     var m = Material(f32).new();
-    m.pattern = Pattern(f32).stripes(Color(f32).new(1.0, 1.0, 1.0), Color(f32).new(0.0, 0.0, 0.0));
+    m.pattern = Pattern(f32).stripes(&solid_white, &solid_black);
     m.ambient = 1.0;
     m.diffuse = 0.0;
     m.specular = 0.0;

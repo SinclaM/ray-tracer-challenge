@@ -5,6 +5,7 @@ const Tuple = @import("../tuple.zig").Tuple;
 const Matrix = @import("../matrix.zig").Matrix;
 const Color = @import("../color.zig").Color;
 const Shape = @import("../shapes/shape.zig").Shape;
+const SolidPattern = @import("solid.zig").SolidPattern;
 const StripesPattern = @import("stripes.zig").StripesPattern;
 const GradientPattern = @import("gradient.zig").GradientPattern;
 const RingsPattern = @import("rings.zig").RingsPattern;
@@ -16,6 +17,7 @@ pub fn Pattern(comptime T: type) type {
 
         const Variant = union(enum) {
             test_pattern: TestPattern(T),
+            solid: SolidPattern(T),
             stripes: StripesPattern(T),
             gradient: GradientPattern(T),
             rings: RingsPattern(T),
@@ -34,20 +36,24 @@ pub fn Pattern(comptime T: type) type {
             return Self.new(Self.Variant { .test_pattern = TestPattern(T).new() });
         }
 
-        pub fn stripes(a: Color(T), b: Color(T)) Self {
+        pub fn stripes(a: *const Self, b: *const Self) Self {
             return Self.new(Self.Variant { .stripes = StripesPattern(T).new(a, b) });
         }
 
-        pub fn gradient(a: Color(T), b: Color(T)) Self {
+        pub fn gradient(a: *const Self, b: *const Self) Self {
             return Self.new(Self.Variant { .gradient = GradientPattern(T).new(a, b) });
         }
 
-        pub fn rings(a: Color(T), b: Color(T)) Self {
+        pub fn rings(a: *const Self, b: *const Self) Self {
             return Self.new(Self.Variant { .rings = RingsPattern(T).new(a, b) });
         }
 
-        pub fn checkers(a: Color(T), b: Color(T)) Self {
+        pub fn checkers(a: *const Self, b: *const Self) Self {
             return Self.new(Self.Variant { .checkers = CheckersPattern(T).new(a, b) });
+        }
+
+        pub fn solid(a: Color(T)) Self {
+            return Self.new(Self.Variant { .solid = SolidPattern(T).new(a) });
         }
 
         pub fn setTransform(self: *Self, matrix: Matrix(T, 4)) !void {
@@ -55,13 +61,19 @@ pub fn Pattern(comptime T: type) type {
             self._inverse_transform = try matrix.inverse();
         }
 
-        pub fn patternAtShape(self: Self, shape: Shape(T), world_point: Tuple(T)) Color(T) {
-            const object_point = shape._inverse_transform.tupleMul(world_point);
+        pub fn patternAt(self: Self, object_point: Tuple(T)) Color(T) {
             const pattern_point = self._inverse_transform.tupleMul(object_point);
 
             switch (self.variant) {
-                inline else => |s| { return s.patternAt(pattern_point); },
+                inline else => |s| { 
+                    return s.patternAt(pattern_point, object_point);
+                },
             }
+        }
+
+        pub fn patternAtShape(self: Self, shape: Shape(T), world_point: Tuple(T)) Color(T) {
+            const object_point = shape._inverse_transform.tupleMul(world_point);
+            return self.patternAt(object_point);
         }
     };
 }
@@ -74,8 +86,9 @@ fn TestPattern(comptime T: type) type {
             return .{};
         }
 
-        fn patternAt(self: Self, pattern_point: Tuple(T)) Color(T) {
+        fn patternAt(self: Self, pattern_point: Tuple(T), object_point: Tuple(T)) Color(T) {
             _ = self;
+            _ = object_point;
             return Color(T).new(pattern_point.x, pattern_point.y, pattern_point.z);
         }
     };

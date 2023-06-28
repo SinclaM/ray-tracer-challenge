@@ -48,9 +48,11 @@ pub fn renderSimpleWorld() !void {
     middle.material.color = Color(f64).new(0.1, 1.0, 0.5);
     middle.material.diffuse = 0.7;
     middle.material.specular = 0.3;
-    var pattern = Pattern(f64).checkers(Color(f64).new(0.33, 0.4, 0.67), Color(f64).new(0.67, 0.6, 0.33));
-    try pattern.setTransform(identity.rotateZ(pi / 1.5).scale(0.25, 0.25, 0.25));
-    middle.material.pattern = pattern;
+    const p1 = Pattern(f64).solid(Color(f64).new(0.33, 0.4, 0.67));
+    const p2 = Pattern(f64).solid(Color(f64).new(0.67, 0.6, 0.33));
+    var checkers = Pattern(f64).checkers(&p1, &p2);
+    try checkers.setTransform(identity.rotateZ(pi / 1.5).scale(0.25, 0.25, 0.25));
+    middle.material.pattern = checkers;
 
     var right = Shape(f64).sphere();
     try right.setTransform(identity.scale(0.5, 0.5, 0.5).translate(1.5, 0.5, -0.5));
