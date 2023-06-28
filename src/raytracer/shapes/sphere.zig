@@ -12,6 +12,11 @@ const Intersections = shape.Intersections;
 const sortIntersections = shape.sortIntersections;
 const Shape = shape.Shape;
 
+/// A sphere object, backed by floats of type `T`.
+///
+/// All spheres are unit spheres centered at the origin in their
+/// own object space. To move them, rotate them, resize them, etc.
+/// in world space, use Shape.setTransform.
 pub fn Sphere(comptime T: type) type {
     return struct {
         const Self = @This();

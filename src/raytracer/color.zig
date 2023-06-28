@@ -1,6 +1,10 @@
 const std = @import("std");
 const testing = std.testing;
 
+/// An rgb representation of a color, backed by floats of type `T`.
+///
+/// Channels scale from 0.0 (least intense) to 1.0 (most intense),
+/// but they are not clamped to [0.0, 1.0] until being drawn to a canvas.
 pub fn Color(comptime T: type) type {
     return packed struct {
         const Self = @This();
@@ -10,34 +14,40 @@ pub fn Color(comptime T: type) type {
         g: T,
         b: T,
 
+        /// Creates a new `Color`.
         pub inline fn new(r: T, g: T, b: T) Self {
             return .{ .r = r, .g = g, .b = b };
         }
 
+        /// Tests whether two `Color`s should be considered equal.
         pub inline fn approxEqual(self: Self, other: Self) bool {
             return @fabs(self.r - other.r) < tolerance
                 and @fabs(self.g - other.g) < tolerance
                 and @fabs(self.b - other.b) < tolerance;
         }
 
+        /// Adds two `Color`s elementwise.
         pub inline fn add(self: Self, other: Self) Self {
             return .{ .r = self.r + other.r,
                       .g = self.g + other.g,
                       .b = self.b + other.b };
         }
 
+        /// Subtracts two `Color`s elementwise.
         pub inline fn sub(self: Self, other: Self) Self {
             return .{ .r = self.r - other.r,
                       .g = self.g - other.g,
                       .b = self.b - other.b };
         }
 
+        /// Multiples a `Color` by `val`.
         pub inline fn mul(self: Self, val: T) Self {
             return .{ .r = self.r * val,
                       .g = self.g * val,
                       .b = self.b * val };
         }
 
+        /// Multiples two `Color`s elementwise.
         pub inline fn elementwiseMul(self: Self, other: Self) Self {
             return .{ .r = self.r * other.r,
                       .g = self.g * other.g,
@@ -46,6 +56,8 @@ pub fn Color(comptime T: type) type {
     };
 }
 
+/// Clamps a channel to the [0, 255] range, converting
+/// from float to u8.
 pub fn clamp(comptime T: type, channel: T) u8 {
     var tmp = @floatToInt(i128, @round(channel * 255));
 

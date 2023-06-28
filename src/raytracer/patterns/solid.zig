@@ -3,6 +3,10 @@ const testing = std.testing;
 const Tuple = @import("../tuple.zig").Tuple;
 const Color = @import("../color.zig").Color;
 
+/// A pattern of just one color.
+///
+/// This pattern is useless on its own, but can form the
+/// base pattern for other higher-order patterns.
 pub fn SolidPattern(comptime T: type) type {
     return struct {
         const Self = @This();

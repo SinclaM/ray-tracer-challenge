@@ -10,11 +10,6 @@ const Ray = @import("../ray.zig").Ray;
 const Sphere = @import("sphere.zig").Sphere;
 const Plane = @import("plane.zig").Plane;
 
-const global = struct {
-    var id: usize = 0;
-};
-
-
 pub fn Intersection(comptime T: type) type {
     return struct {
         const Self = @This();
@@ -68,10 +63,19 @@ pub fn hit(comptime T: type, intersections: Intersections(T)) ?Intersection(T) {
     return min;
 }
 
+/// A `Shape` is an object in a world, backed by floats of type `T`.
 pub fn Shape(comptime T: type) type {
     return struct {
         const Self = @This();
 
+        /// The various concrete shapes. Structs that can be placed in
+        /// this tagged union must provide the following functions:
+        /// 
+        /// fn localIntersect(self: Self, allocator: Allocator, super: Shape(T), ray: Ray(T)) !Intersections(T);
+        /// fn localNormalAt(self: Self, super: Shape(T), point: Tuple(T)) Tuple(T);
+        ///
+        /// `localIntersect` should compute the intersections with the shape for the given `ray`.
+        /// `localNormalAt` should return the surface normal vector at the point in object space `point`.
         const Variant = union(enum) {
             test_shape: TestShape(T),
             sphere: Sphere(T),
@@ -86,31 +90,43 @@ pub fn Shape(comptime T: type) type {
         _saved_ray: ?Ray(T) = null,
         variant: Variant,
 
+        /// Creates a new `Shape`.
         fn new(variant: Variant) Self {
-            const save = global.id;
-            global.id += 1;
+            const static = struct {
+                var id: usize = 0;
+            };
+
+            const save = static.id;
+            static.id += 1;
 
             return .{ .id = save, .variant = variant };
         }
 
-        pub fn testShape() Self {
+        /// Creates a new test shape.
+        fn testShape() Self {
             return Self.new(Self.Variant { .test_shape = TestShape(T).new() });
         }
 
+        /// Creates a new sphere.
         pub fn sphere() Self {
             return Self.new(Self.Variant { .sphere = Sphere(T) {} });
         }
 
+        /// Creates a new plane.
         pub fn plane() Self {
             return Self.new(Self.Variant { .plane = Plane(T) {} });
         }
 
+        /// Sets the shape's transformation matrix to `matrix`.
+        ///
+        /// Fails if `matrix` is not invertible.
         pub fn setTransform(self: *Self, matrix: Matrix(T, 4)) !void {
             self._transform = matrix;
             self._inverse_transform = try matrix.inverse();
             self._inverse_transform_transpose = self._inverse_transform.transpose();
         }
 
+        /// Finds the intersections of `ray` with `self`.
         pub fn intersect(self: *Self, allocator: Allocator, ray: Ray(T)) !Intersections(T) {
             self._saved_ray = ray.transform(self._inverse_transform);
             switch (self.variant) {
@@ -118,6 +134,7 @@ pub fn Shape(comptime T: type) type {
             }
         }
 
+        /// Finds the surface normal vector at the `point` in world space.
         pub fn normalAt(self: Self, point: Tuple(T)) Tuple(T) {
             const local_point = self._inverse_transform.tupleMul(point);
             // Be very careful with this switch statement. If you try to assign to
@@ -137,6 +154,7 @@ pub fn Shape(comptime T: type) type {
     };
 }
 
+/// A simple shape for testing.
 fn TestShape(comptime T: type) type {
     return struct {
         const Self = @This();

@@ -6,6 +6,8 @@ const Allocator = std.mem.Allocator;
 const Color = @import("color.zig").Color;
 const clamp = @import("color.zig").clamp;
 
+/// A container for pixels which can be written in different
+/// image formats (currently only PPM).
 pub fn Canvas(comptime T: type) type {
     return struct {
         const Self = @This();
@@ -15,6 +17,8 @@ pub fn Canvas(comptime T: type) type {
         pixels: []Color(T),
         allocator: Allocator,
 
+        /// Creates a new `Canvas` with dimensions `width` and `height`.
+        /// Destroy with `destroy`.
         pub fn new(allocator: Allocator, width: usize, height: usize) !Self {
             var pixels = try allocator.alloc(Color(T), width * height);
             for (pixels) |*pixel| {
@@ -24,10 +28,15 @@ pub fn Canvas(comptime T: type) type {
             return .{ .width = width, .height = height, .pixels = pixels, .allocator = allocator };
         }
 
+        /// Frees the memory associated with the Canvas' pixels.
         pub fn destroy(self: Self) void {
             self.allocator.free(self.pixels);
         }
 
+        /// Get's a pointer to the pixel at `x`, `y`. Returns `null` if
+        /// `x`, `y` is out-of-bounds.
+        ///
+        /// Caller borrows the referent pixel mutably.
         pub fn getPixelPointer(self: *Self, x: usize, y: usize) ?*Color(T) {
             if (x >= self.width or y >= self.width) {
                 return null;
@@ -35,6 +44,9 @@ pub fn Canvas(comptime T: type) type {
             return &self.pixels[y * self.width + x];
         }
 
+        /// Dumps a `Canvas` in the PPM image format.
+        ///
+        /// Destroy with `allocator.free`.
         pub fn ppm(self: Self, allocator: Allocator) ![]u8 {
             var str = try std.ArrayList(u8).initCapacity(allocator, self.width * self.height * 12);
             var scratch: [32]u8 = undefined;

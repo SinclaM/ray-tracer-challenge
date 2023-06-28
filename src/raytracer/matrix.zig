@@ -6,6 +6,7 @@ const Tuple = @import("tuple.zig").Tuple;
 
 pub const MatrixError = error { NotInvertible };
 
+/// A square matrix of size `N`, backed by floats of type `T`.
 pub fn Matrix(comptime T: type, comptime N: usize) type {
     return struct {
         const Self = @This();
@@ -13,15 +14,18 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
 
         data: [N][N]T,
 
+        /// Creates a `Matrix` from an `N` x `N` buffer.
         pub fn new(data: [N][N]T) Self {
             return .{ .data = data };
         }
 
+        /// Creates an uninitialized `Matrix`.
         pub fn newUninit() Self {
             const data: [N][N]T = undefined;
             return .{ .data = data };
         }
 
+        /// Creates the zero matrix of size `N`.
         pub fn zero() Self {
             var data: [N][N]T = undefined;
             for (data) |*row| {
@@ -32,6 +36,7 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
             return .{ .data = data };
         }
 
+        /// Creates the `N` x `N` identity matrix.
         pub fn identity() Self {
             var matrix = Self.zero();
 
@@ -44,6 +49,10 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
             return matrix;
         }
 
+        /// Computes the transformation needed move a world as if the camera
+        /// is positioned at `from`, facing `to`, with `up` as the upwards direction.
+        ///
+        /// Assumes `from` is a point, `to` is a point, and `up` is a vector.
         pub fn viewTransform(from: Tuple(T), to: Tuple(T), up: Tuple(T)) Self {
             const forward = to.sub(from).normalized();
             const left = forward.cross(up.normalized());
@@ -59,6 +68,7 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
             return orientation.mul(Matrix(T, 4).identity().translate(-from.x, -from.y, -from.z));
         }
 
+        /// Tests whether two matrices should be considered equal.
         pub fn approxEqual(self: Self, other: Self) bool {
             var row: usize = 0;
             while (row < N) {
@@ -74,27 +84,28 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
             return true;
         }
 
+        /// Multiplies the matrices `self` and `other` (not elementwise).
         pub fn mul(self: Self, other: Self) Self {
             var result = Self.newUninit();
             var row: usize = 0;
-            while (row < N) {
+            while (row < N) : (row += 1) {
                 var col: usize = 0;
-                while (col < N) {
+                while (col < N) : (col += 1) {
                     var i: usize = 0;
                     var sum: T = 0;
-                    while (i < N) {
+                    while (i < N) : (i += 1) {
                         sum += self.data[row][i] * other.data[i][col];
-                        i += 1;
                     }
                     result.data[row][col] = sum;
-                    col += 1;
                 }
-                row += 1;
             }
 
             return result;
         }
 
+        /// Multiplies `self` with `tup`.
+        ///
+        /// Assumes `tup` is a vector.
         pub fn tupleMul(self: Self, tup: Tuple(T)) Tuple(T) {
             var result = Tuple(T).new(0.0, 0.0, 0.0, 0.0);
 
@@ -113,6 +124,7 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
             return result;
         }
 
+        /// Transposes `self`.
         pub fn transpose(self: Self) Self {
             var transposed = Self.newUninit();
 
@@ -129,6 +141,7 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
             return transposed;
         }
 
+        /// Finds the submatrix of `self` excluding `row` and `col`.
         pub fn submatrix(self: Self, row: usize, col: usize) Matrix(T, N - 1) {
             var sub = Matrix(T, N - 1).newUninit();
 
@@ -147,10 +160,12 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
             return sub;
         }
 
+        /// Computes the minor of `self` at `row`, `col`.
         pub fn minor(self: Self, row: usize, col: usize) T {
             return self.submatrix(row, col).det();
         }
 
+        /// Computes the cofactor of `self` at `row`, `col`.
         pub fn cofactor(self: Self, row: usize, col: usize) T {
             if ((row + col) % 2 == 0) {
                 return self.minor(row, col);
@@ -159,6 +174,7 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
             }
         }
 
+        /// Computes the determinant.
         pub fn det(self: Self) T {
             var det_: T = 0.0;
 
@@ -174,6 +190,7 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
             return det_;
         }
 
+        /// Finds the inverse of `self`. Fails if `self` is not invertible.
         pub fn inverse(self: Self) !Self {
             const det_ = self.det();
             if (@fabs(det_) < Self.tolerance) {
@@ -193,6 +210,9 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
             return inverse_;
         }
 
+        /// Produces a transformation that will translate vectors by
+        /// `x`, `y`, and `z` in each respective direction after the
+        /// transformation applied by `self`.
         pub fn translate(self: Self, x: T, y: T, z: T) Self {
             const translation = Matrix(T, 4).new([4][4]T{
                 [_]T{ 1.0, 0.0, 0.0, x },
@@ -204,6 +224,9 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
             return translation.mul(self);
         }
 
+        /// Produces a transformation that will scale vectors by
+        /// `x`, `y`, and `z` in each respective direction after the
+        /// transformation applied by `self`.
         pub fn scale(self: Self, x: T, y: T, z: T) Self {
             const scaling = Matrix(T, 4).new([4][4]T{
                 [_]T{  x , 0.0, 0.0, 0.0 },
@@ -215,6 +238,8 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
             return scaling.mul(self);
         }
 
+        /// Produces a transformation that will rotate vectors by `angle`
+        /// about the x-axis after the transformation applied by `self`.
         pub fn rotateX(self: Self, angle: T) Self {
             const rotation = Matrix(T, 4).new([4][4]T{
                 [_]T{ 1.0,    0.0     ,     0.0     , 0.0 },
@@ -226,6 +251,8 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
             return rotation.mul(self);
         }
 
+        /// Produces a transformation that will rotate vectors by `angle`
+        /// about the y-axis after the transformation applied by `self`.
         pub fn rotateY(self: Self, angle: T) Self {
             const rotation = Matrix(T, 4).new([4][4]T{
                 [_]T{ @cos(angle) , 0.0, @sin(angle), 0.0 },
@@ -237,6 +264,8 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
             return rotation.mul(self);
         }
 
+        /// Produces a transformation that will rotate vectors by `angle`
+        /// about the z-axis after the transformation applied by `self`.
         pub fn rotateZ(self: Self, angle: T) Self {
             const rotation = Matrix(T, 4).new([4][4]T{
                 [_]T{@cos(angle), -@sin(angle), 0.0, 0.0 },
@@ -257,6 +286,12 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
             zy: T = 0.0,
         };
 
+        /// Produces a transformation that will shear vectors the values
+        /// given in `args` after the transformation applied by `self`.
+        ///
+        /// If `args == .{ .xy = 3.0, .zx = -1.0 }`, for example, the shear
+        /// will add `3.0` to x for each unit of y and `-1.0` to z for each
+        /// unit of x.
         pub fn shear(self: Self, args: ShearArgs) Self {
             const shearing = Matrix(T, 4).new([4][4]T{
                 [_]T{ 1.0    , args.xy, args.xz, 0.0 },

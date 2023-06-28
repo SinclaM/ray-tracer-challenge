@@ -10,6 +10,8 @@ const World = @import("world.zig").World;
 const Canvas = @import("canvas.zig").Canvas;
 const Color = @import("color.zig").Color;
 
+/// A camera capable of rendering a world to a `Canvas`, backed
+/// by floats of type `T`.
 pub fn Camera(comptime T: type) type {
     return struct {
         const Self = @This();
@@ -23,6 +25,9 @@ pub fn Camera(comptime T: type) type {
         _transform: Matrix(T, 4) = Matrix(T, 4).identity(),
         _inverse_transform: Matrix(T, 4) = Matrix(T, 4).identity(),
 
+        /// Creates a new `Camera` which will create an image
+        /// with horizontal size `hsize`, vertical size `vsize`,
+        /// and the given `fov`.
         pub fn new(hsize: usize, vsize: usize, fov: T) Self {
             const half_view = @tan(fov / 2.0);
             const aspect = @intToFloat(T, hsize) / @intToFloat(T, vsize);
@@ -44,11 +49,16 @@ pub fn Camera(comptime T: type) type {
             };
         }
 
+        /// Sets the camera's view transformation. `matrix` is usually
+        /// computed with `Matrix.viewTransform`.
+        ///
+        /// Fails if `matrix` is not invertible.
         pub fn setTransform(self: *Self, matrix: Matrix(T, 4)) !void {
             self._transform = matrix;
             self._inverse_transform = try matrix.inverse();
         }
 
+        /// Creates the ray needed to render the pixel at `x`, `y`.
         pub fn rayForPixel(self: Self, x: usize, y: usize) Ray(T) {
             const xoffset = (@intToFloat(T, x) + 0.5) * self.pixel_size;
             const yoffset = (@intToFloat(T, y) + 0.5) * self.pixel_size;
@@ -63,6 +73,8 @@ pub fn Camera(comptime T: type) type {
             return Ray(T).new(origin, direction);
         }
 
+        /// Renders the `world` to a new `Canvas`.
+        /// Destroy the canvas with `Canvas.destroy`.
         pub fn render(self: Self, allocator: Allocator, world: World(T)) !Canvas(T) {
             var image = try Canvas(T).new(allocator, self.hsize, self.vsize);
             var x: usize = 0;

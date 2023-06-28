@@ -4,6 +4,14 @@ const Tuple = @import("../tuple.zig").Tuple;
 const Color = @import("../color.zig").Color;
 const Pattern = @import("pattern.zig").Pattern;
 
+/// A pattern of concentric rings, backed by floats of type `T`.
+///
+/// This is a higher-order pattern, meaning the rings
+/// themselves may contain complex patterns.
+///
+/// The rings are always centered on the origin and independent
+/// of y in pattern space. To transform the pattern, use
+/// `Pattern.setTransform`.
 pub fn RingsPattern(comptime T: type) type {
     return struct {
         const Self = @This();

@@ -4,6 +4,10 @@ const Tuple = @import("../tuple.zig").Tuple;
 const Color = @import("../color.zig").Color;
 const Pattern = @import("pattern.zig").Pattern;
 
+/// A 3D checker-board pattern, backed by floats of type `T`.
+///
+/// This is a higher-order pattern, meaning the checkered areas
+/// may themselves be complex patterns.
 pub fn CheckersPattern(comptime T: type) type {
     return struct {
         const Self = @This();

@@ -4,6 +4,14 @@ const Tuple = @import("../tuple.zig").Tuple;
 const Color = @import("../color.zig").Color;
 const Pattern = @import("pattern.zig").Pattern;
 
+/// A pattern of stripes, backed by floats of type `T`.
+///
+/// This is a higher-order pattern, meaning the stripes
+/// themselves may contain complex patterns.
+///
+/// The stripes are only governed by the x coordinate in
+/// pattern space. To transform the pattern, use
+/// `Pattern.setTransform`.
 pub fn StripesPattern(comptime T: type) type {
     return struct {
         const Self = @This();

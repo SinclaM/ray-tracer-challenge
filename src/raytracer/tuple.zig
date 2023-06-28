@@ -1,6 +1,13 @@
 const std = @import("std");
 const testing = std.testing;
 
+/// A 4-component xyzw representation of 3D points and vectors, backed
+/// by floats of type `T`.
+/// `tuple.w == 0` => `tuple` is a vector.
+/// `tuple.w == 1` => `tuple` is a point.
+///
+/// Vector algebra in this ray tracer follows a left-handed cooridinate
+/// system (sorry).
 pub fn Tuple(comptime T: type) type {
     return packed struct {
         const Self = @This();
@@ -11,22 +18,27 @@ pub fn Tuple(comptime T: type) type {
         z: T,
         w: T,
 
+        /// Creates a `Tuple` from all 4 components. Prefer creation `point` and `vec3`.
         pub inline fn new(x: T, y: T, z: T, w: T) Self {
             return .{ .x = x, .y = y, .z = z, .w = w };
         }
 
+        /// Creates a point.
         pub inline fn point(x: T, y: T, z: T) Self {
             return .{ .x = x, .y = y, .z = z, .w = 1.0 };
         }
 
+        /// Creates a vector.
         pub inline fn vec3(x: T, y: T, z: T) Self {
             return .{ .x = x, .y = y, .z = z, .w = 0.0 };
         }
 
+        /// Creates a `Tuple` from a 4 element array.
         pub inline fn fromBuf(buf: [4]T) Self {
             return .{ .x = buf[0], .y = buf[1], .z = buf[2], .w = buf[3] };
         }
 
+        /// Tests if two tuples should be considered equal.
         pub inline fn approxEqual(self: Self, other: Self) bool {
             return @fabs(self.x - other.x) < tolerance
                 and @fabs(self.y - other.y) < tolerance
@@ -34,6 +46,11 @@ pub fn Tuple(comptime T: type) type {
                 and @fabs(self.w - other.w) < tolerance;
         }
 
+        /// Adds `Tuple`s elementwise.
+        ///
+        /// Assumes either:
+        ///     1.) `self` is a vector, and `other` is a vector.
+        ///     2.) Exactly one of `self` and `other` is a vector.
         pub inline fn add(self: Self, other: Self) Self {
             return .{ .x = self.x + other.x,
                       .y = self.y + other.y,
@@ -41,6 +58,7 @@ pub fn Tuple(comptime T: type) type {
                       .w = self.w + other.w };
         }
 
+        /// Subtracts `Tuple`s elementwise.
         pub inline fn sub(self: Self, other: Self) Self {
             return .{ .x = self.x - other.x,
                       .y = self.y - other.y,
@@ -48,6 +66,9 @@ pub fn Tuple(comptime T: type) type {
                       .w = self.w - other.w };
         }
 
+        /// Multiplies a `Tuple` by -1.
+        ///
+        /// Assumes `self` is a vector.
         pub inline fn negate(self: Self) Self {
             return .{ .x = - self.x,
                       .y = - self.y,
@@ -55,6 +76,9 @@ pub fn Tuple(comptime T: type) type {
                       .w = - self.w };
         }
 
+        /// Multiplies a `Tuple` by a `val` elementwise.
+        ///
+        /// Assumes `self` is a vector.
         pub inline fn mul(self: Self, val: T) Self {
             return .{ .x = self.x * val,
                       .y = self.y * val,
@@ -62,6 +86,9 @@ pub fn Tuple(comptime T: type) type {
                       .w = self.w * val };
         }
 
+        /// Divides a `Tuple` by a `val` elementwise.
+        ///
+        /// Assumes `self` is a vector.
         pub inline fn div(self: Self, val: T) Self {
             return .{ .x = self.x / val,
                       .y = self.y / val,
@@ -69,18 +96,30 @@ pub fn Tuple(comptime T: type) type {
                       .w = self.w / val };
         }
 
+        /// Computes the magninute of a `Tuple`.
+        ///
+        /// Assumes `self` is a vector.
         pub inline fn magnitude(self: Self) T {
             return @sqrt(self.x * self.x + self.y * self.y + self.z * self.z + self.w * self.w);
         }
 
+        /// Normalized a `Tuple`.
+        ///
+        /// Assumes `self` is a vector.
         pub inline fn normalized(self: Self) Self {
             return self.div(self.magnitude());
         }
 
+        /// Computes the dot product.
+        ///
+        /// Assumes both `self` and `other` are vectors.
         pub inline fn dot(self: Self, other: Self) T {
             return self.x * other.x + self.y * other.y + self.z * other.z + self.w * other.w;
         }
 
+        /// Computes the (left-handed) cross product.
+        ///
+        /// Assumes both `self` and `other` are vectors.
         pub inline fn cross(self: Self, other: Self) Self {
             return Self.vec3(
                 self.y * other.z - self.z * other.y,
@@ -89,6 +128,9 @@ pub fn Tuple(comptime T: type) type {
             );
         }
 
+        /// Reflects a `Tuple` across `normal`.
+        ///
+        /// Assumes `self` and `normal` are vectors.
         pub inline fn reflect(self: Self, normal: Self) Self {
             return self.sub(normal.mul(2.0 * self.dot(normal)));
         }

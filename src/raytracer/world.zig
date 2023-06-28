@@ -14,6 +14,8 @@ const sortIntersections = @import("shapes/shape.zig").sortIntersections;
 const hit = @import("shapes/shape.zig").hit;
 const Shape = @import("shapes/shape.zig").Shape;
 
+/// A `World` is a collection of `objects` and `lights`, backed
+/// by floats of type `T`.
 pub fn World(comptime T: type) type {
     return struct {
         const Self = @This();
@@ -21,6 +23,9 @@ pub fn World(comptime T: type) type {
         objects: ArrayList(Shape(T)),
         lights: ArrayList(Light(T)),
 
+        /// Creates an empty world.
+        ///
+        /// Destroy with `destroy`.
         pub fn new(allocator: Allocator) Self {
             return .{ 
                 .objects = ArrayList(Shape(T)).init(allocator),
@@ -28,6 +33,9 @@ pub fn World(comptime T: type) type {
             };
         }
 
+        /// Creates the default world.
+        ///
+        /// Destroy with `destroy`.
         pub fn default(allocator: Allocator) !Self {
             var world = Self.new(allocator);
 
@@ -52,11 +60,13 @@ pub fn World(comptime T: type) type {
             return world;
         }
 
+        /// Frees the memory associated with `self`.
         pub fn destroy(self: Self) void {
             self.objects.deinit();
             self.lights.deinit();
         }
         
+        /// Finds all the intersections of `ray` with objects in `self`.
         pub fn intersect(self: Self, allocator: Allocator, ray: Ray(T)) !Intersections(T) {
             var all = Intersections(T).init(allocator);
 
@@ -71,6 +81,7 @@ pub fn World(comptime T: type) type {
             return all;
         }
 
+        /// Computes the `Color` for the information in `comps` considering shadows.
         pub fn shadeHit(self: Self, allocator: Allocator, comps: PreComputations(T)) !Color(T) {
             var color = Color(T).new(0.0, 0.0, 0.0);
 
@@ -84,6 +95,7 @@ pub fn World(comptime T: type) type {
             return color;
         }
 
+        /// Determines the `Color` produced by intersecting `ray` with `self`.
         pub fn colorAt(self: Self, allocator: Allocator, ray: Ray(T)) !Color(T) {
             const xs = try self.intersect(allocator, ray);
             defer xs.deinit();
@@ -96,6 +108,9 @@ pub fn World(comptime T: type) type {
             }
         }
 
+        /// Tests if `point` is shadowed, when considering the light source `light`.
+        ///
+        /// Assumes `point` is a point.
         pub fn isShadowed(self: Self, allocator: Allocator, point: Tuple(T), light: Light(T)) !bool {
             const direction = light.position.sub(point);
             const distance = direction.magnitude();
@@ -110,6 +125,8 @@ pub fn World(comptime T: type) type {
     };
 }
 
+/// A `PreComputations` object packages some useful data
+/// for reuse in shading and lighting computations.
 pub fn PreComputations(comptime T: type) type {
     return struct {
         const Self = @This();
@@ -122,6 +139,7 @@ pub fn PreComputations(comptime T: type) type {
         normal: Tuple(T),
         inside: bool,
 
+        /// Creates a new `PreComputations`.
         pub fn new(intersection: Intersection(T), ray: Ray(T)) Self {
             const point = ray.position(intersection.t);
             const eyev = ray.direction.negate();

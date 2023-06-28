@@ -4,6 +4,14 @@ const Tuple = @import("../tuple.zig").Tuple;
 const Color = @import("../color.zig").Color;
 const Pattern = @import("pattern.zig").Pattern;
 
+/// A gradient pattern, backed by floats of type `T`.
+///
+/// This is a higher-order pattern, meaning the gradient
+/// itself may transition between two complex patterns.
+///
+/// The gradient transition is governed only by the x
+/// coordinate in pattern space. To transform the pattern, use
+/// `Pattern.setTransform`.
 pub fn GradientPattern(comptime T: type) type {
     return struct {
         const Self = @This();

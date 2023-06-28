@@ -8,6 +8,9 @@ const Light = @import("light.zig").Light;
 const Shape = @import("shapes/shape.zig").Shape;
 const Pattern = @import("patterns/pattern.zig").Pattern;
 
+/// A material for an object, backed by floats of type `T`.
+/// Different materials behave differently under lighting,
+/// and may have different patterns.
 pub fn Material(comptime T: type) type {
     return struct {
         const Self = @This();
@@ -19,10 +22,19 @@ pub fn Material(comptime T: type) type {
         shininess: T = 200.0,
         pattern: ?Pattern(T) = null,
 
+        /// Creates the default material.
         pub fn new() Self {
             return .{};
         }
 
+        /// Determines what color should appear for the material `self`,
+        /// when lit by `light`, on the shape `object`, at `point`, with
+        /// the vector `point_to_eye` directed toward the camera, with
+        /// `normal` as the surface normal, and whether the position is
+        /// `in_shadow`.
+        ///
+        /// Assumes `point` is a point, `point_to_eye` is a vector, and
+        /// `normal` is a vector.
         pub fn lighting(
             self: Self,
             light: Light(T),

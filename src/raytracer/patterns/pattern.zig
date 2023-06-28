@@ -11,10 +11,19 @@ const GradientPattern = @import("gradient.zig").GradientPattern;
 const RingsPattern = @import("rings.zig").RingsPattern;
 const CheckersPattern = @import("checkers.zig").CheckersPattern;
 
+/// A pattern to be put on a `Material`, backed by floats of type `T`.
 pub fn Pattern(comptime T: type) type {
     return struct {
         const Self = @This();
 
+        /// The various concrete patterns. Structs that can be placed in
+        /// this tagged union must provide the following function:
+        ///
+        /// fn patternAt(self: Self, pattern_point: Tuple(T), object_point: Tuple(T)) Color(T);
+        ///
+        /// `patternAt` is responsible for returning the pattern's color at
+        /// the point `pattern_point` in pattern space. `object_point` may be
+        /// used for higher-order patterns.
         const Variant = union(enum) {
             test_pattern: TestPattern(T),
             solid: SolidPattern(T),
@@ -28,39 +37,50 @@ pub fn Pattern(comptime T: type) type {
         _inverse_transform: Matrix(T, 4) = Matrix(T, 4).identity(),
         variant: Variant,
 
+        /// Creates a new pattern.
         fn new(variant: Variant) Self {
             return .{ .variant = variant };
         }
 
-        pub fn testPattern() Self {
+        /// Creates a new test pattern.
+        fn testPattern() Self {
             return Self.new(Self.Variant { .test_pattern = TestPattern(T).new() });
         }
 
+        /// Creates a new pattern of stripes.
         pub fn stripes(a: *const Self, b: *const Self) Self {
             return Self.new(Self.Variant { .stripes = StripesPattern(T).new(a, b) });
         }
 
+        /// Creates a new gradient pattern.
         pub fn gradient(a: *const Self, b: *const Self) Self {
             return Self.new(Self.Variant { .gradient = GradientPattern(T).new(a, b) });
         }
 
+        /// Creates a new pattern of rings.
         pub fn rings(a: *const Self, b: *const Self) Self {
             return Self.new(Self.Variant { .rings = RingsPattern(T).new(a, b) });
         }
 
+        /// Creates a new checkered pattern.
         pub fn checkers(a: *const Self, b: *const Self) Self {
             return Self.new(Self.Variant { .checkers = CheckersPattern(T).new(a, b) });
         }
 
+        /// Creates a new pattern of just one color.
         pub fn solid(a: Color(T)) Self {
             return Self.new(Self.Variant { .solid = SolidPattern(T).new(a) });
         }
 
+        /// Transforms a pattern relative to shape on which it lies.
         pub fn setTransform(self: *Self, matrix: Matrix(T, 4)) !void {
             self._transform = matrix;
             self._inverse_transform = try matrix.inverse();
         }
 
+        /// Determines the pattern's color at the point `object_point` in object space.
+        ///
+        /// Assumes `object_point` is a point.
         pub fn patternAt(self: Self, object_point: Tuple(T)) Color(T) {
             const pattern_point = self._inverse_transform.tupleMul(object_point);
 
@@ -71,6 +91,9 @@ pub fn Pattern(comptime T: type) type {
             }
         }
 
+        /// Determines the pattern's color at the point `world_point` in world space.
+        ///
+        /// Assumes `world_point` is a point.
         pub fn patternAtShape(self: Self, shape: Shape(T), world_point: Tuple(T)) Color(T) {
             const object_point = shape._inverse_transform.tupleMul(world_point);
             return self.patternAt(object_point);
@@ -78,6 +101,7 @@ pub fn Pattern(comptime T: type) type {
     };
 }
 
+/// A simple pattern for testing.
 fn TestPattern(comptime T: type) type {
     return struct {
         const Self = @This();
