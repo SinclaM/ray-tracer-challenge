@@ -19,32 +19,55 @@ pub fn renderSimpleWorld() !void {
     var floor = Shape(f64).plane();
     floor.material.color = Color(f64).new(1, 0.9, 0.9);
     floor.material.specular = 0.0;
+    floor.material.reflective = 0.5;
     const solid_white = Pattern(f64).solid(Color(f64).new(1.0, 1.0, 1.0));
     const solid_black = Pattern(f64).solid(Color(f64).new(0.0, 0.0, 0.0));
     floor.material.pattern = Pattern(f64).checkers(&solid_white, &solid_black);
     try floor.material.pattern.?.setTransform(identity.scale(0.1, 0.1, 0.1));
 
-    var left_wall = Shape(f64).sphere();
+    var left_wall = Shape(f64).plane();
     try left_wall.setTransform(
         identity
-            .scale(10.0, 0.01, 10.0)
             .rotateX(pi / 2.0)
             .rotateY(-pi / 4.0)
             .translate(0.0, 0.0, 5.0)
     );
     left_wall.material.color = Color(f64).new(0.9, 1.0, 0.9);
     left_wall.material.specular = 0.0;
+    const solid_light_gray = Pattern(f64).solid(Color(f64).new(0.8, 0.8, 0.8));
+    const solid_dark_gray = Pattern(f64).solid(Color(f64).new(0.2, 0.2, 0.2));
+    var gray_stripes = Pattern(f64).stripes(&solid_light_gray, &solid_dark_gray);
+    left_wall.material.pattern = gray_stripes;
+    try left_wall.material.pattern.?.setTransform(
+        Matrix(f64, 4).identity().rotateY(pi / 2.0).scale(0.25, 0.25, 0.25)
+    );
 
-    var right_wall = Shape(f64).sphere();
+    var right_wall = Shape(f64).plane();
     try right_wall.setTransform(
         identity
-            .scale(10.0, 0.01, 10.0)
             .rotateX(pi / 2.0)
             .rotateY(pi / 4.0)
             .translate(0.0, 0.0, 5.0)
     );
     right_wall.material.color = Color(f64).new(0.9, 0.9, 1.0);
     right_wall.material.specular = 0.0;
+    right_wall.material.pattern = gray_stripes;
+    try right_wall.material.pattern.?.setTransform(
+        Matrix(f64, 4).identity().translate(1.0, 0.0, 0.0).rotateY(pi / 2.0).scale(0.25, 0.25, 0.25)
+    );
+
+    var back_wall = Shape(f64).plane();
+    try back_wall.setTransform(
+        identity
+            .rotateX(pi / 2.0)
+            .translate(0.0, 0.0, -15.0)
+    );
+    back_wall.material.color = Color(f64).new(0.9, 0.9, 1.0);
+    back_wall.material.specular = 0.0;
+    back_wall.material.pattern = gray_stripes;
+    try back_wall.material.pattern.?.setTransform(
+        Matrix(f64, 4).identity().translate(1.0, 0.0, 0.0).rotateY(pi / 2.0).scale(0.25, 0.25, 0.25)
+    );
 
     var middle = Shape(f64).sphere();
     try middle.setTransform(identity.translate(-0.5, 1.0, 0.5));
@@ -70,9 +93,10 @@ pub fn renderSimpleWorld() !void {
 
     var left = Shape(f64).sphere();
     try left.setTransform(identity.scale(0.33, 0.33, 0.33).translate(-1.5, 0.33, -0.75));
-    left.material.color = Color(f64).new(1.0, 0.8, 0.1);
+    left.material.color = Color(f64).new(1.0, 1.0, 1.0);
     left.material.diffuse = 0.7;
     left.material.specular = 0.3;
+    left.material.reflective = 0.7;
 
 
     var world = World(f64).new(allocator);
@@ -80,6 +104,7 @@ pub fn renderSimpleWorld() !void {
     try world.objects.append(floor);
     try world.objects.append(left_wall);
     try world.objects.append(right_wall);
+    try world.objects.append(back_wall);
     try world.objects.append(middle);
     try world.objects.append(right);
     try world.objects.append(left);
@@ -91,7 +116,7 @@ pub fn renderSimpleWorld() !void {
         Tuple(f64).point(10.0, 10.0, -10.0), Color(f64).new(0.5, 0.5, 0.5)
     ));
 
-    var camera = Camera(f64).new(4000, 2000, pi / 3.0);
+    var camera = Camera(f64).new(1000, 500, pi / 3.0);
     try camera.setTransform(
         Matrix(f64, 4).viewTransform(
             Tuple(f64).point(0.0, 1.5, -5.0), Tuple(f64).point(0.0, 1.0, 0.0), Tuple(f64).vec3(0.0, 1.0, 0.0)
