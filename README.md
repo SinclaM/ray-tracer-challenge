@@ -14,7 +14,7 @@ This project is a simple [Zig](https://ziglang.org/) implementation of the ray t
 - [x] Chapter 7 - Making a Scene
 - [x] Chapter 8 - Shadows
 - [x] Chapter 9 - Planes
-- [ ] Chapter 10 - Patterns
+- [x] Chapter 10 - Patterns
 - [ ] Chapter 11 - Reflection and Refraction
 - [ ] Chapter 12 - Cubes
 - [ ] Chapter 13 - Cylinders
@@ -30,7 +30,7 @@ This project is a simple [Zig](https://ziglang.org/) implementation of the ray t
 
 <br/><br/>
 
-<img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/99bb3eb1-f128-4e54-a24c-9727ca7659fc width=800> 
+<img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/a7138983-505f-4baf-a9b5-09acf5c2ca80) width=800> 
 
 <br/><br/>
 
