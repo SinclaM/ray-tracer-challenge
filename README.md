@@ -30,7 +30,7 @@ This project is a simple [Zig](https://ziglang.org/) implementation of the ray t
 
 <br/><br/>
 
-<img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/a7138983-505f-4baf-a9b5-09acf5c2ca80) width=800> 
+<img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/445e20cc-334a-460f-8073-6193b0d86661) width=800> 
 
 <br/><br/>
 
