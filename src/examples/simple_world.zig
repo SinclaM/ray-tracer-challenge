@@ -16,10 +16,13 @@ pub fn renderSimpleWorld() !void {
 
     const identity = Matrix(f64, 4).identity();
 
-    var floor = Shape(f64).sphere();
-    try floor.setTransform(identity.scale(10.0, 0.01, 10.0));
+    var floor = Shape(f64).plane();
     floor.material.color = Color(f64).new(1, 0.9, 0.9);
     floor.material.specular = 0.0;
+    const solid_white = Pattern(f64).solid(Color(f64).new(1.0, 1.0, 1.0));
+    const solid_black = Pattern(f64).solid(Color(f64).new(0.0, 0.0, 0.0));
+    floor.material.pattern = Pattern(f64).checkers(&solid_white, &solid_black);
+    try floor.material.pattern.?.setTransform(identity.scale(0.1, 0.1, 0.1));
 
     var left_wall = Shape(f64).sphere();
     try left_wall.setTransform(
@@ -50,15 +53,20 @@ pub fn renderSimpleWorld() !void {
     middle.material.specular = 0.3;
     const p1 = Pattern(f64).solid(Color(f64).new(0.33, 0.4, 0.67));
     const p2 = Pattern(f64).solid(Color(f64).new(0.67, 0.6, 0.33));
-    var checkers = Pattern(f64).checkers(&p1, &p2);
-    try checkers.setTransform(identity.rotateZ(pi / 1.5).scale(0.25, 0.25, 0.25));
-    middle.material.pattern = checkers;
+    var stripes = Pattern(f64).stripes(&p1, &p2);
+    try stripes.setTransform(identity.rotateZ(pi / 1.5).scale(0.25, 0.25, 0.25));
+    middle.material.pattern = Pattern(f64).perturb(&stripes, .{});
 
     var right = Shape(f64).sphere();
     try right.setTransform(identity.scale(0.5, 0.5, 0.5).translate(1.5, 0.5, -0.5));
     right.material.color = Color(f64).new(0.5, 1.0, 0.1);
     right.material.diffuse = 0.7;
     right.material.specular = 0.3;
+    const solid_green = Pattern(f64).solid(Color(f64).new(0.0, 1.0, 0.0));
+    const solid_red = Pattern(f64).solid(Color(f64).new(1.0, 0.0, 0.0));
+    var gradient = Pattern(f64).gradient(&solid_green, &solid_red);
+    try gradient.setTransform(identity.translate(-0.5, 0.0, 0.0).scale(2.0, 2.0, 2.0).rotateY(pi / 6.0));
+    right.material.pattern = gradient;
 
     var left = Shape(f64).sphere();
     try left.setTransform(identity.scale(0.33, 0.33, 0.33).translate(-1.5, 0.33, -0.75));
@@ -83,7 +91,7 @@ pub fn renderSimpleWorld() !void {
         Tuple(f64).point(10.0, 10.0, -10.0), Color(f64).new(0.5, 0.5, 0.5)
     ));
 
-    var camera = Camera(f64).new(1000, 500, pi / 3.0);
+    var camera = Camera(f64).new(4000, 2000, pi / 3.0);
     try camera.setTransform(
         Matrix(f64, 4).viewTransform(
             Tuple(f64).point(0.0, 1.5, -5.0), Tuple(f64).point(0.0, 1.0, 0.0), Tuple(f64).vec3(0.0, 1.0, 0.0)

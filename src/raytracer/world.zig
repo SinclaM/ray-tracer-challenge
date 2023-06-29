@@ -88,7 +88,7 @@ pub fn World(comptime T: type) type {
             for (self.lights.items) |light| {
                 const shadowed = try self.isShadowed(allocator, comps.over_point, light);
                 color = color.add(comps.intersection.object.material.lighting(
-                    light, comps.intersection.object, comps.point, comps.eyev, comps.normal, shadowed
+                    light, comps.intersection.object, comps.over_point, comps.eyev, comps.normal, shadowed
                 ));
             }
 

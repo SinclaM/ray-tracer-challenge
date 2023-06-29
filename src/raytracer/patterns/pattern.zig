@@ -7,6 +7,7 @@ const Color = @import("../color.zig").Color;
 const Shape = @import("../shapes/shape.zig").Shape;
 const Solid = @import("solid.zig").Solid;
 const Blend = @import("blend.zig").Blend;
+const Perturb = @import("perturb.zig").Perturb;
 const Stripes = @import("stripes.zig").Stripes;
 const Gradient = @import("gradient.zig").Gradient;
 const RadialGradient = @import("gradient.zig").RadialGradient;
@@ -30,6 +31,7 @@ pub fn Pattern(comptime T: type) type {
             test_pattern: TestPattern(T),
             solid: Solid(T),
             blend: Blend(T),
+            perturb: Perturb(T),
             stripes: Stripes(T),
             gradient: Gradient(T),
             radial_gradient: RadialGradient(T),
@@ -61,6 +63,10 @@ pub fn Pattern(comptime T: type) type {
             return Self.new(Self.Variant { .blend = Blend(T).new(a, b) });
         }
 
+        /// Creates a new pattern that perturb's a pattern.
+        pub fn perturb(a: *const Self, info: Perturb(T).PerturbInfo) Self {
+            return Self.new(Self.Variant { .perturb = Perturb(T).new(a, info) });
+        }
 
         /// Creates a new pattern of stripes.
         pub fn stripes(a: *const Self, b: *const Self) Self {
