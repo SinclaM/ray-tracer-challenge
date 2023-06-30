@@ -23,7 +23,7 @@ pub fn renderSimpleWorld() !void {
     const solid_white = Pattern(f64).solid(Color(f64).new(1.0, 1.0, 1.0));
     const solid_black = Pattern(f64).solid(Color(f64).new(0.0, 0.0, 0.0));
     floor.material.pattern = Pattern(f64).checkers(&solid_white, &solid_black);
-    try floor.material.pattern.?.setTransform(identity.scale(0.1, 0.1, 0.1));
+    try floor.material.pattern.?.setTransform(identity.scale(0.1, 0.1, 0.1).rotateY(pi / 4.0));
 
     var left_wall = Shape(f64).plane();
     try left_wall.setTransform(

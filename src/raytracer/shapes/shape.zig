@@ -9,6 +9,7 @@ const Material = @import("../material.zig").Material;
 const Ray = @import("../ray.zig").Ray;
 const Sphere = @import("sphere.zig").Sphere;
 const Plane = @import("plane.zig").Plane;
+const PreComputations = @import("../world.zig").PreComputations;
 
 pub fn Intersection(comptime T: type) type {
     return struct {
@@ -110,6 +111,14 @@ pub fn Shape(comptime T: type) type {
         /// Creates a new sphere.
         pub fn sphere() Self {
             return Self.new(Self.Variant { .sphere = Sphere(T) {} });
+        }
+
+        /// Creates a glass sphere.
+        pub fn glass_sphere() Self {
+            var sphere_ = Self.sphere();
+            sphere_.material.transparency = 1.0;
+            sphere_.material.refractive_index = 1.5;
+            return sphere_;
         }
 
         /// Creates a new plane.
@@ -248,3 +257,42 @@ test "Hit" {
     }
 }
 
+fn testRefraction(comptime T: type, allocator: Allocator, i: usize, n1: T, n2: T) !void {
+    var a = Shape(T).glass_sphere();
+    try a.setTransform(Matrix(T, 4).identity().scale(2.0, 2.0, 2.0));
+    a.material.refractive_index = 1.5;
+
+    var b = Shape(T).glass_sphere();
+    try b.setTransform(Matrix(T, 4).identity().translate(0.0, 0.0, -0.25));
+    b.material.refractive_index = 2.0;
+
+    var c = Shape(T).glass_sphere();
+    try c.setTransform(Matrix(T, 4).identity().translate(0.0, 0.0, 0.25));
+    c.material.refractive_index = 2.5;
+
+    const r = Ray(T).new(Tuple(T).point(0.0, 0.0, -4.0), Tuple(T).vec3(0.0, 0.0, 1.0));
+    var xs = Intersections(T).init(allocator);
+    defer xs.deinit();
+    try xs.append(Intersection(T).new(2.0, a));
+    try xs.append(Intersection(T).new(2.75, b));
+    try xs.append(Intersection(T).new(3.25, c));
+    try xs.append(Intersection(T).new(4.75, b));
+    try xs.append(Intersection(T).new(5.25, c));
+    try xs.append(Intersection(T).new(6.0, a));
+
+    const comps = try PreComputations(T).new(allocator, xs.items[i], r, xs);
+
+    try testing.expectEqual(comps.n1, n1);
+    try testing.expectEqual(comps.n2, n2);
+}
+
+test "Refraction" {
+    const allocator = testing.allocator;
+
+    try testRefraction(f32, allocator, 0, 1.0, 1.5);
+    try testRefraction(f32, allocator, 1, 1.5, 2.0);
+    try testRefraction(f32, allocator, 2, 2.0, 2.5);
+    try testRefraction(f32, allocator, 3, 2.5, 2.5);
+    try testRefraction(f32, allocator, 4, 2.5, 1.5);
+    try testRefraction(f32, allocator, 5, 1.5, 1.0);
+}

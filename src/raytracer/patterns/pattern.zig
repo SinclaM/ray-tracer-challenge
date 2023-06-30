@@ -49,7 +49,7 @@ pub fn Pattern(comptime T: type) type {
         }
 
         /// Creates a new test pattern.
-        fn testPattern() Self {
+        pub fn testPattern() Self {
             return Self.new(Self.Variant { .test_pattern = TestPattern(T).new() });
         }
 

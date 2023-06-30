@@ -22,6 +22,8 @@ pub fn Material(comptime T: type) type {
         shininess: T = 200.0,
         pattern: ?Pattern(T) = null,
         reflective: T = 0.0,
+        transparency: T = 0.0,
+        refractive_index: T = 1.0,
 
         /// Creates the default material.
         pub fn new() Self {
