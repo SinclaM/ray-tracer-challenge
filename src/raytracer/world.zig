@@ -90,7 +90,6 @@ pub fn World(comptime T: type) type {
 
             for (self.lights.items) |light| {
                 const shadowed = try self.isShadowed(allocator, comps.over_point, light);
-                //std.debug.print("comps: {}\n",  .{comps});
                 surface = surface.add(comps.intersection.object.material.lighting(
                     light, comps.intersection.object, comps.over_point, comps.eyev, comps.normal, shadowed
                 ));
@@ -104,9 +103,6 @@ pub fn World(comptime T: type) type {
                 const reflectance = comps.schlick();
                 return surface.add(reflected.mul(reflectance)).add(refracted.mul(1.0 - reflectance));
             } else {
-                //std.debug.print("surface: {}\n",  .{surface  });
-                //std.debug.print("reflected: {}\n",.{reflected});
-                //std.debug.print("refracted: {}\n",.{refracted});
                 return surface.add(reflected).add(refracted);
             }
         }
@@ -217,34 +213,28 @@ pub fn PreComputations(comptime T: type) type {
             var n1: T = 1.0;
             var n2: T = 1.0;
 
-            //std.debug.print("BEGGINING LOOP\n", .{});
             for (xs.items) |item| {
                 const is_hit = item.t == hit_.t and item.object.id == hit_.object.id;
                 if (is_hit and containers.items.len > 0) {
                     n1 = containers.items[containers.items.len - 1].material.refractive_index;
-                    //std.debug.print("SET N1 TO {}\n", .{n1});
                 }
 
                 var i: usize = 0;
                 while (i < containers.items.len) : (i += 1) {
                     if (containers.items[i].id == item.object.id) {
                         // Wish there was a BTree ...
-                        //std.debug.print("REMOVING SHAPE {} FROM CONTAINERS\n", .{item.object.id});
                         _ = containers.orderedRemove(i);
                         break;
                     }
                 } else {
-                    //std.debug.print("ADDING SHAPE {} TO CONTAINERS\n", .{item.object.id});
                     try containers.append(item.object);
                 }
 
                 if (is_hit and containers.items.len > 0) {
                     n2 = containers.items[containers.items.len - 1].material.refractive_index;
-                    //std.debug.print("SET N2 TO {}\n", .{n2});
                     break;
                 }
             }
-            //std.debug.print("LOOP DONE\n", .{});
 
 
             return .{
@@ -826,5 +816,38 @@ test "Schlick" {
         const reflectance = comps.schlick();
 
         try testing.expectApproxEqAbs(reflectance, 0.48873, tolerance);
+    }
+
+    {
+        var w = try World(f32).default(allocator);
+        defer w.destroy();
+
+        const r = Ray(f32).new(
+            Tuple(f32).point(0.0, 0.0, -3.0), Tuple(f32).vec3(0.0, -1.0 / @sqrt(2.0), 1.0 / @sqrt(2.0))
+        );
+
+        var floor = Shape(f32).plane();
+        try floor.setTransform(Matrix(f32, 4).identity().translate(0.0, -1.0, 0.0));
+        floor.material.reflective = 0.5;
+        floor.material.transparency = 0.5;
+        floor.material.refractive_index = 1.5;
+
+        var ball = Shape(f32).sphere();
+        try ball.setTransform(Matrix(f32, 4).identity().translate(0.0, -3.5, -0.5));
+        ball.material.color = Color(f32).new(1.0, 0.0, 0.0);
+        ball.material.ambient = 0.5;
+
+        try w.objects.append(floor);
+        try w.objects.append(ball);
+
+        var xs = Intersections(f32).init(allocator);
+        defer xs.deinit();
+
+        try xs.append(Intersection(f32).new(@sqrt(2.0), floor));
+        const comps = try PreComputations(f32).new(allocator, xs.items[0], r, xs);
+
+        const color = try w.shadeHit(allocator, comps, 5);
+
+        try testing.expect(color.approxEqual(Color(f32).new(0.93391, 0.69643, 0.69243)));
     }
 }
