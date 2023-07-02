@@ -26,7 +26,7 @@ This project is a simple [Zig](https://ziglang.org/) implementation of the ray t
 
 ## Examples
 
-<img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/6f4e9293-c8f2-4efa-8868-408df31ebbfa width=400>
+<img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/2a4709c2-ae44-4385-933a-fb9489edbc9e width=400>
 
 <br/><br/>
 
