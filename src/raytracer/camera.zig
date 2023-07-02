@@ -82,7 +82,7 @@ pub fn Camera(comptime T: type) type {
                 var y: usize = 0;
                 while (y < self.vsize) : (y += 1) {
                     const ray = self.rayForPixel(x, y);
-                    const color = try world.colorAt(allocator, ray, 3);
+                    const color = try world.colorAt(allocator, ray, 5);
                     image.getPixelPointer(x, y).?.* = color;
                 }
             }

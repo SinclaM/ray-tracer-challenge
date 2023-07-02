@@ -107,8 +107,8 @@ test "Intersections" {
 
         const first =  xs.items[0];
         var second = xs.items[1];
-        try testing.expectApproxEqAbs(first.t, 1.0, tolerance);
-        try testing.expectApproxEqAbs(second.t, -1.0, tolerance);
+        try testing.expectApproxEqAbs(first.t, -1.0, tolerance);
+        try testing.expectApproxEqAbs(second.t, 1.0, tolerance);
         try testing.expectEqual(first.object, s);
         try testing.expectEqual(second.object, s);
     }

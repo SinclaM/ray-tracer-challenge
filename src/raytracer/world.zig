@@ -90,6 +90,7 @@ pub fn World(comptime T: type) type {
 
             for (self.lights.items) |light| {
                 const shadowed = try self.isShadowed(allocator, comps.over_point, light);
+                //std.debug.print("comps: {}\n",  .{comps});
                 surface = surface.add(comps.intersection.object.material.lighting(
                     light, comps.intersection.object, comps.over_point, comps.eyev, comps.normal, shadowed
                 ));
@@ -98,7 +99,16 @@ pub fn World(comptime T: type) type {
             const reflected = try self.reflectedColor(allocator, comps, remaining_recursions);
             const refracted = try self.refractedColor(allocator, comps, remaining_recursions);
 
-            return surface.add(reflected).add(refracted);
+            if (comps.intersection.object.material.reflective > 0.0
+                and comps.intersection.object.material.transparency > 0.0) {
+                const reflectance = comps.schlick();
+                return surface.add(reflected.mul(reflectance)).add(refracted.mul(1.0 - reflectance));
+            } else {
+                //std.debug.print("surface: {}\n",  .{surface  });
+                //std.debug.print("reflected: {}\n",.{reflected});
+                //std.debug.print("refracted: {}\n",.{refracted});
+                return surface.add(reflected).add(refracted);
+            }
         }
 
         /// Determines the `Color` produced by intersecting `ray` with `self`.
@@ -207,28 +217,34 @@ pub fn PreComputations(comptime T: type) type {
             var n1: T = 1.0;
             var n2: T = 1.0;
 
+            //std.debug.print("BEGGINING LOOP\n", .{});
             for (xs.items) |item| {
                 const is_hit = item.t == hit_.t and item.object.id == hit_.object.id;
                 if (is_hit and containers.items.len > 0) {
                     n1 = containers.items[containers.items.len - 1].material.refractive_index;
+                    //std.debug.print("SET N1 TO {}\n", .{n1});
                 }
 
                 var i: usize = 0;
                 while (i < containers.items.len) : (i += 1) {
                     if (containers.items[i].id == item.object.id) {
                         // Wish there was a BTree ...
+                        //std.debug.print("REMOVING SHAPE {} FROM CONTAINERS\n", .{item.object.id});
                         _ = containers.orderedRemove(i);
                         break;
                     }
                 } else {
+                    //std.debug.print("ADDING SHAPE {} TO CONTAINERS\n", .{item.object.id});
                     try containers.append(item.object);
                 }
 
                 if (is_hit and containers.items.len > 0) {
                     n2 = containers.items[containers.items.len - 1].material.refractive_index;
+                    //std.debug.print("SET N2 TO {}\n", .{n2});
                     break;
                 }
             }
+            //std.debug.print("LOOP DONE\n", .{});
 
 
             return .{
@@ -243,6 +259,25 @@ pub fn PreComputations(comptime T: type) type {
                 .n1 = n1,
                 .n2 = n2
             };
+        }
+
+        fn schlick(self: Self) T {
+            var cos = self.eyev.dot(self.normal);
+            if (self.n1 > self.n2) {
+                const n_ratio = self.n1 / self.n2;
+                const sin2_t = n_ratio * n_ratio * (1.0 - cos * cos);
+                if (sin2_t > 1.0) {
+                    return 1.0;
+                } else {
+                    const cos_t = @sqrt(1.0 - sin2_t);
+                    cos = cos_t;
+                }
+            }
+
+            const frac = (self.n1 - self.n2) / (self.n1 + self.n2);
+            const r0 = frac * frac;
+
+            return r0 + (1.0 - r0) * std.math.pow(T, 1 - cos, 5);
         }
     };
 }
@@ -739,5 +774,57 @@ test "Recursive refraction" {
         const color = try w.shadeHit(allocator, comps, 5);
 
         try testing.expect(color.approxEqual(Color(f32).new(0.93642, 0.68642, 0.68642)));
+    }
+}
+
+test "Schlick" {
+    const allocator = testing.allocator;
+    const tolerance = 1e-5;
+
+    {
+        const shape = Shape(f32).glass_sphere();
+        const r = Ray(f32).new(
+            Tuple(f32).point(0.0, 0.0, 1.0 / @sqrt(2.0)), Tuple(f32).vec3(0.0, 1.0, 0.0)
+        );
+        var xs = Intersections(f32).init(allocator);
+        defer xs.deinit();
+        try xs.append(Intersection(f32).new(-1.0 / @sqrt(2.0), shape));
+        try xs.append(Intersection(f32).new(1.0 / @sqrt(2.0), shape));
+
+        const comps = try PreComputations(f32).new(allocator, xs.items[1], r, xs);
+        const reflectance = comps.schlick();
+
+        try testing.expectEqual(reflectance, 1.0);
+    }
+
+    {
+        const shape = Shape(f32).glass_sphere();
+        const r = Ray(f32).new(
+            Tuple(f32).point(0.0, 0.0, 0.0), Tuple(f32).vec3(0.0, 1.0, 0.0)
+        );
+        var xs = Intersections(f32).init(allocator);
+        defer xs.deinit();
+        try xs.append(Intersection(f32).new(-1.0, shape));
+        try xs.append(Intersection(f32).new(1.0, shape));
+
+        const comps = try PreComputations(f32).new(allocator, xs.items[1], r, xs);
+        const reflectance = comps.schlick();
+
+        try testing.expectApproxEqAbs(reflectance, 0.04, tolerance);
+    }
+
+    {
+        const shape = Shape(f32).glass_sphere();
+        const r = Ray(f32).new(
+            Tuple(f32).point(0.0, 0.99, -2.0), Tuple(f32).vec3(0.0, 0.0, 1.0)
+        );
+        var xs = Intersections(f32).init(allocator);
+        defer xs.deinit();
+        try xs.append(Intersection(f32).new(1.8589, shape));
+
+        const comps = try PreComputations(f32).new(allocator, xs.items[0], r, xs);
+        const reflectance = comps.schlick();
+
+        try testing.expectApproxEqAbs(reflectance, 0.48873, tolerance);
     }
 }

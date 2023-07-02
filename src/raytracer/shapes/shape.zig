@@ -28,12 +28,6 @@ fn IntersectionCmp(comptime T: type) type {
         fn call(context: void, a: Intersection(T), b: Intersection(T)) bool {
             _ = context;
 
-            if (a.t > 0.0 and b.t < 0.0) {
-                return true;
-            } else if (a.t < 0.0 and b.t > 0.0) {
-                return false;
-            }
-
             return std.sort.asc(T)({}, a.t, b.t);
         }
     };
@@ -53,7 +47,7 @@ pub fn hit(comptime T: type, intersections: Intersections(T)) ?Intersection(T) {
 
     for (intersections.items) |item| {
         if (min) |_| {
-            if (IntersectionCmp(T).call({}, item, min.?)) {
+            if (item.t >= 0.0 and item.t < min.?.t) {
                 min = item;
             }
         } else if (item.t >= 0.0) {
