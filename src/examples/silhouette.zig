@@ -7,6 +7,7 @@ const Matrix = @import("../raytracer/matrix.zig").Matrix;
 const Ray = @import("../raytracer/ray.zig").Ray;
 const Shape = @import("../raytracer/shapes/shape.zig").Shape;
 const hit = @import("../raytracer/shapes/shape.zig").hit;
+const sortIntersections = @import("../raytracer/shapes/shape.zig").sortIntersections;
 
 pub fn drawSilhouette() !void {
     comptime var canvas_size = 100;
@@ -39,7 +40,8 @@ pub fn drawSilhouette() !void {
             const ray = Ray(f32).new(source, direction);
             const xs = try s.intersect(allocator, ray);
             defer xs.deinit();
-            if (hit(f32, xs)) |_| {
+            sortIntersections(f32, xs.items);
+            if (hit(f32, xs.items)) |_| {
                 canvas.getPixelPointer(x, y).?.* = Color(f32).new(1.0, 0.0, 0.0);
             }
 

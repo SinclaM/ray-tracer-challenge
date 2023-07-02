@@ -52,12 +52,13 @@ pub fn Material(comptime T: type) type {
             const point_to_light = light.position.sub(point).normalized();
 
             const ambient = effective_color.mul(self.ambient);
-            var diffuse = Color(T).new(0.0, 0.0, 0.0);
-            var specular = Color(T).new(0.0, 0.0, 0.0);
 
             if (in_shadow) {
-                return ambient.add(diffuse).add(specular);
+                return ambient;
             }
+
+            var diffuse = Color(T).new(0.0, 0.0, 0.0);
+            var specular = Color(T).new(0.0, 0.0, 0.0);
 
             const light_dot_normal = point_to_light.dot(normal);
             if (light_dot_normal >= 0.0 ) {

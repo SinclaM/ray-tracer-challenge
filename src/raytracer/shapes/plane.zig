@@ -9,7 +9,6 @@ const Ray = @import("../ray.zig").Ray;
 const shape = @import("shape.zig");
 const Intersection = shape.Intersection;
 const Intersections = shape.Intersections;
-const sortIntersections = shape.sortIntersections;
 const Shape = shape.Shape;
 
 /// A plane object, backed by floats of type `T`.

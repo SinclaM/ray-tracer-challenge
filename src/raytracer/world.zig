@@ -78,7 +78,7 @@ pub fn World(comptime T: type) type {
                 try all.appendSlice(xs.items);
             }
 
-            sortIntersections(T, &all);
+            sortIntersections(T, all.items);
             return all;
         }
 
@@ -112,8 +112,8 @@ pub fn World(comptime T: type) type {
             const xs = try self.intersect(allocator, ray);
             defer xs.deinit();
 
-            if (hit(T, xs)) |hit_| {
-                const comps = try PreComputations(T).new(allocator, hit_, ray, xs);
+            if (hit(T, xs.items)) |hit_idx| {
+                const comps = try PreComputations(T).new(allocator, xs.items[hit_idx], ray, xs);
                 return try self.shadeHit(allocator, comps, remaining_recursions);
             } else {
                 return Color(T).new(0.0, 0.0, 0.0);
@@ -131,8 +131,26 @@ pub fn World(comptime T: type) type {
             const intersections = try self.intersect(allocator, shadow_ray);
             defer intersections.deinit();
 
-            const hit_ = hit(T, intersections);
-            return hit_ != null and hit_.?.t < distance;
+            var is_shadowed = false;
+
+            // Check if any objects which do not opt out of shadow casting appear
+            // in the intersections between the point and the light.
+            var i = hit(T, intersections.items);
+            while (i != null) {
+                if (intersections.items[i.?].t < distance and intersections.items[i.?].object.casts_shadow) {
+                    is_shadowed = true;
+                    break;
+                }
+
+                const delta = hit(T, intersections.items[(i.? + 1)..]);
+                if (delta != null) {
+                    i = i.? + delta.? + 1;
+                } else {
+                    i = null;
+                }
+            }
+
+            return is_shadowed;
         }
 
         /// Determines the color produced by reflection.
@@ -469,7 +487,7 @@ test "Coloring" {
 test "isShadowed" {
     const allocator = testing.allocator;
 
-    const w = try World(f32).default(allocator);
+    var w = try World(f32).default(allocator);
     defer w.destroy();
 
     var p = Tuple(f32).point(0.0, 10.0, 0.0);
@@ -482,6 +500,21 @@ test "isShadowed" {
     try testing.expectEqual(w.isShadowed(allocator, p, w.lights.items[0]), false);
 
     p = Tuple(f32).point(-2.0, 2.0, -2.0);
+    try testing.expectEqual(w.isShadowed(allocator, p, w.lights.items[0]), false);
+
+    // Test opting out of shadow casting
+    p = Tuple(f32).point(0.0, 0.0, 0.0);
+
+    w.objects.items[0].casts_shadow = false;
+    w.objects.items[1].casts_shadow = true;
+    try testing.expectEqual(w.isShadowed(allocator, p, w.lights.items[0]), true);
+
+    w.objects.items[0].casts_shadow = true;
+    w.objects.items[1].casts_shadow = false;
+    try testing.expectEqual(w.isShadowed(allocator, p, w.lights.items[0]), true);
+
+    w.objects.items[0].casts_shadow = false;
+    w.objects.items[1].casts_shadow = false;
     try testing.expectEqual(w.isShadowed(allocator, p, w.lights.items[0]), false);
 }
 

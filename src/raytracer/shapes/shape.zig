@@ -38,24 +38,23 @@ pub fn Intersections(comptime T: type) type {
 }
 
 
-pub fn sortIntersections(comptime T: type, intersections: *Intersections(T)) void {
-    std.sort.sort(Intersection(T), intersections.items[0..], {}, IntersectionCmp(T).call);
+pub fn sortIntersections(comptime T: type, intersections: []Intersection(T)) void {
+    std.sort.sort(Intersection(T), intersections, {}, IntersectionCmp(T).call);
 }
 
-pub fn hit(comptime T: type, intersections: Intersections(T)) ?Intersection(T) {
-    var min: ?Intersection(T) = null;
-
-    for (intersections.items) |item| {
-        if (min) |_| {
-            if (item.t >= 0.0 and item.t < min.?.t) {
-                min = item;
-            }
-        } else if (item.t >= 0.0) {
-            min = item;
+/// Finds the first intersection in `intersection` with a nonnegative `t`.
+///
+/// Assumes `intersections` is sorted.
+pub fn hit(comptime T: type, intersections: []Intersection(T)) ?usize {
+    // Could use binary search here ...
+    var i: usize = 0;
+    while (i < intersections.len) : (i += 1) {
+        if (intersections[i].t >= 0.0) {
+            return i;
         }
     }
 
-    return min;
+    return null;
 }
 
 /// A `Shape` is an object in a world, backed by floats of type `T`.
@@ -84,6 +83,7 @@ pub fn Shape(comptime T: type) type {
         material: Material(T) = Material(T).new(),
         _saved_ray: ?Ray(T) = null,
         variant: Variant,
+        casts_shadow: bool = true,
 
         /// Creates a new `Shape`.
         fn new(variant: Variant) Self {
@@ -214,8 +214,9 @@ test "Hit" {
         defer xs.deinit();
         try xs.append(.{ .t = 1.0, .object = s});
         try xs.append(.{ .t = 2.0, .object = s});
+        sortIntersections(f32, xs.items);
 
-        try testing.expectEqual(hit(f32, xs), .{ .t = 1.0, .object = s});
+        try testing.expectEqual(xs.items[hit(f32, xs.items).?], .{ .t = 1.0, .object = s});
     }
 
     {
@@ -224,8 +225,9 @@ test "Hit" {
         defer xs.deinit();
         try xs.append(.{ .t = -1.0, .object = s});
         try xs.append(.{ .t = 1.0, .object = s});
+        sortIntersections(f32, xs.items);
 
-        try testing.expectEqual(hit(f32, xs), .{ .t = 1.0, .object = s});
+        try testing.expectEqual(xs.items[hit(f32, xs.items).?], .{ .t = 1.0, .object = s});
     }
 
     {
@@ -234,8 +236,9 @@ test "Hit" {
         defer xs.deinit();
         try xs.append(.{ .t = -2.0, .object = s});
         try xs.append(.{ .t = -1.0, .object = s});
+        sortIntersections(f32, xs.items);
 
-        try testing.expectEqual(hit(f32, xs), null);
+        try testing.expectEqual(hit(f32, xs.items), null);
     }
 
     {
@@ -246,8 +249,9 @@ test "Hit" {
         try xs.append(.{ .t = 7.0, .object = s});
         try xs.append(.{ .t = -3.0, .object = s});
         try xs.append(.{ .t = 2.0, .object = s});
+        sortIntersections(f32, xs.items);
 
-        try testing.expectEqual(hit(f32, xs), .{ .t = 2.0, .object = s});
+        try testing.expectEqual(xs.items[hit(f32, xs.items).?], .{ .t = 2.0, .object = s});
     }
 }
 

@@ -7,6 +7,7 @@ const Matrix = @import("../raytracer/matrix.zig").Matrix;
 const Ray = @import("../raytracer/ray.zig").Ray;
 const Shape = @import("../raytracer/shapes/shape.zig").Shape;
 const hit = @import("../raytracer/shapes/shape.zig").hit;
+const sortIntersections = @import("../raytracer/shapes/shape.zig").sortIntersections;
 const Light = @import("../raytracer/light.zig").Light;
 
 pub fn drawSphere() !void {
@@ -45,8 +46,9 @@ pub fn drawSphere() !void {
             const ray = Ray(f32).new(eye, direction);
             const xs = try s.intersect(allocator, ray);
             defer xs.deinit();
-            if (hit(f32, xs)) |hit_| {
-                const point = ray.position(hit_.t);
+            sortIntersections(f32, xs.items);
+            if (hit(f32, xs.items)) |hit_| {
+                const point = ray.position(xs.items[hit_].t);
                 const normal = s.normalAt(point);
                 const eyev = ray.direction.negate();
                 const color = s.material.lighting(light, s, point, eyev, normal, false);

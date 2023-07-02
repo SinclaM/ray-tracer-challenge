@@ -38,7 +38,7 @@ pub fn Sphere(comptime T: type) type {
 
                 try xs.append(Intersection(T).new(t1, super));
                 try xs.append(Intersection(T).new(t2, super));
-                sortIntersections(T, &xs);
+                sortIntersections(T, xs.items);
             }
             return xs;
         }
