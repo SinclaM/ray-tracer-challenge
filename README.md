@@ -16,7 +16,7 @@ This project is a simple [Zig](https://ziglang.org/) implementation of the ray t
 - [x] Chapter 9 - Planes
 - [x] Chapter 10 - Patterns
 - [x] Chapter 11 - Reflection and Refraction
-- [ ] Chapter 12 - Cubes
+- [x] Chapter 12 - Cubes
 - [ ] Chapter 13 - Cylinders
 - [ ] Chapter 14 - Groups
 - [ ] Chapter 15 - Triangles
