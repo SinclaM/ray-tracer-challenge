@@ -10,6 +10,7 @@ comptime {
     _ = @import("raytracer/camera.zig");
     _ = @import("raytracer/shapes/shape.zig");
     _ = @import("raytracer/shapes/sphere.zig");
+    _ = @import("raytracer/shapes/cube.zig");
     _ = @import("raytracer/shapes/plane.zig");
     _ = @import("raytracer/patterns/pattern.zig");
     _ = @import("raytracer/patterns/solid.zig");

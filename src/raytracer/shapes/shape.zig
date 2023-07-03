@@ -8,6 +8,7 @@ const Matrix = @import("../matrix.zig").Matrix;
 const Material = @import("../material.zig").Material;
 const Ray = @import("../ray.zig").Ray;
 const Sphere = @import("sphere.zig").Sphere;
+const Cube = @import("cube.zig").Cube;
 const Plane = @import("plane.zig").Plane;
 const PreComputations = @import("../world.zig").PreComputations;
 
@@ -73,6 +74,7 @@ pub fn Shape(comptime T: type) type {
         const Variant = union(enum) {
             test_shape: TestShape(T),
             sphere: Sphere(T),
+            cube: Cube(T),
             plane: Plane(T),
         };
 
@@ -115,6 +117,11 @@ pub fn Shape(comptime T: type) type {
             return sphere_;
         }
 
+        /// Creates a new cube.
+        pub fn cube() Self {
+            return Self.new(Self.Variant { .cube = Cube(T) {} });
+        }
+
         /// Creates a new plane.
         pub fn plane() Self {
             return Self.new(Self.Variant { .plane = Plane(T) {} });
@@ -132,27 +139,38 @@ pub fn Shape(comptime T: type) type {
         /// Finds the intersections of `ray` with `self`.
         pub fn intersect(self: *Self, allocator: Allocator, ray: Ray(T)) !Intersections(T) {
             self._saved_ray = ray.transform(self._inverse_transform);
-            switch (self.variant) {
-                inline else => |s| { return s.localIntersect(allocator, self.*, self._saved_ray.?); },
+
+            // At this point we need to call the variant's implementation of
+            // `localIntersect`. The normal way to do this is with `inline else` in
+            // a switch statement. But that way is unfortunately just broken; the
+            // compiler will randomly lose its fucking mind and optimize out the
+            // entire switch in release mode. Instead, we have to use this monstronsity
+            // here and elsewhere.
+            // TODO: check if `inline else` works in future versions of Zig.
+            const Tag = @typeInfo(@TypeOf(self.variant)).Union.tag_type.?;
+            inline for (@typeInfo(Tag).Enum.fields) |field| {
+                if (field.value == @enumToInt(self.variant)) {
+                    return @field(self.variant, field.name).localIntersect(allocator, self.*, self._saved_ray.?);
+                }
             }
+
+            unreachable;
         }
 
         /// Finds the surface normal vector at the `point` in world space.
         pub fn normalAt(self: Self, point: Tuple(T)) Tuple(T) {
             const local_point = self._inverse_transform.tupleMul(point);
-            // Be very careful with this switch statement. If you try to assign to
-            // local_normal with a switch expression instead of jamming the rest of the
-            // function in the inline else, the compiler will lose its fucking mind and
-            // optimize out the entire switch in release mode.
-            switch (self.variant) {
-                inline else => |s| {
-                    const local_normal = s.localNormalAt(self, local_point);
+            const Tag = @typeInfo(@TypeOf(self.variant)).Union.tag_type.?;
+            inline for (@typeInfo(Tag).Enum.fields) |field| {
+                if (field.value == @enumToInt(self.variant)) {
+                    const local_normal = @field(self.variant, field.name).localNormalAt(self, local_point);
                     var world_normal = self._inverse_transform_transpose.tupleMul(local_normal);
                     world_normal.w = 0.0;
                     return world_normal.normalized();
-                },
+                }
             }
 
+            unreachable;
         }
     };
 }

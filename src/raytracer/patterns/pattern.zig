@@ -104,11 +104,14 @@ pub fn Pattern(comptime T: type) type {
         pub fn patternAt(self: Self, object_point: Tuple(T)) Color(T) {
             const pattern_point = self._inverse_transform.tupleMul(object_point);
 
-            switch (self.variant) {
-                inline else => |s| { 
-                    return s.patternAt(pattern_point, object_point);
-                },
+            const Tag = @typeInfo(@TypeOf(self.variant)).Union.tag_type.?;
+            inline for (@typeInfo(Tag).Enum.fields) |field| {
+                if (field.value == @enumToInt(self.variant)) {
+                    return @field(self.variant, field.name).patternAt(pattern_point, object_point);
+                }
             }
+
+            unreachable;
         }
 
         /// Determines the pattern's color at the point `world_point` in world space.

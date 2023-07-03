@@ -114,7 +114,7 @@ pub fn World(comptime T: type) type {
 
             if (hit(T, xs.items)) |hit_idx| {
                 const comps = try PreComputations(T).new(allocator, xs.items[hit_idx], ray, xs);
-                return try self.shadeHit(allocator, comps, remaining_recursions);
+                return self.shadeHit(allocator, comps, remaining_recursions);
             } else {
                 return Color(T).new(0.0, 0.0, 0.0);
             }
@@ -223,6 +223,7 @@ pub fn PreComputations(comptime T: type) type {
             const over_point = point.add(normal.mul(PreComputations(T).epsilon));
             const under_point = point.sub(normal.mul(PreComputations(T).epsilon));
             const reflectv = ray.direction.reflect(normal);
+
 
             // No BTree in the zig stdlib unfortunately.
             var containers = try ArrayList(Shape(T)).initCapacity(allocator, xs.items.len);
