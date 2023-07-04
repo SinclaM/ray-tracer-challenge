@@ -34,7 +34,7 @@ This project is a simple [Zig](https://ziglang.org/) implementation of the ray t
 
 <br/><br/>
 
-<img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/1a9eb6be-8081-434d-a0ec-6dad4cb1c309 width=800> 
+<img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/8c29e0ca-9f3c-4509-ac19-50e8f155913c width=800> 
 
 ## Performance profiling
 
