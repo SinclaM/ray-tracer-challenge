@@ -59,7 +59,7 @@ pub fn Color(comptime T: type) type {
 /// Clamps a channel to the [0, 255] range, converting
 /// from float to u8.
 pub fn clamp(comptime T: type, channel: T) u8 {
-    var tmp = @floatToInt(i128, @round(channel * 255));
+    var tmp: i128 = @intFromFloat(@round(channel * 255));
 
     if (tmp < 0) {
         tmp = 0;
@@ -67,7 +67,7 @@ pub fn clamp(comptime T: type, channel: T) u8 {
         tmp = 255;
     }
 
-    return @intCast(u8, tmp);
+    return @intCast(tmp);
 }
 
 

@@ -30,8 +30,8 @@ pub fn drawSilhouette() !void {
         var y: usize = 0;
         while (y < canvas_size) : (y += 1) {
             const pos = Tuple(f32).point(
-                - wall_size / 2.0 + pixel_size * @intToFloat(f32, x),
-                wall_size / 2.0 - pixel_size * @intToFloat(f32, y),
+                - wall_size / 2.0 + pixel_size * @as(f32, @floatFromInt(x)),
+                wall_size / 2.0 - pixel_size * @as(f32, @floatFromInt(y)),
                 wall_z
             );
 

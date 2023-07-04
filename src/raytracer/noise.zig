@@ -58,9 +58,9 @@ pub fn noise(comptime T: type, x_: T, y_: T, z_: T) T {
     var z = z_;
 
     // Find unit cube that contains point
-    const X = @floatToInt(u8, @floor(x)) & 255;
-    const Y = @floatToInt(u8, @floor(y)) & 255;
-    const Z = @floatToInt(u8, @floor(z)) & 255;
+    const X: u8 = @as(u8, @intFromFloat(@floor(x))) & 255;
+    const Y: u8 = @as(u8, @intFromFloat(@floor(y))) & 255;
+    const Z: u8 = @as(u8, @intFromFloat(@floor(z))) & 255;
     x -= @floor(x);                          
     y -= @floor(y);                          
     z -= @floor(z);

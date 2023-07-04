@@ -30,7 +30,7 @@ pub fn Camera(comptime T: type) type {
         /// and the given `fov`.
         pub fn new(hsize: usize, vsize: usize, fov: T) Self {
             const half_view = @tan(fov / 2.0);
-            const aspect = @intToFloat(T, hsize) / @intToFloat(T, vsize);
+            const aspect = @as(T, @floatFromInt(hsize)) / @as(T, @floatFromInt(vsize));
             var half_width = half_view * aspect; 
             var half_height = half_view;
 
@@ -45,7 +45,7 @@ pub fn Camera(comptime T: type) type {
                 .fov = fov,
                 .half_width = half_width,
                 .half_height = half_height,
-                .pixel_size = (half_width * 2.0) / @intToFloat(T, hsize)
+                .pixel_size = (half_width * 2.0) / @as(T, @floatFromInt(hsize))
             };
         }
 
@@ -60,8 +60,8 @@ pub fn Camera(comptime T: type) type {
 
         /// Creates the ray needed to render the pixel at `x`, `y`.
         pub fn rayForPixel(self: Self, x: usize, y: usize) Ray(T) {
-            const xoffset = (@intToFloat(T, x) + 0.5) * self.pixel_size;
-            const yoffset = (@intToFloat(T, y) + 0.5) * self.pixel_size;
+            const xoffset = (@as(T, @floatFromInt(x)) + 0.5) * self.pixel_size;
+            const yoffset = (@as(T, @floatFromInt(y)) + 0.5) * self.pixel_size;
 
             const world_x = self.half_width - xoffset;
             const world_y = self.half_height - yoffset;

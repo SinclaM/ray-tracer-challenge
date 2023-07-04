@@ -35,11 +35,11 @@ pub fn simulate() !void {
     defer canvas.destroy();
 
     while (proj.position.y > 0) {
-        const x = @floatToInt(i32, proj.position.x);
-        const y = @intCast(i32, canvas.height - 1) - @floatToInt(i32, proj.position.y);
+        const x: i32 = @intFromFloat(proj.position.x);
+        const y = @as(i32, @intCast(canvas.height - 1)) - @as(i32, @intFromFloat(proj.position.y));
 
         if (x > 0 and y > 0) {
-            if (canvas.getPixelPointer(@intCast(usize, x), @intCast(usize, y))) |pixel| {
+            if (canvas.getPixelPointer(@intCast(x), @intCast(y))) |pixel| {
                 pixel.* = Color(f32).new(1.0, 0.0, 0.0);
             }
         }

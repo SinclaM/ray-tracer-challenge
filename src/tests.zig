@@ -21,4 +21,5 @@ comptime {
     _ = @import("raytracer/patterns/rings.zig");
     _ = @import("raytracer/patterns/checkers.zig");
     _ = @import("raytracer/noise.zig");
+    _ = @import("parser/parser.zig");
 }

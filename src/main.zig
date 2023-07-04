@@ -6,6 +6,8 @@ const simple_world = @import("examples/simple_world.zig");
 const simple_superflat = @import("examples/simple_superflat.zig");
 const fresnel = @import("examples/fresnel.zig");
 
+const renderScene = @import("parser/parser.zig").renderScene;
+
 pub fn main() !void {
     try projectile.simulate();
     try clock.drawHours();

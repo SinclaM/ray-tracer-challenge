@@ -20,8 +20,8 @@ pub fn drawHours() !void {
     var p = Tuple(f32).point(0.0, 45.0, 0.0);
     while (i < 12) : (i += 1) {
         canvas.getPixelPointer(
-            @floatToInt(usize, p.x + @intToFloat(f32, width / 2)),
-            @floatToInt(usize, p.y + @intToFloat(f32, height / 2))
+            @intFromFloat(p.x + @as(f32, @floatFromInt(width / 2))),
+            @intFromFloat(p.y + @as(f32, @floatFromInt(height / 2)))
         ).?.* = Color(f32).new(1.0, 1.0, 1.0);
 
         p = transform.tupleMul(p);

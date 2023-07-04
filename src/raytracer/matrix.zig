@@ -28,7 +28,7 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
         /// Creates the zero matrix of size `N`.
         pub fn zero() Self {
             var data: [N][N]T = undefined;
-            for (data) |*row| {
+            for (&data) |*row| {
                 for (row) |*val| {
                     val.* = 0.0;
                 }
@@ -153,7 +153,7 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
                 while (c < N) : (c += 1) {
                     if (c == col) { continue; }
 
-                    sub.data[r - @boolToInt(r > row)][c - @boolToInt(c > col)] = self.data[r][c];
+                    sub.data[r - @intFromBool(r > row)][c - @intFromBool(c > col)] = self.data[r][c];
                 }
             }
 

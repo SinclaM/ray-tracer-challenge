@@ -106,7 +106,7 @@ pub fn Pattern(comptime T: type) type {
 
             const Tag = @typeInfo(@TypeOf(self.variant)).Union.tag_type.?;
             inline for (@typeInfo(Tag).Enum.fields) |field| {
-                if (field.value == @enumToInt(self.variant)) {
+                if (field.value == @intFromEnum(self.variant)) {
                     return @field(self.variant, field.name).patternAt(pattern_point, object_point);
                 }
             }

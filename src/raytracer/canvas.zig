@@ -58,8 +58,8 @@ pub fn Canvas(comptime T: type) type {
             try str.appendSlice("255\n");
 
             // Pixels
-            var i = @intCast(usize, 0);
-            var col = @intCast(usize, 0);
+            var i: usize = 0;
+            var col: usize = 0;
             for (self.pixels) |pixel| {
                 // ------ Red channel ------
                 slice = (try std.fmt.bufPrint(&scratch, "{}", .{ clamp(T, pixel.r) }));
@@ -68,7 +68,7 @@ pub fn Canvas(comptime T: type) type {
                     // If the red channel can't fit on the current line, break the
                     // line.
                     try str.append('\n');
-                    col = @intCast(usize, 0);
+                    col = 0;
                 } else if (i % self.width != 0) {
                     // Otherwise, insert a space, but only if we aren't the first
                     // pixel in the line.
@@ -86,7 +86,7 @@ pub fn Canvas(comptime T: type) type {
                     // If the green channel can't fit on the current line, break the
                     // line.
                     try str.append('\n');
-                    col = @intCast(usize, 0);
+                    col = 0;
                 } else {
                     // Otherwise, insert a space.
                     try str.append(' ');
@@ -103,7 +103,7 @@ pub fn Canvas(comptime T: type) type {
                     // If the blue channel can't fit on the current line, break the
                     // line.
                     try str.append('\n');
-                    col = @intCast(usize, 0);
+                    col = 0;
                 } else {
                     // Otherwise, insert a space.
                     try str.append(' ');
@@ -116,7 +116,7 @@ pub fn Canvas(comptime T: type) type {
                 if ((i + 1) % self.width == 0) {
                     // Break the line if this is the last pixel in the row.
                     try str.append('\n');
-                    col = @intCast(usize, 0);
+                    col = 0;
                 }
 
                 i += 1;

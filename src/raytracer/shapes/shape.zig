@@ -40,13 +40,13 @@ pub fn Intersections(comptime T: type) type {
 
 
 pub fn sortIntersections(comptime T: type, intersections: []Intersection(T)) void {
-    std.sort.sort(Intersection(T), intersections, {}, IntersectionCmp(T).call);
+    std.mem.sort(Intersection(T), intersections, {}, IntersectionCmp(T).call);
 }
 
 /// Finds the first intersection in `intersection` with a nonnegative `t`.
 ///
 /// Assumes `intersections` is sorted.
-pub fn hit(comptime T: type, intersections: []Intersection(T)) ?usize {
+pub fn hit(comptime T: type, intersections: []const Intersection(T)) ?usize {
     // Could use binary search here ...
     var i: usize = 0;
     while (i < intersections.len) : (i += 1) {
@@ -149,7 +149,7 @@ pub fn Shape(comptime T: type) type {
             // TODO: check if `inline else` works in future versions of Zig.
             const Tag = @typeInfo(@TypeOf(self.variant)).Union.tag_type.?;
             inline for (@typeInfo(Tag).Enum.fields) |field| {
-                if (field.value == @enumToInt(self.variant)) {
+                if (field.value == @intFromEnum(self.variant)) {
                     return @field(self.variant, field.name).localIntersect(allocator, self.*, self._saved_ray.?);
                 }
             }
@@ -162,7 +162,7 @@ pub fn Shape(comptime T: type) type {
             const local_point = self._inverse_transform.tupleMul(point);
             const Tag = @typeInfo(@TypeOf(self.variant)).Union.tag_type.?;
             inline for (@typeInfo(Tag).Enum.fields) |field| {
-                if (field.value == @enumToInt(self.variant)) {
+                if (field.value == @intFromEnum(self.variant)) {
                     const local_normal = @field(self.variant, field.name).localNormalAt(self, local_point);
                     var world_normal = self._inverse_transform_transpose.tupleMul(local_normal);
                     world_normal.w = 0.0;
