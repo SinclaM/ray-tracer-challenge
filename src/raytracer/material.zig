@@ -15,12 +15,11 @@ pub fn Material(comptime T: type) type {
     return struct {
         const Self = @This();
 
-        color: Color(T) = Color(T).new(1.0, 1.0, 1.0),
+        pattern: Pattern(T) = Pattern(T).solid(Color(T).new(1.0, 1.0, 1.0)),
         ambient: T = 0.1,
         diffuse: T = 0.9,
         specular: T = 0.9,
         shininess: T = 200.0,
-        pattern: ?Pattern(T) = null,
         reflective: T = 0.0,
         transparency: T = 0.0,
         refractive_index: T = 1.0,
@@ -47,7 +46,7 @@ pub fn Material(comptime T: type) type {
             normal: Tuple(T),
             in_shadow: bool,
         ) Color(T) {
-            const color = if (self.pattern == null) self.color else self.pattern.?.patternAtShape(object, point);
+            const color = self.pattern.patternAtShape(object, point);
             const effective_color = color.elementwiseMul(light.intensity);
             const point_to_light = light.position.sub(point).normalized();
 

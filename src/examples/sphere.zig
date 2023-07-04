@@ -9,6 +9,7 @@ const Shape = @import("../raytracer/shapes/shape.zig").Shape;
 const hit = @import("../raytracer/shapes/shape.zig").hit;
 const sortIntersections = @import("../raytracer/shapes/shape.zig").sortIntersections;
 const Light = @import("../raytracer/light.zig").Light;
+const Pattern = @import("../raytracer//patterns/pattern.zig").Pattern;
 
 pub fn drawSphere() !void {
     comptime var canvas_size = 1000;
@@ -19,7 +20,7 @@ pub fn drawSphere() !void {
     defer canvas.destroy();
 
     var s = Shape(f32).sphere();
-    s.material.color = Color(f32).new(1.0, 0.2, 1.0);
+    s.material.pattern = Pattern(f32).solid(Color(f32).new(1.0, 0.2, 1.0));
 
     const eye = Tuple(f32).point(0.0, 0.0, -5.0);
 

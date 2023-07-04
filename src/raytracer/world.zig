@@ -41,7 +41,7 @@ pub fn World(comptime T: type) type {
             var world = Self.new(allocator);
 
             var sphere1 = Shape(T).sphere();
-            sphere1.material.color = Color(T).new(0.8, 1.0, 0.6);
+            sphere1.material.pattern = Pattern(T).solid(Color(T).new(0.8, 1.0, 0.6));
             sphere1.material.diffuse = 0.7;
             sphere1.material.specular = 0.2;
 
@@ -480,7 +480,13 @@ test "Coloring" {
             Tuple(f32).point(0.0, 0.0, 0.75), Tuple(f32).vec3(0.0, 0.0, -1.0)
         );
 
-        try testing.expect((try w.colorAt(allocator, r, 3)).approxEqual(inner.material.color));
+        // Placeholder point. Solid pattern evaluates to same color everywhere.
+        const point = Tuple(f32).point(0.0, 0.0, 0.0);
+
+        try testing.expect(
+            (try w.colorAt(allocator, r, 3))
+                .approxEqual(inner.material.pattern.patternAtShape(inner.*, point))
+        );
     }
 }
 
@@ -779,7 +785,7 @@ test "Recursive refraction" {
 
         var ball = Shape(f32).sphere();
         try ball.setTransform(Matrix(f32, 4).identity().translate(0.0, -3.5, -0.5));
-        ball.material.color = Color(f32).new(1.0, 0.0, 0.0);
+        ball.material.pattern = Pattern(f32).solid(Color(f32).new(1.0, 0.0, 0.0));
         ball.material.ambient = 0.5;
 
         try w.objects.append(floor);
@@ -867,7 +873,7 @@ test "Schlick" {
 
         var ball = Shape(f32).sphere();
         try ball.setTransform(Matrix(f32, 4).identity().translate(0.0, -3.5, -0.5));
-        ball.material.color = Color(f32).new(1.0, 0.0, 0.0);
+        ball.material.pattern = Pattern(f32).solid(Color(f32).new(1.0, 0.0, 0.0));
         ball.material.ambient = 0.5;
 
         try w.objects.append(floor);

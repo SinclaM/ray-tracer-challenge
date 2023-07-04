@@ -26,7 +26,7 @@ pub fn renderFresnel() !void {
     backdrop.material.pattern = Pattern(f64).checkers(&solid_black, &solid_white);
 
     var glass_sphere = Shape(f64).sphere();
-    glass_sphere.material.color = Color(f64).new(1.0, 1.0, 1.0);
+    glass_sphere.material.pattern = Pattern(f64).solid(Color(f64).new(1.0, 1.0, 1.0));
     glass_sphere.material.ambient = 0.0;
     glass_sphere.material.diffuse = 0.0;
     glass_sphere.material.specular = 0.9;
@@ -36,7 +36,7 @@ pub fn renderFresnel() !void {
     glass_sphere.material.refractive_index = 1.5;
 
     var air_bubble = Shape(f64).sphere();
-    air_bubble.material.color = Color(f64).new(1.0, 1.0, 1.0);
+    air_bubble.material.pattern = Pattern(f64).solid(Color(f64).new(1.0, 1.0, 1.0));
     air_bubble.material.ambient = 0.0;
     air_bubble.material.diffuse = 0.0;
     air_bubble.material.specular = 0.9;

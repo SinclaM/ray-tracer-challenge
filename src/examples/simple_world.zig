@@ -17,13 +17,13 @@ pub fn renderSimpleWorld() !void {
     const identity = Matrix(f64, 4).identity();
 
     var floor = Shape(f64).plane();
-    floor.material.color = Color(f64).new(1, 0.9, 0.9);
+    floor.material.pattern = Pattern(f64).solid(Color(f64).new(1, 0.9, 0.9));
     floor.material.specular = 0.0;
     floor.material.reflective = 0.5;
     const solid_white = Pattern(f64).solid(Color(f64).new(1.0, 1.0, 1.0));
     const solid_black = Pattern(f64).solid(Color(f64).new(0.0, 0.0, 0.0));
     floor.material.pattern = Pattern(f64).checkers(&solid_white, &solid_black);
-    try floor.material.pattern.?.setTransform(identity.scale(0.1, 0.1, 0.1).rotateY(pi / 4.0));
+    try floor.material.pattern.setTransform(identity.scale(0.1, 0.1, 0.1).rotateY(pi / 4.0));
 
     var left_wall = Shape(f64).plane();
     try left_wall.setTransform(
@@ -32,13 +32,13 @@ pub fn renderSimpleWorld() !void {
             .rotateY(-pi / 4.0)
             .translate(0.0, 0.0, 5.0)
     );
-    left_wall.material.color = Color(f64).new(0.9, 1.0, 0.9);
+    left_wall.material.pattern = Pattern(f64).solid(Color(f64).new(0.9, 1.0, 0.9));
     left_wall.material.specular = 0.0;
     const solid_light_gray = Pattern(f64).solid(Color(f64).new(0.8, 0.8, 0.8));
     const solid_dark_gray = Pattern(f64).solid(Color(f64).new(0.2, 0.2, 0.2));
     var gray_stripes = Pattern(f64).stripes(&solid_light_gray, &solid_dark_gray);
     left_wall.material.pattern = gray_stripes;
-    try left_wall.material.pattern.?.setTransform(
+    try left_wall.material.pattern.setTransform(
         Matrix(f64, 4).identity().rotateY(pi / 2.0).scale(0.25, 0.25, 0.25)
     );
 
@@ -49,10 +49,10 @@ pub fn renderSimpleWorld() !void {
             .rotateY(pi / 4.0)
             .translate(0.0, 0.0, 5.0)
     );
-    right_wall.material.color = Color(f64).new(0.9, 0.9, 1.0);
+    right_wall.material.pattern = Pattern(f64).solid(Color(f64).new(0.9, 0.9, 1.0));
     right_wall.material.specular = 0.0;
     right_wall.material.pattern = gray_stripes;
-    try right_wall.material.pattern.?.setTransform(
+    try right_wall.material.pattern.setTransform(
         Matrix(f64, 4).identity().translate(1.0, 0.0, 0.0).rotateY(pi / 2.0).scale(0.25, 0.25, 0.25)
     );
 
@@ -62,16 +62,16 @@ pub fn renderSimpleWorld() !void {
             .rotateX(pi / 2.0)
             .translate(0.0, 0.0, -15.0)
     );
-    back_wall.material.color = Color(f64).new(0.9, 0.9, 1.0);
+    back_wall.material.pattern = Pattern(f64).solid(Color(f64).new(0.9, 0.9, 1.0));
     back_wall.material.specular = 0.0;
     back_wall.material.pattern = gray_stripes;
-    try back_wall.material.pattern.?.setTransform(
+    try back_wall.material.pattern.setTransform(
         Matrix(f64, 4).identity().translate(1.0, 0.0, 0.0).rotateY(pi / 2.0).scale(0.25, 0.25, 0.25)
     );
 
     var middle = Shape(f64).sphere();
     try middle.setTransform(identity.translate(-0.5, 1.0, 0.5));
-    middle.material.color = Color(f64).new(0.1, 1.0, 0.5);
+    middle.material.pattern = Pattern(f64).solid(Color(f64).new(0.1, 1.0, 0.5));
     middle.material.diffuse = 0.7;
     middle.material.specular = 0.3;
     const p1 = Pattern(f64).solid(Color(f64).new(0.33, 0.4, 0.67));
@@ -82,7 +82,7 @@ pub fn renderSimpleWorld() !void {
 
     var right = Shape(f64).sphere();
     try right.setTransform(identity.scale(0.5, 0.5, 0.5).translate(1.5, 0.5, -0.5));
-    right.material.color = Color(f64).new(0.5, 1.0, 0.1);
+    right.material.pattern = Pattern(f64).solid(Color(f64).new(0.5, 1.0, 0.1));
     right.material.diffuse = 0.7;
     right.material.specular = 0.3;
     const solid_green = Pattern(f64).solid(Color(f64).new(0.0, 1.0, 0.0));
@@ -93,7 +93,7 @@ pub fn renderSimpleWorld() !void {
 
     var left = Shape(f64).sphere();
     try left.setTransform(identity.scale(0.33, 0.33, 0.33).translate(-1.5, 0.33, -0.75));
-    left.material.color = Color(f64).new(1.0, 1.0, 1.0);
+    left.material.pattern = Pattern(f64).solid(Color(f64).new(1.0, 1.0, 1.0));
     left.material.diffuse = 0.7;
     left.material.specular = 0.3;
     left.material.reflective = 0.7;

@@ -17,7 +17,7 @@ pub fn renderSimpleSuperflat() !void {
     const identity = Matrix(f64, 4).identity();
 
     var floor = Shape(f64).plane();
-    floor.material.color = Color(f64).new(1, 0.9, 0.9);
+    floor.material.pattern = Pattern(f64).solid(Color(f64).new(1, 0.9, 0.9));
     floor.material.specular = 0.0;
     const solid_white = Pattern(f64).solid(Color(f64).new(1.0, 1.0, 1.0));
     const solid_black = Pattern(f64).solid(Color(f64).new(0.0, 0.0, 0.0));
@@ -31,13 +31,13 @@ pub fn renderSimpleSuperflat() !void {
 
     var large = Shape(f64).sphere();
     try large.setTransform(identity.translate(-0.5, 1.0, 0.5).scale(1.0, 0.5, 1.0));
-    large.material.color = Color(f64).new(0.1, 1.0, 0.5);
+    large.material.pattern = Pattern(f64).solid(Color(f64).new(0.1, 1.0, 0.5));
     large.material.diffuse = 0.7;
     large.material.specular = 0.3;
 
     var small = Shape(f64).sphere();
     try small.setTransform(identity.scale(0.5, 0.5, 0.5).translate(1.5, 0.5, -0.5));
-    small.material.color = Color(f64).new(0.5, 1.0, 0.1);
+    small.material.pattern = Pattern(f64).solid(Color(f64).new(0.5, 1.0, 0.1));
     small.material.diffuse = 0.7;
     small.material.specular = 0.3;
 
@@ -47,7 +47,7 @@ pub fn renderSimpleSuperflat() !void {
             .scale(0.25, 0.25, 0.25)
             .translate(1.5, 1.25, -0.5)
     );
-    tiny.material.color = Color(f64).new(1.0, 0.2, 1.0);
+    tiny.material.pattern = Pattern(f64).solid(Color(f64).new(1.0, 0.2, 1.0));
     tiny.material.diffuse = 0.7;
     tiny.material.specular = 0.3;
 
