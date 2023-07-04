@@ -37,8 +37,7 @@ pub fn octaveNoise(comptime T: type, x: T, y: T, z: T, octaves: usize, persisten
     var frequency: T = 1.0;
     var amplitude: T = 1.0;
     var max_value: T = 0.0; // Used for normalizing result to 0.0 - 1.0
-    var i: usize = 0;
-    while (i < octaves) : (i += 1) {
+    for (0..octaves) |_| {
         total += noise(T, x * frequency, y * frequency, z * frequency) * amplitude;
 
         max_value += amplitude;

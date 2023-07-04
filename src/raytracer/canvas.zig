@@ -58,9 +58,8 @@ pub fn Canvas(comptime T: type) type {
             try str.appendSlice("255\n");
 
             // Pixels
-            var i: usize = 0;
             var col: usize = 0;
-            for (self.pixels) |pixel| {
+            for (self.pixels, 0..) |pixel, i| {
                 // ------ Red channel ------
                 slice = (try std.fmt.bufPrint(&scratch, "{}", .{ clamp(T, pixel.r) }));
 
@@ -118,8 +117,6 @@ pub fn Canvas(comptime T: type) type {
                     try str.append('\n');
                     col = 0;
                 }
-
-                i += 1;
             }
 
             return str.toOwnedSlice();

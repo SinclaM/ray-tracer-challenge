@@ -31,10 +31,8 @@ pub fn drawSphere() !void {
     const wall_z: f32 = 10.0;
     const pixel_size: f32 = wall_size / canvas_size;
 
-    var x: usize = 0;
-    while (x < canvas_size) : (x += 1) {
-        var y: usize = 0;
-        while (y < canvas_size) : (y += 1) {
+    for (0..canvas_size) |x| {
+        for (0..canvas_size) |y| {
             const pos = Tuple(f32).point(
                 - wall_size / 2.0 + pixel_size * @as(f32, @floatFromInt(x)),
                 wall_size / 2.0 - pixel_size * @as(f32, @floatFromInt(y)),

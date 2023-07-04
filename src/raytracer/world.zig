@@ -238,9 +238,8 @@ pub fn PreComputations(comptime T: type) type {
                     n1 = containers.items[containers.items.len - 1].material.refractive_index;
                 }
 
-                var i: usize = 0;
-                while (i < containers.items.len) : (i += 1) {
-                    if (containers.items[i].id == item.object.id) {
+                for (containers.items, 0..) |container, i| {
+                    if (container.id == item.object.id) {
                         // Wish there was a BTree ...
                         _ = containers.orderedRemove(i);
                         break;

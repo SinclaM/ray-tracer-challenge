@@ -48,9 +48,8 @@ pub fn sortIntersections(comptime T: type, intersections: []Intersection(T)) voi
 /// Assumes `intersections` is sorted.
 pub fn hit(comptime T: type, intersections: []const Intersection(T)) ?usize {
     // Could use binary search here ...
-    var i: usize = 0;
-    while (i < intersections.len) : (i += 1) {
-        if (intersections[i].t >= 0.0) {
+    for (intersections, 0..) |intersection, i| {
+        if (intersection.t >= 0.0) {
             return i;
         }
     }

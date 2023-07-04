@@ -77,10 +77,8 @@ pub fn Camera(comptime T: type) type {
         /// Destroy the canvas with `Canvas.destroy`.
         pub fn render(self: Self, allocator: Allocator, world: World(T)) !Canvas(T) {
             var image = try Canvas(T).new(allocator, self.hsize, self.vsize);
-            var x: usize = 0;
-            while (x < self.hsize) : (x += 1) {
-                var y: usize = 0;
-                while (y < self.vsize) : (y += 1) {
+            for (0..self.hsize) |x| {
+                for (0..self.vsize) |y| {
                     const ray = self.rayForPixel(x, y);
                     const color = try world.colorAt(allocator, ray, 5);
                     image.getPixelPointer(x, y).?.* = color;

@@ -40,10 +40,8 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
         pub fn identity() Self {
             var matrix = Self.zero();
 
-            var i: usize = 0;
-            while (i < N) {
+            for (0..N) |i| {
                 matrix.data[i][i] = 1.0;
-                i += 1;
             }
 
             return matrix;
@@ -70,16 +68,12 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
 
         /// Tests whether two matrices should be considered equal.
         pub fn approxEqual(self: Self, other: Self) bool {
-            var row: usize = 0;
-            while (row < N) {
-                var col: usize = 0;
-                while (col < N) {
+            for (0..N) |row| {
+                for (0..N) |col| {
                     if (@fabs(self.data[row][col] - other.data[row][col]) > tolerance) {
                         return false;
                     }
-                    col += 1;
                 }
-                row += 1;
             }
             return true;
         }
@@ -87,13 +81,10 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
         /// Multiplies the matrices `self` and `other` (not elementwise).
         pub fn mul(self: Self, other: Self) Self {
             var result = Self.newUninit();
-            var row: usize = 0;
-            while (row < N) : (row += 1) {
-                var col: usize = 0;
-                while (col < N) : (col += 1) {
-                    var i: usize = 0;
+            for (0..N) |row| {
+                for (0..N) |col| {
                     var sum: T = 0;
-                    while (i < N) : (i += 1) {
+                    for (0..N) |i| {
                         sum += self.data[row][i] * other.data[i][col];
                     }
                     result.data[row][col] = sum;
@@ -128,14 +119,10 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
         pub fn transpose(self: Self) Self {
             var transposed = Self.newUninit();
 
-            var row: usize = 0;
-            while (row < N) {
-                var col: usize = 0;
-                while (col < N) {
+            for (0..N) |row| {
+                for (0..N) |col| {
                     transposed.data[row][col] = self.data[col][row];
-                    col += 1;
                 }
-                row += 1;
             }
 
             return transposed;
@@ -145,12 +132,10 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
         pub fn submatrix(self: Self, row: usize, col: usize) Matrix(T, N - 1) {
             var sub = Matrix(T, N - 1).newUninit();
 
-            var r: usize = 0;
-            while (r < N) : (r += 1) {
+            for (0..N) |r| {
                 if (r == row) { continue; }
 
-                var c: usize = 0;
-                while (c < N) : (c += 1) {
+                for (0..N) |c| {
                     if (c == col) { continue; }
 
                     sub.data[r - @intFromBool(r > row)][c - @intFromBool(c > col)] = self.data[r][c];
@@ -181,8 +166,7 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
             if (N == 2) {
                 det_ = self.data[0][0] * self.data[1][1] - self.data[0][1] * self.data[1][0];
             } else {
-                var col: usize = 0;
-                while (col < N) : (col += 1) {
+                for (0..N) |col| {
                     det_ += self.data[0][col] * self.cofactor(0, col);
                 }
             }
@@ -199,10 +183,8 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
 
             var inverse_ = Self.newUninit();
 
-            var row: usize = 0;
-            while (row < N) : (row += 1) {
-                var col: usize = 0;
-                while (col < N) : (col += 1) {
+            for (0..N) |row| {
+                for (0..N) |col| {
                     inverse_.data[col][row] = self.cofactor(row, col) / det_;
                 }
             }
