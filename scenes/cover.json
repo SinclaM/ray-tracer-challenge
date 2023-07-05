@@ -1,0 +1,329 @@
+{
+    "camera": {
+        "width": 1280,
+        "height": 1280,
+        "field-of-view": 0.785,
+        "from": [ -6, 6, -10 ],
+        "to": [ 6, 0, 6 ],
+        "up": [ -0.45, 1, 0 ]
+    },
+    "lights": [
+        {
+            "point-light": {
+                "position": [ 50, 100, -50 ],
+                "intensity": [ 1, 1, 1 ]
+            }
+        },
+        {
+            "point-light": {
+                "position": [ -400, 50, -10 ],
+                "intensity": [ 0.2, 0.2, 0.2 ]
+            }
+        }
+    ],
+    "objects": [
+        {
+            "type": "plane",
+            "material": {
+                "pattern": { "type": { "solid": [1, 1, 1] } },
+                "ambient": 1,
+                "diffuse": 0,
+                "specular": 0
+            },
+            "transform": [
+                { "rotate-x": 1.5707963267948966 },
+                { "translate": [0, 0, 500]}
+            ]
+        },
+        {
+            "type": "sphere",
+            "material": {
+                "pattern": { "type": { "solid": [0.373, 0.404, 0.55] } },
+                "diffuse": 0.2,
+                "ambient": 0,
+                "specular": 1,
+                "shininess": 200,
+                "reflective": 0.7,
+                "transparency": 0.7,
+                "refractive-index": 1.5
+            },
+            "transform": [
+                { "translate": [1, -1, 1] },
+                { "scale": [0.5, 0.5, 0.5]},
+                { "scale": [3.5, 3.5, 3.5]}
+            ]
+        },
+        {
+            "type": "cube",
+            "material": {
+                "pattern": { "type": { "solid": [1, 1, 1] } },
+                "diffuse": 0.7,
+                "ambient": 0.1,
+                "specular": 0,
+                "reflective": 0.1
+            },
+            "transform": [
+                { "translate": [1, -1, 1] },
+                { "scale": [0.5, 0.5, 0.5]},
+                { "scale": [3, 3, 3]},
+                { "translate": [4, 0, 0]}
+            ]
+        },
+        {
+            "type": "cube",
+            "material": {
+                "pattern": { "type": { "solid": [0.537, 0.831, 0.914] } },
+                "diffuse": 0.7,
+                "ambient": 0.1,
+                "specular": 0,
+                "reflective": 0.1
+            },
+            "transform": [
+                { "translate": [1, -1, 1] },
+                { "scale": [0.5, 0.5, 0.5]},
+                { "scale": [3.5, 3.5, 3.5]},
+                { "translate": [8.5, 1.5, -0.5]}
+            ]
+        },
+        {
+            "type": "cube",
+            "material": {
+                "pattern": { "type": { "solid": [0.941, 0.322, 0.388] } },
+                "diffuse": 0.7,
+                "ambient": 0.1,
+                "specular": 0,
+                "reflective": 0.1
+            },
+            "transform": [
+                { "translate": [1, -1, 1] },
+                { "scale": [0.5, 0.5, 0.5]},
+                { "scale": [3.5, 3.5, 3.5]},
+                { "translate": [0, 0, 4]}
+            ]
+        },
+        {
+            "type": "cube",
+            "material": {
+                "pattern": { "type": { "solid": [1, 1, 1] } },
+                "diffuse": 0.7,
+                "ambient": 0.1,
+                "specular": 0,
+                "reflective": 0.1
+            },
+            "transform": [
+                { "translate": [1, -1, 1] },
+                { "scale": [0.5, 0.5, 0.5]},
+                { "scale": [2, 2, 2]},
+                { "translate": [4, 0, 4]}
+            ]
+        },
+        {
+            "type": "cube",
+            "material": {
+                "pattern": { "type": { "solid": [0.373, 0.404, 0.55] } },
+                "diffuse": 0.7,
+                "ambient": 0.1,
+                "specular": 0,
+                "reflective": 0.1
+            },
+            "transform": [
+                { "translate": [1, -1, 1] },
+                { "scale": [0.5, 0.5, 0.5]},
+                { "scale": [3, 3, 3]},
+                { "translate": [7.5, 0.5, 4]}
+            ]
+        },
+        {
+            "type": "cube",
+            "material": {
+                "pattern": { "type": { "solid": [1, 1, 1] } },
+                "diffuse": 0.7,
+                "ambient": 0.1,
+                "specular": 0,
+                "reflective": 0.1
+            },
+            "transform": [
+                { "translate": [1, -1, 1] },
+                { "scale": [0.5, 0.5, 0.5]},
+                { "scale": [3, 3, 3]},
+                { "translate": [-0.25, 0.25, 8]}
+            ]
+        },
+        {
+            "type": "cube",
+            "material": {
+                "pattern": { "type": { "solid": [0.537, 0.831, 0.914] } },
+                "diffuse": 0.7,
+                "ambient": 0.1,
+                "specular": 0,
+                "reflective": 0.1
+            },
+            "transform": [
+                { "translate": [1, -1, 1] },
+                { "scale": [0.5, 0.5, 0.5]},
+                { "scale": [3.5, 3.5, 3.5]},
+                { "translate": [4, 1, 7.5] }
+            ]
+        },
+        {
+            "type": "cube",
+            "material": {
+                "pattern": { "type": { "solid": [0.941, 0.322, 0.388] } },
+                "diffuse": 0.7,
+                "ambient": 0.1,
+                "specular": 0,
+                "reflective": 0.1
+            },
+            "transform": [
+                { "translate": [1, -1, 1] },
+                { "scale": [0.5, 0.5, 0.5]},
+                { "scale": [3, 3, 3]},
+                { "translate": [10, 2, 7.5]}
+            ]
+        },
+        {
+            "type": "cube",
+            "material": {
+                "pattern": { "type": { "solid": [1, 1, 1] } },
+                "diffuse": 0.7,
+                "ambient": 0.1,
+                "specular": 0,
+                "reflective": 0.1
+            },
+            "transform": [
+                { "translate": [1, -1, 1] },
+                { "scale": [0.5, 0.5, 0.5]},
+                { "scale": [2, 2, 2]},
+                { "translate": [8, 2, 12]}
+            ]
+        },
+        {
+            "type": "cube",
+            "material": {
+                "pattern": { "type": { "solid": [1, 1, 1] } },
+                "diffuse": 0.7,
+                "ambient": 0.1,
+                "specular": 0,
+                "reflective": 0.1
+            },
+            "transform": [
+                { "translate": [1, -1, 1] },
+                { "scale": [0.5, 0.5, 0.5]},
+                { "scale": [2, 2, 2]},
+                { "translate": [20, 1, 9]}
+            ]
+        },
+        {
+            "type": "cube",
+            "material": {
+                "pattern": { "type": { "solid": [0.537, 0.831, 0.914] } },
+                "diffuse": 0.7,
+                "ambient": 0.1,
+                "specular": 0,
+                "reflective": 0.1
+            },
+            "transform": [
+                { "translate": [1, -1, 1] },
+                { "scale": [0.5, 0.5, 0.5]},
+                { "scale": [3.5, 3.5, 3.5]},
+                { "translate": [-0.5, -5, 0.25] }
+            ]
+        },
+        {
+            "type": "cube",
+            "material": {
+                "pattern": { "type": { "solid": [0.941, 0.322, 0.388] } },
+                "diffuse": 0.7,
+                "ambient": 0.1,
+                "specular": 0,
+                "reflective": 0.1
+            },
+            "transform": [
+                { "translate": [1, -1, 1] },
+                { "scale": [0.5, 0.5, 0.5]},
+                { "scale": [3.5, 3.5, 3.5]},
+                { "translate": [4, -4, 0] }
+            ]
+        },
+        {
+            "type": "cube",
+            "material": {
+                "pattern": { "type": { "solid": [1, 1, 1] } },
+                "diffuse": 0.7,
+                "ambient": 0.1,
+                "specular": 0,
+                "reflective": 0.1
+            },
+            "transform": [
+                { "translate": [1, -1, 1] },
+                { "scale": [0.5, 0.5, 0.5]},
+                { "scale": [3.5, 3.5, 3.5]},
+                { "translate": [8.5, -4, 0] }
+            ]
+        },
+        {
+            "type": "cube",
+            "material": {
+                "pattern": { "type": { "solid": [1, 1, 1] } },
+                "diffuse": 0.7,
+                "ambient": 0.1,
+                "specular": 0,
+                "reflective": 0.1
+            },
+            "transform": [
+                { "translate": [1, -1, 1] },
+                { "scale": [0.5, 0.5, 0.5]},
+                { "scale": [3.5, 3.5, 3.5]},
+                { "translate": [0, -4, 4] }
+            ]
+        },
+        {
+            "type": "cube",
+            "material": {
+                "pattern": { "type": { "solid": [0.373, 0.404, 0.55] } },
+                "diffuse": 0.7,
+                "ambient": 0.1,
+                "specular": 0,
+                "reflective": 0.1
+            },
+            "transform": [
+                { "translate": [1, -1, 1] },
+                { "scale": [0.5, 0.5, 0.5]},
+                { "scale": [3.5, 3.5, 3.5]},
+                { "translate": [-0.5, -4.5, 8] }
+            ]
+        },
+        {
+            "type": "cube",
+            "material": {
+                "pattern": { "type": { "solid": [1, 1, 1] } },
+                "diffuse": 0.7,
+                "ambient": 0.1,
+                "specular": 0,
+                "reflective": 0.1
+            },
+            "transform": [
+                { "translate": [1, -1, 1] },
+                { "scale": [0.5, 0.5, 0.5]},
+                { "scale": [3.5, 3.5, 3.5]},
+                { "translate": [0, -8, 4] }
+            ]
+        },
+        {
+            "type": "cube",
+            "material": {
+                "pattern": { "type": { "solid": [1, 1, 1] } },
+                "diffuse": 0.7,
+                "ambient": 0.1,
+                "specular": 0,
+                "reflective": 0.1
+            },
+            "transform": [
+                { "translate": [1, -1, 1] },
+                { "scale": [0.5, 0.5, 0.5]},
+                { "scale": [3.5, 3.5, 3.5]},
+                { "translate": [-0.5, -8.5, 8] }
+            ]
+        }
+    ]
+}

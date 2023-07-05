@@ -20,7 +20,8 @@ pub fn main() !void {
     try fresnel.renderFresnel();
 
     const scenes_to_render = [_][]const u8 {
-        "ch11_reflection_and_refraction"
+        "ch11_reflection_and_refraction",
+        "cover"
     };
 
     inline for (scenes_to_render) |scene| {
