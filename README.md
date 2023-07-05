@@ -22,7 +22,7 @@ This project is a simple [Zig](https://ziglang.org/) implementation of the ray t
 - [ ] Chapter 15 - Triangles
 - [ ] Chapter 16 - Constructive Solid Geometry (CSG)
 - [ ] Chapter 17 - Next Steps
-- [ ] A1 - Rendering the Cover Image
+- [x] A1 - Rendering the Cover Image
 
 ## Examples
 
@@ -35,6 +35,12 @@ This project is a simple [Zig](https://ziglang.org/) implementation of the ray t
 <br/><br/>
 
 <img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/8c29e0ca-9f3c-4509-ac19-50e8f155913c width=800> 
+
+
+<br/><br/>
+
+<img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/590d80a2-0801-4fea-9979-e92128c6f38a width=800> 
+
 
 ## Performance profiling
 
