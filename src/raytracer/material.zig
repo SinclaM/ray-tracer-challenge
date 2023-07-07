@@ -40,7 +40,7 @@ pub fn Material(comptime T: type) type {
         pub fn lighting(
             self: Self,
             light: Light(T),
-            object: Shape(T),
+            object: *const Shape(T),
             point: Tuple(T),
             point_to_eye: Tuple(T),
             normal: Tuple(T),
@@ -84,7 +84,7 @@ test "Lighting" {
         const eyev = Tuple(f32).vec3(0.0, 0.0, -1.0);
         const normal = Tuple(f32).vec3(0.0, 0.0, -1.0);
         const light = Light(f32).pointLight(Tuple(f32).point(0.0, 0.0, -10.0), Color(f32).new(1.0, 1.0, 1.0));
-        const result = m.lighting(light, placeholder_object, position, eyev, normal, false);
+        const result = m.lighting(light, &placeholder_object, position, eyev, normal, false);
 
         try testing.expect(result.approxEqual(Color(f32).new(1.9, 1.9, 1.9)));
     }
@@ -94,7 +94,7 @@ test "Lighting" {
         const eyev = Tuple(f32).vec3(0.0, 1.0 / @sqrt(2.0), -1.0 / @sqrt(2.0));
         const normal = Tuple(f32).vec3(0.0, 0.0, -1.0);
         const light = Light(f32).pointLight(Tuple(f32).point(0.0, 0.0, -10.0), Color(f32).new(1.0, 1.0, 1.0));
-        const result = m.lighting(light, placeholder_object, position, eyev, normal, false);
+        const result = m.lighting(light, &placeholder_object, position, eyev, normal, false);
 
         try testing.expect(result.approxEqual(Color(f32).new(1.0, 1.0, 1.0)));
     }
@@ -104,7 +104,7 @@ test "Lighting" {
         const eyev = Tuple(f32).vec3(0.0, 0.0, -1.0);
         const normal = Tuple(f32).vec3(0.0, 0.0, -1.0);
         const light = Light(f32).pointLight(Tuple(f32).point(0.0, 10.0, -10.0), Color(f32).new(1.0, 1.0, 1.0));
-        const result = m.lighting(light, placeholder_object, position, eyev, normal, false);
+        const result = m.lighting(light, &placeholder_object, position, eyev, normal, false);
 
         try testing.expect(result.approxEqual(Color(f32).new(0.7364, 0.7364, 0.7364)));
     }
@@ -114,7 +114,7 @@ test "Lighting" {
         const eyev = Tuple(f32).vec3(0.0, -1.0 / @sqrt(2.0), -1.0 / @sqrt(2.0));
         const normal = Tuple(f32).vec3(0.0, 0.0, -1.0);
         const light = Light(f32).pointLight(Tuple(f32).point(0.0, 10.0, -10.0), Color(f32).new(1.0, 1.0, 1.0));
-        const result = m.lighting(light, placeholder_object, position, eyev, normal, false);
+        const result = m.lighting(light, &placeholder_object, position, eyev, normal, false);
 
         try testing.expect(result.approxEqual(Color(f32).new(1.63639, 1.63639, 1.63639)));
     }
@@ -124,7 +124,7 @@ test "Lighting" {
         const eyev = Tuple(f32).vec3(0.0, 0.0, -1.0);
         const normal = Tuple(f32).vec3(0.0, 0.0, -1.0);
         const light = Light(f32).pointLight(Tuple(f32).point(0.0, 0.0, 10.0), Color(f32).new(1.0, 1.0, 1.0));
-        const result = m.lighting(light, placeholder_object, position, eyev, normal, false);
+        const result = m.lighting(light, &placeholder_object, position, eyev, normal, false);
 
         try testing.expect(result.approxEqual(Color(f32).new(0.1, 0.1, 0.1)));
     }
@@ -134,7 +134,7 @@ test "Lighting" {
         const eyev = Tuple(f32).vec3(0.0, 0.0, -1.0);
         const normal = Tuple(f32).vec3(0.0, 0.0, -1.0);
         const light = Light(f32).pointLight(Tuple(f32).point(0.0, 0.0, -10.0), Color(f32).new(1.0, 1.0, 1.0));
-        const result = m.lighting(light, placeholder_object, position, eyev, normal, true);
+        const result = m.lighting(light, &placeholder_object, position, eyev, normal, true);
 
         try testing.expect(result.approxEqual(Color(f32).new(0.1, 0.1, 0.1)));
     }
@@ -156,8 +156,8 @@ test "Lighting with pattern" {
     const light = Light(f32).pointLight(Tuple(f32).point(0.0, 0.0, -10.0), Color(f32).new(1.0, 1.0, 1.0));
     const s = Shape(f32).sphere();
 
-    const c1 = m.lighting(light, s, Tuple(f32).point(0.9, 0.0, 0.0), eyev, normal, false);
-    const c2 = m.lighting(light, s, Tuple(f32).point(1.1, 0.0, 0.0), eyev, normal, false);
+    const c1 = m.lighting(light, &s, Tuple(f32).point(0.9, 0.0, 0.0), eyev, normal, false);
+    const c2 = m.lighting(light, &s, Tuple(f32).point(1.1, 0.0, 0.0), eyev, normal, false);
     try testing.expectEqual(c1, white);
     try testing.expectEqual(c2, black);
 }

@@ -21,7 +21,9 @@ pub fn Plane(comptime T: type) type {
         const Self = @This();
         const epsilon: T = 1e-5;
 
-        pub fn localIntersect(self: Self, allocator: Allocator, super: Shape(T), ray: Ray(T)) !Intersections(T) {
+        pub fn localIntersect(
+            self: Self, allocator: Allocator, super: *const Shape(T), ray: Ray(T)
+        ) !Intersections(T) {
             _ = self;
             var xs = Intersections(T).init(allocator);
 
@@ -69,7 +71,7 @@ test "Intersections" {
         defer xs.deinit();
         try testing.expectEqual(xs.items.len, 1);
         try testing.expectApproxEqAbs(xs.items[0].t, 1.0, Plane(f32).epsilon);
-        try testing.expectEqual(xs.items[0].object, p);
+        try testing.expectEqual(xs.items[0].object, &p);
     }
 
     {
@@ -79,7 +81,7 @@ test "Intersections" {
         defer xs.deinit();
         try testing.expectEqual(xs.items.len, 1);
         try testing.expectApproxEqAbs(xs.items[0].t, 1.0, Plane(f32).epsilon);
-        try testing.expectEqual(xs.items[0].object, p);
+        try testing.expectEqual(xs.items[0].object, &p);
     }
 }
 

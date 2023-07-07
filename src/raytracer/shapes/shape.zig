@@ -16,9 +16,9 @@ pub fn Intersection(comptime T: type) type {
     return struct {
         const Self = @This();
         t: T,
-        object: Shape(T),
+        object: *const Shape(T),
 
-        pub fn new(t: T, object: Shape(T)) Self {
+        pub fn new(t: T, object: *const Shape(T)) Self {
             return .{ .t = t, .object = object };
         }
     };
@@ -65,7 +65,9 @@ pub fn Shape(comptime T: type) type {
         /// The various concrete shapes. Structs that can be placed in
         /// this tagged union must provide the following functions:
         /// 
-        /// fn localIntersect(self: Self, allocator: Allocator, super: Shape(T), ray: Ray(T)) !Intersections(T);
+        /// fn localIntersect(
+        ///     self: Self, allocator: Allocator, super: *const Shape(T), ray: Ray(T)
+        /// ) !Intersections(T);
         /// fn localNormalAt(self: Self, super: Shape(T), point: Tuple(T)) Tuple(T);
         ///
         /// `localIntersect` should compute the intersections with the shape for the given `ray`.
@@ -149,7 +151,7 @@ pub fn Shape(comptime T: type) type {
             const Tag = @typeInfo(@TypeOf(self.variant)).Union.tag_type.?;
             inline for (@typeInfo(Tag).Enum.fields) |field| {
                 if (field.value == @intFromEnum(self.variant)) {
-                    return @field(self.variant, field.name).localIntersect(allocator, self.*, self._saved_ray.?);
+                    return @field(self.variant, field.name).localIntersect(allocator, self, self._saved_ray.?);
                 }
             }
 
@@ -183,7 +185,9 @@ fn TestShape(comptime T: type) type {
             return .{};
         }
 
-        fn localIntersect(self: Self, allocator: Allocator, super: Shape(T), ray: Ray(T)) !Intersections(T) {
+        fn localIntersect(
+            self: Self, allocator: Allocator, super: *const Shape(T), ray: Ray(T)
+        ) !Intersections(T) {
             _ = self;
             _ = super;
             _ = ray;
@@ -229,12 +233,12 @@ test "Hit" {
         var s = Shape(f32).sphere();
         var xs = Intersections(f32).init(allocator);
         defer xs.deinit();
-        try xs.append(Intersection(f32).new(1.0, s));
-        try xs.append(Intersection(f32).new(2.0, s));
+        try xs.append(Intersection(f32).new(1.0, &s));
+        try xs.append(Intersection(f32).new(2.0, &s));
         sortIntersections(f32, xs.items);
 
         try testing.expectEqual(
-            xs.items[hit(f32, xs.items).?], Intersection(f32).new(1.0, s)
+            xs.items[hit(f32, xs.items).?], Intersection(f32).new(1.0, &s)
         );
     }
 
@@ -242,12 +246,12 @@ test "Hit" {
         var s = Shape(f32).sphere();
         var xs = Intersections(f32).init(allocator);
         defer xs.deinit();
-        try xs.append(Intersection(f32).new(-1.0, s));
-        try xs.append(Intersection(f32).new(1.0, s));
+        try xs.append(Intersection(f32).new(-1.0, &s));
+        try xs.append(Intersection(f32).new(1.0, &s));
         sortIntersections(f32, xs.items);
 
         try testing.expectEqual(
-            xs.items[hit(f32, xs.items).?], Intersection(f32).new(1.0, s)
+            xs.items[hit(f32, xs.items).?], Intersection(f32).new(1.0, &s)
         );
     }
 
@@ -255,8 +259,8 @@ test "Hit" {
         var s = Shape(f32).sphere();
         var xs = Intersections(f32).init(allocator);
         defer xs.deinit();
-        try xs.append(Intersection(f32).new(-2.0, s));
-        try xs.append(Intersection(f32).new(-1.0, s));
+        try xs.append(Intersection(f32).new(-2.0, &s));
+        try xs.append(Intersection(f32).new(-1.0, &s));
         sortIntersections(f32, xs.items);
 
         try testing.expectEqual(hit(f32, xs.items), null);
@@ -266,14 +270,14 @@ test "Hit" {
         var s = Shape(f32).sphere();
         var xs = Intersections(f32).init(allocator);
         defer xs.deinit();
-        try xs.append(Intersection(f32).new(5.0, s));
-        try xs.append(Intersection(f32).new(7.0, s));
-        try xs.append(Intersection(f32).new(-3.0, s));
-        try xs.append(Intersection(f32).new(2.0, s));
+        try xs.append(Intersection(f32).new(5.0, &s));
+        try xs.append(Intersection(f32).new(7.0, &s));
+        try xs.append(Intersection(f32).new(-3.0, &s));
+        try xs.append(Intersection(f32).new(2.0, &s));
         sortIntersections(f32, xs.items);
 
         try testing.expectEqual(
-            xs.items[hit(f32, xs.items).?], Intersection(f32).new(2.0, s)
+            xs.items[hit(f32, xs.items).?], Intersection(f32).new(2.0, &s)
         );
     }
 }
@@ -294,12 +298,12 @@ fn testRefraction(comptime T: type, allocator: Allocator, i: usize, n1: T, n2: T
     const r = Ray(T).new(Tuple(T).point(0.0, 0.0, -4.0), Tuple(T).vec3(0.0, 0.0, 1.0));
     var xs = Intersections(T).init(allocator);
     defer xs.deinit();
-    try xs.append(Intersection(T).new(2.0, a));
-    try xs.append(Intersection(T).new(2.75, b));
-    try xs.append(Intersection(T).new(3.25, c));
-    try xs.append(Intersection(T).new(4.75, b));
-    try xs.append(Intersection(T).new(5.25, c));
-    try xs.append(Intersection(T).new(6.0, a));
+    try xs.append(Intersection(T).new(2.0, &a));
+    try xs.append(Intersection(T).new(2.75, &b));
+    try xs.append(Intersection(T).new(3.25, &c));
+    try xs.append(Intersection(T).new(4.75, &b));
+    try xs.append(Intersection(T).new(5.25, &c));
+    try xs.append(Intersection(T).new(6.0, &a));
 
     const comps = try PreComputations(T).new(allocator, xs.items[i], r, xs);
 

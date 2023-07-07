@@ -47,7 +47,9 @@ pub fn Cube(comptime T: type) type {
             return [_]T {tmin, tmax};
         }
 
-        pub fn localIntersect(self: Self, allocator: Allocator, super: Shape(T), ray: Ray(T)) !Intersections(T) {
+        pub fn localIntersect(
+            self: Self, allocator: Allocator, super: *const Shape(T), ray: Ray(T)
+        ) !Intersections(T) {
             _ = self;
 
             const xt = Self.checkAxis(ray.origin.x, ray.direction.x);

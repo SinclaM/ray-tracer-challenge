@@ -21,7 +21,9 @@ pub fn Sphere(comptime T: type) type {
     return struct {
         const Self = @This();
 
-        pub fn localIntersect(self: Self, allocator: Allocator, super: Shape(T), ray: Ray(T)) !Intersections(T) {
+        pub fn localIntersect(
+            self: Self, allocator: Allocator, super: *const Shape(T), ray: Ray(T)
+        ) !Intersections(T) {
             _ = self;
             const sphere_to_ray = ray.origin.sub(Tuple(T).point(0.0, 0.0, 0.0));
 
@@ -68,8 +70,8 @@ test "Intersections" {
         var second = xs.items[1];
         try testing.expectApproxEqAbs(first.t, 4.0, tolerance);
         try testing.expectApproxEqAbs(second.t, 6.0, tolerance);
-        try testing.expectEqual(first.object, s);
-        try testing.expectEqual(second.object, s);
+        try testing.expectEqual(first.object, &s);
+        try testing.expectEqual(second.object, &s);
     }
 
     {
@@ -84,8 +86,8 @@ test "Intersections" {
         var second = xs.items[1];
         try testing.expectApproxEqAbs(first.t, 5.0, tolerance);
         try testing.expectApproxEqAbs(second.t, 5.0, tolerance);
-        try testing.expectEqual(first.object, s);
-        try testing.expectEqual(second.object, s);
+        try testing.expectEqual(first.object, &s);
+        try testing.expectEqual(second.object, &s);
     }
 
     {
@@ -109,8 +111,8 @@ test "Intersections" {
         var second = xs.items[1];
         try testing.expectApproxEqAbs(first.t, -1.0, tolerance);
         try testing.expectApproxEqAbs(second.t, 1.0, tolerance);
-        try testing.expectEqual(first.object, s);
-        try testing.expectEqual(second.object, s);
+        try testing.expectEqual(first.object, &s);
+        try testing.expectEqual(second.object, &s);
     }
 
     {
@@ -125,8 +127,8 @@ test "Intersections" {
         var second = xs.items[1];
         try testing.expectApproxEqAbs(first.t, -6.0, tolerance);
         try testing.expectApproxEqAbs(second.t, -4.0, tolerance);
-        try testing.expectEqual(first.object, s);
-        try testing.expectEqual(second.object, s);
+        try testing.expectEqual(first.object, &s);
+        try testing.expectEqual(second.object, &s);
     }
 
     {
@@ -142,8 +144,8 @@ test "Intersections" {
         var second = xs.items[1];
         try testing.expectApproxEqAbs(first.t, 3.0, tolerance);
         try testing.expectApproxEqAbs(second.t, 7.0, tolerance);
-        try testing.expectEqual(first.object, s);
-        try testing.expectEqual(second.object, s);
+        try testing.expectEqual(first.object, &s);
+        try testing.expectEqual(second.object, &s);
     }
 
     {

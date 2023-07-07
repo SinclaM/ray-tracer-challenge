@@ -226,7 +226,7 @@ pub fn PreComputations(comptime T: type) type {
 
 
             // No BTree in the zig stdlib unfortunately.
-            var containers = try ArrayList(Shape(T)).initCapacity(allocator, xs.items.len);
+            var containers = try ArrayList(*const Shape(T)).initCapacity(allocator, xs.items.len);
             defer containers.deinit();
 
             var n1: T = 1.0;
@@ -314,7 +314,7 @@ test "PreComputations" {
     {
         const r = Ray(f32).new(Tuple(f32).point(0.0, 0.0, -5.0), Tuple(f32).vec3(0.0, 0.0, 1.0));
         const shape = Shape(f32).sphere();
-        const i = Intersection(f32).new(4.0, shape);
+        const i = Intersection(f32).new(4.0, &shape);
         var xs = Intersections(f32).init(allocator);
         defer xs.deinit();
         try xs.append(i);
@@ -331,7 +331,7 @@ test "PreComputations" {
     {
         const r = Ray(f32).new(Tuple(f32).point(0.0, 0.0, 0.0), Tuple(f32).vec3(0.0, 0.0, 1.0));
         const shape = Shape(f32).sphere();
-        const i =  Intersection(f32).new(1.0, shape);
+        const i =  Intersection(f32).new(1.0, &shape);
         var xs = Intersections(f32).init(allocator);
         defer xs.deinit();
         try xs.append(i);
@@ -349,7 +349,7 @@ test "PreComputations" {
         const r = Ray(f32).new(Tuple(f32).point(0.0, 0.0, -5.0), Tuple(f32).vec3(0.0, 0.0, 1.0));
         var shape = Shape(f32).sphere();
         try shape.setTransform(Matrix(f32, 4).identity().translate(0.0, 0.0, 1.0));
-        const i =  Intersection(f32).new(5.0, shape);
+        const i =  Intersection(f32).new(5.0, &shape);
         var xs = Intersections(f32).init(allocator);
         defer xs.deinit();
         try xs.append(i);
@@ -364,7 +364,7 @@ test "PreComputations" {
         const r = Ray(f32).new(Tuple(f32).point(0.0, 0.0, -5.0), Tuple(f32).vec3(0.0, 0.0, 1.0));
         var shape = Shape(f32).glass_sphere();
         try shape.setTransform(Matrix(f32, 4).identity().translate(0.0, 0.0, 1.0));
-        const i =  Intersection(f32).new(5.0, shape);
+        const i =  Intersection(f32).new(5.0, &shape);
         var xs = Intersections(f32).init(allocator);
         defer xs.deinit();
         try xs.append(i);
@@ -385,7 +385,7 @@ test "Shading" {
 
         const r = Ray(f32).new(Tuple(f32).point(0.0, 0.0, -5.0), Tuple(f32).vec3(0.0, 0.0, 1.0));
         const shape = w.objects.items[0];
-        const i = Intersection(f32).new(4.0, shape);
+        const i = Intersection(f32).new(4.0, &shape);
         var xs = Intersections(f32).init(allocator);
         defer xs.deinit();
         try xs.append(i);
@@ -405,7 +405,7 @@ test "Shading" {
 
         const r = Ray(f32).new(Tuple(f32).point(0.0, 0.0, 0.0), Tuple(f32).vec3(0.0, 0.0, 1.0));
         const shape = w.objects.items[1];
-        const i = Intersection(f32).new(0.5, shape);
+        const i = Intersection(f32).new(0.5, &shape);
         var xs = Intersections(f32).init(allocator);
         defer xs.deinit();
         try xs.append(i);
@@ -431,7 +431,7 @@ test "Shading" {
         try w.objects.append(s2);
 
         const r = Ray(f32).new(Tuple(f32).point(0.0, 0.0, 5.0), Tuple(f32).vec3(0.0, 0.0, 1.0));
-        const i = Intersection(f32).new(4.0, s2);
+        const i = Intersection(f32).new(4.0, &s2);
         var xs = Intersections(f32).init(allocator);
         defer xs.deinit();
         try xs.append(i);
@@ -485,7 +485,7 @@ test "Coloring" {
 
         try testing.expect(
             (try w.colorAt(allocator, r, 3))
-                .approxEqual(inner.material.pattern.patternAtShape(inner.*, point))
+                .approxEqual(inner.material.pattern.patternAtShape(inner, point))
         );
     }
 }
@@ -533,7 +533,7 @@ test "Reflections" {
         );
 
         var shape = Shape(f32).plane();
-        const i =  Intersection(f32).new(@sqrt(2.0), shape);
+        const i =  Intersection(f32).new(@sqrt(2.0), &shape);
         var xs = Intersections(f32).init(allocator);
         defer xs.deinit();
         try xs.append(i);
@@ -549,7 +549,7 @@ test "Reflections" {
         const r = Ray(f32).new(Tuple(f32).point(0.0, 1.0, 0.0), Tuple(f32).vec3(0.0, 0.0, 1.0));
 
         var shape = w.objects.items[1];
-        const i =  Intersection(f32).new(1.0, shape);
+        const i =  Intersection(f32).new(1.0, &shape);
         var xs = Intersections(f32).init(allocator);
         defer xs.deinit();
         try xs.append(i);
@@ -573,7 +573,7 @@ test "Reflections" {
             Tuple(f32).point(0.0, 0.0, -3.0), Tuple(f32).vec3(0.0, -1.0 / @sqrt(2.0), 1.0 / @sqrt(2.0))
         );
 
-        const i =  Intersection(f32).new(@sqrt(2.0), shape);
+        const i =  Intersection(f32).new(@sqrt(2.0), &shape);
 
         var xs = Intersections(f32).init(allocator);
         defer xs.deinit();
@@ -596,7 +596,7 @@ test "Reflections" {
             Tuple(f32).point(0.0, 0.0, -3.0), Tuple(f32).vec3(0.0, -1.0 / @sqrt(2.0), 1.0 / @sqrt(2.0))
         );
 
-        const i =  Intersection(f32).new(@sqrt(2.0), shape);
+        const i =  Intersection(f32).new(@sqrt(2.0), &shape);
 
         var xs = Intersections(f32).init(allocator);
         defer xs.deinit();
@@ -620,7 +620,7 @@ test "Reflections" {
             Tuple(f32).point(0.0, 0.0, -3.0), Tuple(f32).vec3(0.0, -1.0 / @sqrt(2.0), 1.0 / @sqrt(2.0))
         );
 
-        const i =  Intersection(f32).new(@sqrt(2.0), shape);
+        const i =  Intersection(f32).new(@sqrt(2.0), &shape);
 
         var xs = Intersections(f32).init(allocator);
         defer xs.deinit();
@@ -666,7 +666,7 @@ test "Reflections" {
             Tuple(f32).point(0.0, 0.0, -3.0), Tuple(f32).vec3(0.0, -1.0 / @sqrt(2.0), 1.0 / @sqrt(2.0))
         );
 
-        const i =  Intersection(f32).new(@sqrt(2.0), shape);
+        const i =  Intersection(f32).new(@sqrt(2.0), &shape);
 
         var xs = Intersections(f32).init(allocator);
         defer xs.deinit();
@@ -691,8 +691,8 @@ test "Refraction base cases" {
         var xs = Intersections(f32).init(allocator);
         defer xs.deinit();
 
-        try xs.append(Intersection(f32).new(4.0, shape));
-        try xs.append(Intersection(f32).new(6.0, shape));
+        try xs.append(Intersection(f32).new(4.0, &shape));
+        try xs.append(Intersection(f32).new(6.0, &shape));
 
         const comps = try PreComputations(f32).new(allocator, xs.items[0], r, xs);
         const c = try w.refractedColor(allocator, comps, 3);
@@ -712,8 +712,8 @@ test "Refraction base cases" {
         var xs = Intersections(f32).init(allocator);
         defer xs.deinit();
 
-        try xs.append(Intersection(f32).new(4.0, shape));
-        try xs.append(Intersection(f32).new(6.0, shape));
+        try xs.append(Intersection(f32).new(4.0, &shape));
+        try xs.append(Intersection(f32).new(6.0, &shape));
 
         const comps = try PreComputations(f32).new(allocator, xs.items[0], r, xs);
         const c = try w.refractedColor(allocator, comps, 0);
@@ -735,8 +735,8 @@ test "Total internal reflection" {
 
     var xs = Intersections(f32).init(allocator);
     defer xs.deinit();
-    try xs.append(Intersection(f32).new(- 1.0 / @sqrt(2.0), shape));
-    try xs.append(Intersection(f32).new(1.0 / @sqrt(2.0), shape));
+    try xs.append(Intersection(f32).new(- 1.0 / @sqrt(2.0), &shape));
+    try xs.append(Intersection(f32).new(1.0 / @sqrt(2.0), &shape));
 
     const comps = try PreComputations(f32).new(allocator, xs.items[1], r, xs);
     const c = try w.refractedColor(allocator, comps, 5);
@@ -763,10 +763,10 @@ test "Recursive refraction" {
 
         var xs = Intersections(f32).init(allocator);
         defer xs.deinit();
-        try xs.append(Intersection(f32).new(-0.9899, a.*));
-        try xs.append(Intersection(f32).new(-0.4899, b.*));
-        try xs.append(Intersection(f32).new(0.4899, b.*));
-        try xs.append(Intersection(f32).new(0.9899, a.*));
+        try xs.append(Intersection(f32).new(-0.9899, &a.*));
+        try xs.append(Intersection(f32).new(-0.4899, &b.*));
+        try xs.append(Intersection(f32).new(0.4899, &b.*));
+        try xs.append(Intersection(f32).new(0.9899, &a.*));
 
         const comps = try PreComputations(f32).new(allocator, xs.items[2], r, xs);
         const c = try w.refractedColor(allocator, comps, 5);
@@ -797,7 +797,7 @@ test "Recursive refraction" {
 
         var xs = Intersections(f32).init(allocator);
         defer xs.deinit();
-        try xs.append(Intersection(f32).new(@sqrt(2.0), floor));
+        try xs.append(Intersection(f32).new(@sqrt(2.0), &floor));
         const comps = try PreComputations(f32).new(allocator, xs.items[0], r, xs);
 
         const color = try w.shadeHit(allocator, comps, 5);
@@ -817,8 +817,8 @@ test "Schlick" {
         );
         var xs = Intersections(f32).init(allocator);
         defer xs.deinit();
-        try xs.append(Intersection(f32).new(-1.0 / @sqrt(2.0), shape));
-        try xs.append(Intersection(f32).new(1.0 / @sqrt(2.0), shape));
+        try xs.append(Intersection(f32).new(-1.0 / @sqrt(2.0), &shape));
+        try xs.append(Intersection(f32).new(1.0 / @sqrt(2.0), &shape));
 
         const comps = try PreComputations(f32).new(allocator, xs.items[1], r, xs);
         const reflectance = comps.schlick();
@@ -833,8 +833,8 @@ test "Schlick" {
         );
         var xs = Intersections(f32).init(allocator);
         defer xs.deinit();
-        try xs.append(Intersection(f32).new(-1.0, shape));
-        try xs.append(Intersection(f32).new(1.0, shape));
+        try xs.append(Intersection(f32).new(-1.0, &shape));
+        try xs.append(Intersection(f32).new(1.0, &shape));
 
         const comps = try PreComputations(f32).new(allocator, xs.items[1], r, xs);
         const reflectance = comps.schlick();
@@ -849,7 +849,7 @@ test "Schlick" {
         );
         var xs = Intersections(f32).init(allocator);
         defer xs.deinit();
-        try xs.append(Intersection(f32).new(1.8589, shape));
+        try xs.append(Intersection(f32).new(1.8589, &shape));
 
         const comps = try PreComputations(f32).new(allocator, xs.items[0], r, xs);
         const reflectance = comps.schlick();
@@ -882,7 +882,7 @@ test "Schlick" {
         var xs = Intersections(f32).init(allocator);
         defer xs.deinit();
 
-        try xs.append(Intersection(f32).new(@sqrt(2.0), floor));
+        try xs.append(Intersection(f32).new(@sqrt(2.0), &floor));
         const comps = try PreComputations(f32).new(allocator, xs.items[0], r, xs);
 
         const color = try w.shadeHit(allocator, comps, 5);

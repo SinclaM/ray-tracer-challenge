@@ -117,7 +117,7 @@ pub fn Pattern(comptime T: type) type {
         /// Determines the pattern's color at the point `world_point` in world space.
         ///
         /// Assumes `world_point` is a point.
-        pub fn patternAtShape(self: Self, shape: Shape(T), world_point: Tuple(T)) Color(T) {
+        pub fn patternAtShape(self: Self, shape: *const Shape(T), world_point: Tuple(T)) Color(T) {
             const object_point = shape._inverse_transform.tupleMul(world_point);
             return self.patternAt(object_point);
         }
@@ -146,7 +146,7 @@ test "TestPattern" {
         var shape = Shape(f32).sphere();
         try shape.setTransform(Matrix(f32, 4).identity().scale(2.0, 2.0, 2.0));
         const pattern = Pattern(f32).testPattern();
-        const c = pattern.patternAtShape(shape, Tuple(f32).point(2.0, 3.0, 4.0));
+        const c = pattern.patternAtShape(&shape, Tuple(f32).point(2.0, 3.0, 4.0));
         try testing.expect(c.approxEqual(Color(f32).new(1.0, 1.5, 2.0)));
     }
 
@@ -154,7 +154,7 @@ test "TestPattern" {
         const shape = Shape(f32).sphere();
         var pattern = Pattern(f32).testPattern();
         try pattern.setTransform(Matrix(f32, 4).identity().scale(2.0, 2.0, 2.0));
-        const c = pattern.patternAtShape(shape, Tuple(f32).point(2.0, 3.0, 4.0));
+        const c = pattern.patternAtShape(&shape, Tuple(f32).point(2.0, 3.0, 4.0));
         try testing.expect(c.approxEqual(Color(f32).new(1.0, 1.5, 2.0)));
     }
 
@@ -163,7 +163,7 @@ test "TestPattern" {
         try shape.setTransform(Matrix(f32, 4).identity().scale(2.0, 2.0, 2.0));
         var pattern = Pattern(f32).testPattern();
         try pattern.setTransform(Matrix(f32, 4).identity().translate(0.5, 1.0, 1.5));
-        const c = pattern.patternAtShape(shape, Tuple(f32).point(2.5, 3.0, 3.5));
+        const c = pattern.patternAtShape(&shape, Tuple(f32).point(2.5, 3.0, 3.5));
         try testing.expect(c.approxEqual(Color(f32).new(0.75, 0.5, 0.25)));
     }
 }
