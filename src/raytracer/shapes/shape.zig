@@ -229,30 +229,34 @@ test "Hit" {
         var s = Shape(f32).sphere();
         var xs = Intersections(f32).init(allocator);
         defer xs.deinit();
-        try xs.append(.{ .t = 1.0, .object = s});
-        try xs.append(.{ .t = 2.0, .object = s});
+        try xs.append(Intersection(f32).new(1.0, s));
+        try xs.append(Intersection(f32).new(2.0, s));
         sortIntersections(f32, xs.items);
 
-        try testing.expectEqual(xs.items[hit(f32, xs.items).?], .{ .t = 1.0, .object = s});
+        try testing.expectEqual(
+            xs.items[hit(f32, xs.items).?], Intersection(f32).new(1.0, s)
+        );
     }
 
     {
         var s = Shape(f32).sphere();
         var xs = Intersections(f32).init(allocator);
         defer xs.deinit();
-        try xs.append(.{ .t = -1.0, .object = s});
-        try xs.append(.{ .t = 1.0, .object = s});
+        try xs.append(Intersection(f32).new(-1.0, s));
+        try xs.append(Intersection(f32).new(1.0, s));
         sortIntersections(f32, xs.items);
 
-        try testing.expectEqual(xs.items[hit(f32, xs.items).?], .{ .t = 1.0, .object = s});
+        try testing.expectEqual(
+            xs.items[hit(f32, xs.items).?], Intersection(f32).new(1.0, s)
+        );
     }
 
     {
         var s = Shape(f32).sphere();
         var xs = Intersections(f32).init(allocator);
         defer xs.deinit();
-        try xs.append(.{ .t = -2.0, .object = s});
-        try xs.append(.{ .t = -1.0, .object = s});
+        try xs.append(Intersection(f32).new(-2.0, s));
+        try xs.append(Intersection(f32).new(-1.0, s));
         sortIntersections(f32, xs.items);
 
         try testing.expectEqual(hit(f32, xs.items), null);
@@ -262,13 +266,15 @@ test "Hit" {
         var s = Shape(f32).sphere();
         var xs = Intersections(f32).init(allocator);
         defer xs.deinit();
-        try xs.append(.{ .t = 5.0, .object = s});
-        try xs.append(.{ .t = 7.0, .object = s});
-        try xs.append(.{ .t = -3.0, .object = s});
-        try xs.append(.{ .t = 2.0, .object = s});
+        try xs.append(Intersection(f32).new(5.0, s));
+        try xs.append(Intersection(f32).new(7.0, s));
+        try xs.append(Intersection(f32).new(-3.0, s));
+        try xs.append(Intersection(f32).new(2.0, s));
         sortIntersections(f32, xs.items);
 
-        try testing.expectEqual(xs.items[hit(f32, xs.items).?], .{ .t = 2.0, .object = s});
+        try testing.expectEqual(
+            xs.items[hit(f32, xs.items).?], Intersection(f32).new(2.0, s)
+        );
     }
 }
 

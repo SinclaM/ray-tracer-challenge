@@ -314,7 +314,7 @@ test "PreComputations" {
     {
         const r = Ray(f32).new(Tuple(f32).point(0.0, 0.0, -5.0), Tuple(f32).vec3(0.0, 0.0, 1.0));
         const shape = Shape(f32).sphere();
-        const i: Intersection(f32) = .{ .t = 4, .object = shape };
+        const i = Intersection(f32).new(4.0, shape);
         var xs = Intersections(f32).init(allocator);
         defer xs.deinit();
         try xs.append(i);
