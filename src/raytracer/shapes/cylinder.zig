@@ -1,6 +1,7 @@
 const std = @import("std");
 const testing = std.testing;
 const Allocator = std.mem.Allocator;
+const inf = std.math.inf;
 
 const Tuple = @import("../tuple.zig").Tuple;
 const Matrix = @import("../matrix.zig").Matrix;
@@ -21,6 +22,9 @@ pub fn Cylinder(comptime T: type) type {
     return struct {
         const Self = @This();
         const tolerance: T = 1e-4;
+
+        min: T = -inf(T),
+        max: T = inf(T),
 
         pub fn localIntersect(
             self: Self, allocator: Allocator, super: *const Shape(T), ray: Ray(T)
@@ -142,4 +146,27 @@ test "Normal vector on a cylinder" {
     try testNormalOnCylinder (
         f32, Tuple(f32).point(-1.0, 1.0, 0.0), Tuple(f32).vec3(-1.0, 0.0, 0.0)
     );
+}
+
+test "The default minimum and maximum value for a cylinder" {
+    const cyl = Cylinder(f32) {};
+
+    try testing.expectEqual(cyl.min, -inf(f32));
+    try testing.expectEqual(cyl.max, inf(f32));
+}
+
+fn testRayIntersectsTruncatedCylinder(
+    comptime T: type, allocator: Allocator, origin: Tuple(T), direction: Tuple(T), count: usize
+) !void {
+    var cyl = Shape(T).cylinder();
+
+    cyl.variant.cylinder.min = 1.0;
+    cyl.variant.cylinder.max = 2.0;
+
+    const r = Ray(T).new(origin, direction.normalized());
+
+    const xs = try cyl.intersect(allocator, r);
+    defer xs.deinit();
+
+    try testing.expectEqual(xs.items.len, count);
 }
