@@ -9,6 +9,7 @@ const Material = @import("../material.zig").Material;
 const Ray = @import("../ray.zig").Ray;
 const Sphere = @import("sphere.zig").Sphere;
 const Cube = @import("cube.zig").Cube;
+const Cylinder = @import("cylinder.zig").Cylinder;
 const Plane = @import("plane.zig").Plane;
 const PreComputations = @import("../world.zig").PreComputations;
 
@@ -76,6 +77,7 @@ pub fn Shape(comptime T: type) type {
             test_shape: TestShape(T),
             sphere: Sphere(T),
             cube: Cube(T),
+            cylinder: Cylinder(T),
             plane: Plane(T),
         };
 
@@ -121,6 +123,11 @@ pub fn Shape(comptime T: type) type {
         /// Creates a new cube.
         pub fn cube() Self {
             return Self.new(Self.Variant { .cube = Cube(T) {} });
+        }
+
+        /// Creates a new cylinder.
+        pub fn cylinder() Self {
+            return Self.new(Self.Variant { .cylinder = Cylinder(T) {} });
         }
 
         /// Creates a new plane.

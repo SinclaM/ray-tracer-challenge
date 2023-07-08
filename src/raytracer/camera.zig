@@ -81,7 +81,7 @@ pub fn Camera(comptime T: type) type {
             // TODO: An fba is every so slightly faster than an arena here, but is
             // more susceptible to OOM. I should probably just use the arena for
             // generality.
-            var buffer = try allocator.alloc(u8, 1024 * 16);
+            var buffer = try allocator.alloc(u8, 1024 * 128);
             defer allocator.free(buffer);
             var fba = std.heap.FixedBufferAllocator.init(buffer);
 

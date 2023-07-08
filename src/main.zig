@@ -11,17 +11,18 @@ const fresnel = @import("examples/fresnel.zig");
 const parseScene = @import("parser/parser.zig").parseScene;
 
 pub fn main() !void {
-    try projectile.simulate();
-    try clock.drawHours();
-    try silhouette.drawSilhouette();
-    try sphere.drawSphere();
-    try simple_world.renderSimpleWorld();
-    try simple_superflat.renderSimpleSuperflat();
-    try fresnel.renderFresnel();
+    //try projectile.simulate();
+    //try clock.drawHours();
+    //try silhouette.drawSilhouette();
+    //try sphere.drawSphere();
+    //try simple_world.renderSimpleWorld();
+    //try simple_superflat.renderSimpleSuperflat();
+    //try fresnel.renderFresnel();
 
     const scenes_to_render = [_][]const u8 {
         "ch11_reflection_and_refraction",
-        "cover"
+        //"cover"
+        //"ch12_cube"
     };
 
     inline for (scenes_to_render) |scene| {
