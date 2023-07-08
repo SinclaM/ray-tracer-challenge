@@ -32,7 +32,7 @@ pub fn main() !void {
         // Don't use an arena for the main rendering allocator, though,
         // since there are many small allocs and frees made for intersections
         // during the render (TODO: they probably aren't even necessary).
-        var arena = std.heap.ArenaAllocator.init(std.heap.c_allocator);
+        var arena = std.heap.ArenaAllocator.init(std.heap.raw_c_allocator);
         defer arena.deinit();
         const arena_allocator = arena.allocator();
 
@@ -40,9 +40,9 @@ pub fn main() !void {
         const scene_info = blk: {
             // Read in the json data for the scene. Could use `@embedFile` here.
             const scene_data = try std.fs.cwd().readFileAlloc(
-                std.heap.c_allocator, "scenes/" ++ scene ++ ".json", 65536
+                std.heap.raw_c_allocator, "scenes/" ++ scene ++ ".json", 65536
             );
-            defer std.heap.c_allocator.free(scene_data);
+            defer std.heap.raw_c_allocator.free(scene_data);
             break :blk try parseScene(f64, arena_allocator, scene_data);
         };
 
@@ -50,12 +50,12 @@ pub fn main() !void {
         const world = &scene_info.world;
 
         // Do the ray tracing.
-        const canvas = try camera.render(std.heap.c_allocator, world.*);
+        const canvas = try camera.render(std.heap.raw_c_allocator, world.*);
         defer canvas.destroy();
 
         // Get the PPM data.
-        const ppm = try canvas.ppm(std.heap.c_allocator);
-        defer std.heap.c_allocator.free(ppm);
+        const ppm = try canvas.ppm(std.heap.raw_c_allocator);
+        defer std.heap.raw_c_allocator.free(ppm);
 
         // Save the image.
         const file = try std.fs.cwd().createFile(

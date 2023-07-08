@@ -77,11 +77,20 @@ pub fn Camera(comptime T: type) type {
         /// Destroy the canvas with `Canvas.destroy`.
         pub fn render(self: Self, allocator: Allocator, world: World(T)) !Canvas(T) {
             var image = try Canvas(T).new(allocator, self.hsize, self.vsize);
+
+            // TODO: An fba is every so slightly faster than an arena here, but is
+            // more susceptible to OOM. I should probably just use the arena for
+            // generality.
+            var buffer = try allocator.alloc(u8, 1024 * 16);
+            defer allocator.free(buffer);
+            var fba = std.heap.FixedBufferAllocator.init(buffer);
+
             for (0..self.hsize) |x| {
                 for (0..self.vsize) |y| {
                     const ray = self.rayForPixel(x, y);
-                    const color = try world.colorAt(allocator, ray, 5);
+                    const color = try world.colorAt(fba.allocator(), ray, 5);
                     image.getPixelPointer(x, y).?.* = color;
+                    fba.reset();
                 }
             }
 
