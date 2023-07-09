@@ -5,6 +5,8 @@ const Canvas = @import("raytracer/canvas.zig").Canvas;
 const parseScene = @import("parser/parser.zig").parseScene;
 const SceneInfo = @import("parser/parser.zig").SceneInfo;
 
+const clamp = @import("raytracer/color.zig").clamp;
+
 const Imports = struct {
     extern fn jsConsoleLogWrite(ptr: [*]const u8, len: usize) void;
     extern fn jsConsoleLogFlush() void;
@@ -34,32 +36,41 @@ pub fn Renderer(comptime T: type) type {
 
         allocator: Allocator,
         scene_info: SceneInfo(T),
-        image: Canvas(T),
+        pixels: []u8,
         current_y: usize = 0,
 
         fn new(allocator: Allocator, scene: []const u8) !Self {
             // Parse the scene description.
             const scene_info = try parseScene(T, allocator, scene);
 
-            const image = try Canvas(T).new(allocator, scene_info.camera.hsize, scene_info.camera.vsize);
+            const pixels = try allocator.alloc(u8, 4 * scene_info.camera.hsize * scene_info.camera.vsize);
+
+            for (0..scene_info.camera.hsize) |x| {
+                for (0..scene_info.camera.vsize) |y| {
+                    pixels[(y * scene_info.camera.hsize + x) * 4] = 0;
+                    pixels[(y * scene_info.camera.hsize + x) * 4 + 1] = 0;
+                    pixels[(y * scene_info.camera.hsize + x) * 4 + 2] = 0;
+                    pixels[(y * scene_info.camera.hsize + x) * 4 + 3] = 255;
+                }
+            }
 
             return .{
                 .allocator = allocator,
                 .scene_info = scene_info,
-                .image = image,
+                .pixels = pixels,
             }; 
         }
 
         fn destroy(self: *Self) void {
-            // TODO: free scene_info
-            self.image.destroy();
+            self.allocator.free(self.pixels);
+            self.scene_info.world.destroy();
         }
 
-        fn getCanvasInfo(self: Self) CanvasInfo(T) {
+        fn getCanvasInfo(self: Self) CanvasInfo {
             return .{
-                .pixels = @ptrCast(self.image.pixels.ptr),
-                .width = self.image.width,
-                .height = self.image.height,
+                .pixels = @ptrCast(self.pixels.ptr),
+                .width = self.scene_info.camera.hsize,
+                .height = self.scene_info.camera.vsize,
             };
         }
 
@@ -78,7 +89,12 @@ pub fn Renderer(comptime T: type) type {
                 for (self.current_y..@min(self.current_y + num_rows, camera.vsize)) |y| {
                     const ray = camera.rayForPixel(x, y);
                     const color = try world.colorAt(fba.allocator(), ray, 5);
-                    self.image.getPixelPointer(x, y).?.* = color;
+
+                    self.pixels[(y * self.scene_info.camera.hsize + x) * 4] = clamp(T, color.r);
+                    self.pixels[(y * self.scene_info.camera.hsize + x) * 4 + 1] = clamp(T, color.g);
+                    self.pixels[(y * self.scene_info.camera.hsize + x) * 4 + 2] = clamp(T, color.b);
+                    self.pixels[(y * self.scene_info.camera.hsize + x) * 4 + 3] = 255;
+
                     fba.reset();
                 }
             }
@@ -91,13 +107,11 @@ pub fn Renderer(comptime T: type) type {
     };
 }
 
-pub fn CanvasInfo(comptime T: type) type {
-    return extern struct {
-        pixels: [*]const T,
-        width: usize,
-        height: usize,
-    };
-}
+const CanvasInfo =  extern struct {
+    pixels: [*]const u8,
+    width: usize,
+    height: usize,
+};
 
 export fn wasmAlloc(length: usize) [*]const u8 {
     const slice = std.heap.wasm_allocator.alloc(u8, length) catch
@@ -107,7 +121,7 @@ export fn wasmAlloc(length: usize) [*]const u8 {
 
 var renderer: ?Renderer(f64) = null;
 
-export fn initRenderer(scene_ptr: [*:0]const u8) [*]const f64 {
+export fn initRenderer(scene_ptr: [*:0]const u8) [*]const u8 {
     const allocator = std.heap.wasm_allocator;
 
     const scene = std.mem.span(scene_ptr);

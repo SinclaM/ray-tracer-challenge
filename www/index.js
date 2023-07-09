@@ -22,32 +22,18 @@ let wasm = {
         canvas.height = height;
 
         this.pixels = () =>
-            new Float64Array(
+            new Uint8ClampedArray(
                 this.instance.exports.memory.buffer,
                 ptr,
-                width * height * 3
+                width * height * 4
             );
     },
-    drawCanvas: function (current_y, dy) {
+    drawCanvas: function () {
         const ctx = canvas.getContext("2d");
 
-        const pixels = this.pixels();
-
-        for (
-            let y = current_y;
-            y < Math.max(current_y + dy, canvas.height);
-            y++
-        ) {
-            for (let x = 0; x < canvas.width; x++) {
-                const i = y * canvas.width + x;
-                const [r, g, b] = pixels
-                    .slice(i * 3, i * 3 + 3)
-                    .map((v) => clamp(v));
-
-                ctx.fillStyle = "rgba(" + r + ", " + g + ", " + b + ", 255)";
-                ctx.fillRect(x, y, 1, 1);
-            }
-        }
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        imageData.data.set(this.pixels());
+        ctx.putImageData(imageData, 0, 0);
     },
     // Convert a JavaScript string to a pointer to multi byte character array
     encodeString: function (string) {
@@ -91,14 +77,12 @@ const importObject = {
 
     wasm.attachCanvas(ptr, width, height);
 
-    let current_y = 0;
-    const dy = 50;
+    const dy = 10;
 
     const renderLoop = () => {
         const done = wasm.instance.exports.render(dy);
 
-        wasm.drawCanvas(current_y, dy);
-        current_y += dy;
+        wasm.drawCanvas();
 
         if (done) {
             wasm.instance.exports.deinitRenderer();
