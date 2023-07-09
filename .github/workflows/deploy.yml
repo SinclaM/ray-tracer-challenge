@@ -18,7 +18,7 @@ jobs:
       - name: Install Zig 🔧
         uses: korandoru/setup-zig@v1
         with:
-          zig-version: 0.11.0-dev.3932+17890f6b8
+          zig-version: master
 
       - name: Build 🏗️
         run: zig build -Dtarget=wasm32-freestanding -Doptimize=ReleaseFast
