@@ -2,3 +2,5 @@
 /zig-out
 /images
 .DS_Store
+/www/*.wasm
+/www/*.json

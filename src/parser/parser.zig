@@ -255,9 +255,13 @@ fn parseLight(comptime T: type, light: LightConfig(T)) Light(T) {
     return light_;
 }
 
+pub fn SceneInfo(comptime T: type) type {
+    return struct { camera: Camera(T), world: World(T) };
+}
+
 pub fn parseScene(
     comptime T: type, allocator: Allocator, scene_json: []const u8
-) !struct { camera: Camera(T), world: World(T) } {
+) !SceneInfo(T) {
     const parsed = try std.json.parseFromSlice(SceneConfig(T), allocator, scene_json, .{});
     defer parsed.deinit();
 
