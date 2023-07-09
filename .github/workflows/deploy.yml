@@ -1,0 +1,31 @@
+name: Build and Deploy to Github Pages
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+
+      - name: Install Zig 🔧
+        uses: korandoru/setup-zig@v1
+        with:
+          zig-version: 0.11.0-dev.3932+17890f6b8
+
+      - name: Build 🏗️
+        run: zig build -Dtarget=wasm32-freestanding -Doptimize=ReleaseFast
+
+      - name: Deploy to GH Pages 🚀
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.DEPLOY_TO_GITHUB_PAGES }}
+          publish_dir: public
+
