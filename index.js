@@ -76,12 +76,16 @@ const importObject = {
 
     cover_scene = await fetch("default-scene.json").then((r) => r.text());
 
-    const ptr = wasm.instance.exports.initRenderer(wasm.encodeString(cover_scene));
+    const ptr = wasm.instance.exports.initRenderer(
+        wasm.encodeString(cover_scene)
+    );
     const width = wasm.instance.exports.getWidth();
     const height = wasm.instance.exports.getHeight();
 
     const renderer_initialized = window.performance.now();
-    console.log(`Renderer initialized in ${renderer_initialized - wasm_initialized}ms`);
+    console.log(
+        `Renderer initialized in ${renderer_initialized - wasm_initialized}ms`
+    );
 
     wasm.attachCanvas(ptr, width, height);
 
@@ -96,7 +100,9 @@ const importObject = {
             wasm.instance.exports.deinitRenderer();
 
             const render_finised = window.performance.now();
-            console.log(`Render completed in ${render_finised - renderer_initialized}ms`);
+            console.log(
+                `Render completed in ${render_finised - renderer_initialized}ms`
+            );
             return;
         }
 
