@@ -28,8 +28,8 @@ pub fn build(b: *std.Build) void {
 
             b.installArtifact(lib);
 
-            std.fs.cwd().copyFile("scenes/cover.json", std.fs.cwd(), "www/cover.json", .{})
-                catch @panic("Could not copy cover scene into www/");
+            std.fs.cwd().copyFile("scenes/cover.json", std.fs.cwd(), "www/default-scene.json", .{})
+                catch @panic("Could not copy default scene into www/");
         }
     } else {
         const exe = b.addExecutable(.{

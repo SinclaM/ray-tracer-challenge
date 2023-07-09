@@ -50,7 +50,7 @@ pub fn Renderer(comptime T: type) type {
                     pixels[(y * scene_info.camera.hsize + x) * 4] = 0;
                     pixels[(y * scene_info.camera.hsize + x) * 4 + 1] = 0;
                     pixels[(y * scene_info.camera.hsize + x) * 4 + 2] = 0;
-                    pixels[(y * scene_info.camera.hsize + x) * 4 + 3] = 255;
+                    pixels[(y * scene_info.camera.hsize + x) * 4 + 3] = 0;
                 }
             }
 
