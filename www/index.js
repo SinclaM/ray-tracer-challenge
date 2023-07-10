@@ -68,7 +68,9 @@ let rendering = false;
 
 const render = () => {
     rendering = true;
-    scene = textarea.value;
+
+    const editor = ace.edit("scene-description");
+    scene = editor.getValue();
 
     const ptr = wasm.instance.exports.initRenderer(
         wasm.encodeString(scene)
@@ -89,12 +91,14 @@ const render = () => {
 
         if (done) {
             wasm.instance.exports.deinitRenderer();
-            rendering = false;
 
             const render_finised = window.performance.now();
             console.log(
                 `Render completed in ${render_finised - renderer_initialized}ms`
             );
+
+            rendering = false;
+
             return;
         }
 
@@ -118,9 +122,14 @@ const render = () => {
 
     cover_scene = await fetch("default-scene.json").then((r) => r.text());
 
+    const editor = ace.edit("scene-description");
+    editor.setValue(cover_scene);
+    editor.clearSelection();
+
     textarea.value = cover_scene;
 
     render_button.addEventListener("click", (_) => {
+        // FIXME: probably a TOCTOU race here.
         if (!rendering) {
             render();
         }
