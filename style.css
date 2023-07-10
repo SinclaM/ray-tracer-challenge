@@ -1,0 +1,39 @@
+.wrapper {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    grid-template-rows: 5vh 90vh;
+}
+
+.header {
+    grid-column: 1 / 4;
+    grid-row: 1;
+}
+
+#render {
+    height: 100%
+}
+
+.grid-left {
+    grid-column: 1;
+    grid-row: 2;
+}
+
+.grid-right {
+    grid-column: 2 / 4;
+    grid-row: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#scene-description {
+    height: 100%;
+    width: 100%;
+}
+
+#image-canvas {
+    max-width: 100%;
+    max-height: 100%;
+}
+
