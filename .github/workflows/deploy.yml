@@ -24,6 +24,9 @@ jobs:
         with:
           zig-version: master
 
+      - name: Run tests 📊
+        run: zig build test
+
       - name: Build 🏗️
         run: zig build -Dtarget=wasm32-freestanding -Doptimize=ReleaseFast
 
