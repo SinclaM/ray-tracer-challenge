@@ -4,23 +4,6 @@ body {
     margin: 0;
 }
 
-#github-image {
-    height: 40px;
-    filter: invert(1);
-    padding-right: 30px;
-}
-
-#header-title {
-    color: white;
-    font-family: "JetBrains Mono", monospace;
-    font-size: 25px;
-}
-
-#render {
-    margin-left: auto;
-}
-
-
 #grid-wrapper {
     display: grid;
     grid-template-rows: 7vh 90vh 3vh;
@@ -37,6 +20,25 @@ body {
     grid-row: 1;
 }
 
+
+#github-image {
+    height: 4vh;
+    filter: invert(1);
+    padding-right: 30px;
+}
+
+#header-title {
+    color: white;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 3vh;
+}
+
+#render {
+    max-height: 5vh;
+    margin-left: auto;
+}
+
+
 .footer {
     display: flex;
     align-items: center;
@@ -44,7 +46,7 @@ body {
     grid-row: 3;
     color: white;
     font-family: "JetBrains Mono", monospace;
-    font-size: 20px;
+    font-size: 2.2vh;
 }
 
 #zig-logo {
@@ -122,7 +124,7 @@ button {
     touch-action: manipulation;
     white-space: nowrap;
     will-change: box-shadow, transform;
-    font-size: 18px;
+    font-size: 2vh;
 }
 
 button:focus {
