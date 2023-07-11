@@ -28,8 +28,30 @@ pub fn build(b: *std.Build) void {
 
             b.installArtifact(lib);
 
-            std.fs.cwd().copyFile("scenes/cover.json", std.fs.cwd(), "www/default-scene.json", .{})
-                catch @panic("Could not copy default scene into www/");
+            // Copy all the scene descriptions into www
+            var scenes = std.fs.cwd().openDir("scenes", .{}) catch @panic("Can't access scenes!");
+            defer scenes.close();
+
+            var iter_scenes = std.fs.cwd().openIterableDir("scenes", .{})
+                catch @panic("Can't access scenes for iteration!");
+            defer iter_scenes.close();
+
+            var www = std.fs.cwd().openDir("www", .{}) catch @panic("Can't access www!");
+            defer www.close();
+
+            var iter = iter_scenes.iterate();
+            while (true) {
+                const entry = iter.next() catch @panic("Can't iterate through scenes!");
+                if (entry == null) {
+                    break;
+                } else {
+                    switch (entry.?.kind) {
+                        .file => scenes.copyFile(entry.?.name, www, entry.?.name, .{})
+                            catch @panic("Can't copy scene!"),
+                        else => {},
+                    }
+                }
+            }
         }
     } else {
         const exe = b.addExecutable(.{

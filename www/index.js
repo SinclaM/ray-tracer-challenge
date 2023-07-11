@@ -1,6 +1,20 @@
 const canvas = document.getElementById("image-canvas");
 const textarea = document.getElementById("scene-description");
 const render_button = document.getElementById("render");
+const editor = ace.edit("scene-description");
+const sceneChoices = document.getElementById("scene-choices");
+
+editor.setOption("showLineNumbers", false);
+editor.setOption("fontSize", "13pt");
+editor.setOption("fontFamily", "JetBrains Mono, monospace");
+editor.setShowPrintMargin(false);
+editor.setTheme("ace/theme/dawn");
+editor.session.setMode("ace/mode/json");
+
+sceneChoices.addEventListener("change", async (event) => {
+    editor.setValue(await fetch(event.target.value).then((r) => r.text()));
+    editor.clearSelection();
+});
 
 const text_decoder = new TextDecoder();
 let console_log_buffer = "";
@@ -66,7 +80,6 @@ let rendering = false;
 const render = () => {
     rendering = true;
 
-    const editor = ace.edit("scene-description");
     scene = editor.getValue();
 
     const ptr = wasm.instance.exports.initRenderer(
@@ -117,9 +130,8 @@ const render = () => {
     const wasm_initialized = window.performance.now();
     console.log(`WASM initialized in ${wasm_initialized - start}ms`);
 
-    cover_scene = await fetch("default-scene.json").then((r) => r.text());
+    cover_scene = await fetch("cover.json").then((r) => r.text());
 
-    const editor = ace.edit("scene-description");
     editor.setValue(cover_scene);
     editor.clearSelection();
 
