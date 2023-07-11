@@ -1,20 +1,42 @@
 <html>
     <head>
-        <meta content="text/html;charset=utf-8" http-equiv="Content-Type"/>
-        <link href="style.css" rel="stylesheet"/>
+        <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+        <link href="style.css" rel="stylesheet" />
     </head>
     <body>
-        <div class="wrapper">
+        <div id="grid-wrapper">
             <div class="header">
+                <a href="https://github.com/SinclaM/ray-tracer-challenge">
+                    <img id="github-image" src="github-logo.png" alt="" />
+                </a>
+                <div id="header-title">The Ray Tracer Challenge</div>
                 <button id="render" role="button">Render</button>
             </div>
-            <div class="grid-left">
-                <div id="scene-description"></div>
+            <div class="split">
+                <div id="split-0">
+                    <div id="scene-description"></div>
+                </div>
+                <div id="split-1">
+                    <canvas id="image-canvas"></canvas>
+                </div>
             </div>
-            <div class="grid-right">
-                <canvas id="image-canvas"></canvas>
+            <div class="footer">
+                <img id="zig-logo" src="zig-logo.svg" alt="">
+                +
+                <img id="wasm-logo" src="wasm-logo.png" alt="">
+                == 🔥
             </div>
         </div>
+
+        <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/split.js/1.6.2/split.min.js"
+            integrity="sha512-to2k78YjoNUq8+hnJS8AwFg/nrLRFLdYYalb18SlcsFRXavCOTfBF3lNyplKkLJeB8YjKVTb1FPHGSy9sXfSdg=="
+            crossorigin="anonymous"
+            referrerpolicy="no-referrer"
+        ></script>
+        <script>
+            Split(["#split-0", "#split-1"]);
+        </script>
 
         <script
             src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.3/ace.min.js"
@@ -22,8 +44,11 @@
             charset="utf-8"
         ></script>
         <script>
-            var editor = ace.edit("scene-description");
+            let editor = ace.edit("scene-description");
             editor.setOption("showLineNumbers", false);
+            editor.setOption("fontSize", "13pt");
+            editor.setOption("fontFamily", "JetBrains Mono");
+            editor.setShowPrintMargin(false);
             editor.setTheme("ace/theme/dawn");
             editor.session.setMode("ace/mode/json");
         </script>
