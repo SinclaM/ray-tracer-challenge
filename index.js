@@ -2,9 +2,6 @@ const canvas = document.getElementById("image-canvas");
 const textarea = document.getElementById("scene-description");
 const render_button = document.getElementById("render");
 
-const clamp = (val) =>
-    val * 255.0 > 255.0 ? 255 : val * 255.0 < 0.0 ? 0 : val * 255.0;
-
 const text_decoder = new TextDecoder();
 let console_log_buffer = "";
 
