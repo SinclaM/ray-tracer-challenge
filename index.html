@@ -10,6 +10,16 @@
                     <img id="github-image" src="github-logo.png" alt="" />
                 </a>
                 <div id="header-title">The Ray Tracer Challenge</div>
+                <div id="scene-choices" class="select">
+                    <select id="standard-select">
+                        <option value="cover.json">Cover Scene</option>
+                        <option value="ch11_reflection_and_refraction.json">
+                            Ch11 Reflections and Refractions
+                        </option>
+                        <option value="xyz.json">Raytracer REPL Default</option>
+                    </select>
+                    <span class="focus"></span>
+                </div>
                 <button id="render" role="button">Render</button>
             </div>
             <div class="split">
@@ -21,9 +31,9 @@
                 </div>
             </div>
             <div class="footer">
-                <img id="zig-logo" src="zig-logo.svg" alt="">
+                <img id="zig-logo" src="zig-logo.svg" alt="" />
                 +
-                <img id="wasm-logo" src="wasm-logo.png" alt="">
+                <img id="wasm-logo" src="wasm-logo.png" alt="" />
                 == 🔥
             </div>
         </div>
@@ -43,15 +53,6 @@
             type="text/javascript"
             charset="utf-8"
         ></script>
-        <script>
-            let editor = ace.edit("scene-description");
-            editor.setOption("showLineNumbers", false);
-            editor.setOption("fontSize", "13pt");
-            editor.setOption("fontFamily", "JetBrains Mono, monospace");
-            editor.setShowPrintMargin(false);
-            editor.setTheme("ace/theme/dawn");
-            editor.session.setMode("ace/mode/json");
-        </script>
         <script src="index.js"></script>
     </body>
 </html>

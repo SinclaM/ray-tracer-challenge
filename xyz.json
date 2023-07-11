@@ -1,0 +1,94 @@
+{
+    "camera": {
+        "width": 1280,
+        "height": 720,
+        "field-of-view": 1.047,
+        "from": [0, 1.5, -5],
+        "to": [0, 1, 0],
+        "up": [0, 1, 0]
+    },
+
+    "lights": [
+        {
+            "point-light": {
+                "position": [-10, 10, -10],
+                "intensity": [1, 1, 1]
+            }
+        }
+    ],
+
+    "objects": [
+        {
+            "type": "plane",
+            "material": {
+                "pattern": {
+                    "type": {
+                        "checkers": [
+                            { "type": { "solid": [0, 0, 0] } },
+                            { "type": { "solid": [1, 1, 1] } }
+                        ]
+                    }
+                },
+                "specular": 0,
+                "reflective": 0.5
+            }
+        },
+        {
+            "type": "sphere",
+            "material": {
+                "pattern": {
+                    "type": {
+                        "gradient": [
+                            { "type": { "solid": [1, 0, 0] } },
+                            { "type": { "solid": [0, 1, 0] } }
+                        ]
+                    },
+                    "transform": [
+                        { "scale": [2, 2, 2] },
+                        { "translate": [1, 0, 0] },
+                        { "rotate-z": 4.71239 }
+                    ]
+                }
+            },
+            "transform": [
+                { "scale": [0.33, 0.33, 0.33] },
+                { "translate": [-1.5, 0.33, -0.75] }
+            ]
+        },
+        {
+            "type": "sphere",
+            "material": {
+                "pattern": { "type": { "solid": [0, 0, 0] } },
+                "diffuse": 0.1,
+                "specular": 5,
+                "shininess": 1600,
+                "reflective": 1
+            },
+            "transform": [
+                { "translate":  [-0.5, 1, 0.5] }
+            ]
+        },
+        {
+            "type": "sphere",
+            "material": {
+                "pattern": {
+                    "type": {
+                        "rings": [
+                            { "type": { "solid": [1, 1, 0] } },
+                            { "type": { "solid": [0, 0, 1] } }
+                        ]
+                    },
+                    "transform": [
+                        { "scale": [0.02, 1, 0.02] },
+                        { "rotate-x": 1.5708 },
+                        { "rotate-y": -0.785398 }
+                    ]
+                }
+            },
+            "transform": [
+                { "scale": [0.5, 0.5, 0.5] },
+                { "translate": [1.5, 0.5, -0.5] }
+            ]
+        }
+    ]
+}
