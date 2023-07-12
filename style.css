@@ -2,6 +2,7 @@ body {
     background-color: #4a505c;
     padding: 0;
     margin: 0;
+    font-family: "JetBrains Mono", monospace;
 }
 
 #grid-wrapper {

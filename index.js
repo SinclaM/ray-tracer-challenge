@@ -4,6 +4,13 @@ const render_button = document.getElementById("render");
 const editor = ace.edit("scene-description");
 const sceneChoices = document.getElementById("scene-choices");
 
+// Set up resizable split between editor and scene
+Split(["#split-0", "#split-1"]);
+
+// Set up Notyf
+let notyf = new Notyf();
+
+// Set up scene description editor
 editor.setOption("showLineNumbers", false);
 editor.setOption("fontSize", "13pt");
 editor.setOption("fontFamily", "JetBrains Mono, monospace");
@@ -82,36 +89,77 @@ const render = () => {
 
     scene = editor.getValue();
 
-    const ptr = wasm.instance.exports.initRenderer(
-        wasm.encodeString(scene)
-    );
-    const width = wasm.instance.exports.getWidth();
-    const height = wasm.instance.exports.getHeight();
+    // Tell the WASM code to initialize the renderer.
+    wasm.instance.exports.initRenderer(wasm.encodeString(scene));
+
+    // If there was an error, bail out.
+    if (!wasm.instance.exports.initRendererIsOk()) {
+        const error_ptr = wasm.instance.exports.initRendererGetErrPtr();
+        const error_len = wasm.instance.exports.initRendererGetErrLen();
+
+        const error_message = wasm.getString(error_ptr, error_len);
+        console.error(`Unable to initialize renderer: ${error_message}.`);
+        notyf.error(`Unable to initialize renderer: ${error_message}.`);
+
+        rendering = false;
+        return;
+    }
+
+    // Get the Canvas information and update the UI.
+    const ptr = wasm.instance.exports.initRendererGetPixels();
+    const width = wasm.instance.exports.initRendererGetWidth();
+    const height = wasm.instance.exports.initRendererGetHeight();
 
     const renderer_initialized = window.performance.now();
 
     wasm.attachCanvas(ptr, width, height);
 
+    // We will render in batches of `dy` rows.
     const dy = 10;
 
     const renderLoop = () => {
-        const done = wasm.instance.exports.render(dy);
+        // Render `dy` more rows of the scene.
+        wasm.instance.exports.render(dy);
 
+        // If there was an error, bail out.
+        if (!wasm.instance.exports.renderIsOk()) {
+            // Make sure to destroy the renderer if exiting on failure.
+            wasm.instance.exports.deinitRenderer();
+
+            const error_ptr = wasm.instance.exports.renderGetErrPtr();
+            const error_len = wasm.instance.exports.renderGetErrLen();
+
+            const error_message = wasm.getString(error_ptr, error_len);
+            console.error(`Unable to render: ${error_message}.`);
+            notyf.error(`Unable to render: ${error_message}.`);
+
+            rendering = false;
+            return;
+        }
+
+        const done = wasm.instance.exports.renderGetStatus();
+
+        // Update the UI.
         wasm.drawCanvas();
 
+        // If there are no more rows left to render, we can clean up and exit.
         if (done) {
+            // Make sure to destroy the renderer if exiting on success.
             wasm.instance.exports.deinitRenderer();
 
             const render_finised = window.performance.now();
             console.log(
-                `Render completed in ${render_finised - renderer_initialized}ms`
+                `Render completed in ${render_finised - renderer_initialized}ms.`
             );
+
+            notyf.success(`Render finished in ${render_finised - renderer_initialized}ms.`);
 
             rendering = false;
 
             return;
         }
 
+        // Otherwise, continue with the next batch of rows.
         requestAnimationFrame(renderLoop);
     };
 
