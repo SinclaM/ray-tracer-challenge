@@ -178,12 +178,12 @@ const render = () => {
     const wasm_initialized = window.performance.now();
     console.log(`WASM initialized in ${wasm_initialized - start}ms`);
 
-    cover_scene = await fetch("cover.json").then((r) => r.text());
+    const default_scene = await fetch("cubes.json").then((r) => r.text());
 
-    editor.setValue(cover_scene);
+    editor.setValue(default_scene);
     editor.clearSelection();
 
-    textarea.value = cover_scene;
+    textarea.value = default_scene;
 
     render_button.addEventListener("click", (_) => {
         // FIXME: probably a TOCTOU race here.
