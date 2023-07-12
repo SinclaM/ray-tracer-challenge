@@ -4,6 +4,13 @@ const render_button = document.getElementById("render");
 const editor = ace.edit("scene-description");
 const sceneChoices = document.getElementById("scene-choices");
 
+// Set up resizable split between editor and scene
+Split(["#split-0", "#split-1"]);
+
+// Set up Notyf
+let notyf = new Notyf();
+
+// Set up scene description editor
 editor.setOption("showLineNumbers", false);
 editor.setOption("fontSize", "13pt");
 editor.setOption("fontFamily", "JetBrains Mono, monospace");
@@ -92,6 +99,7 @@ const render = () => {
 
         const error_message = wasm.getString(error_ptr, error_len);
         console.error(`Unable to initialize renderer: ${error_message}.`);
+        notyf.error(`Unable to initialize renderer: ${error_message}.`);
 
         rendering = false;
         return;
@@ -123,6 +131,7 @@ const render = () => {
 
             const error_message = wasm.getString(error_ptr, error_len);
             console.error(`Unable to render: ${error_message}.`);
+            notyf.error(`Unable to render: ${error_message}.`);
 
             rendering = false;
             return;
@@ -140,8 +149,10 @@ const render = () => {
 
             const render_finised = window.performance.now();
             console.log(
-                `Render completed in ${render_finised - renderer_initialized}ms`
+                `Render completed in ${render_finised - renderer_initialized}ms.`
             );
+
+            notyf.success(`Render finished in ${render_finised - renderer_initialized}ms.`);
 
             rendering = false;
 
