@@ -44,6 +44,9 @@ pub fn Renderer(comptime T: type) type {
             const scene_info = try parseScene(T, allocator, scene);
 
             const pixels = try allocator.alloc(u8, 4 * scene_info.camera.hsize * scene_info.camera.vsize);
+            // At this point nothing else can fail, but we might as well explicitly
+            // include the `errdefer` if that changes in the future.
+            errdefer allocator.free(pixels);
 
             for (0..scene_info.camera.hsize) |x| {
                 for (0..scene_info.camera.vsize) |y| {
@@ -107,28 +110,74 @@ pub fn Renderer(comptime T: type) type {
     };
 }
 
-const CanvasInfo =  extern struct {
-    pixels: [*]const u8,
-    width: usize,
-    height: usize,
-};
-
 export fn wasmAlloc(length: usize) [*]const u8 {
     const slice = std.heap.wasm_allocator.alloc(u8, length) catch
-        @panic("failed to allocate memory");
+        @panic("Failed to allocate memory!");
     return slice.ptr;
 }
 
 var renderer: ?Renderer(f64) = null;
 
-export fn initRenderer(scene_ptr: [*:0]const u8) [*]const u8 {
+
+// Returning a struct to WASM means the JS side will have to deconstruct
+// the struct layout to extract the relevant information. That does not
+// sound fun. So instead, we store our results in globals that we provide
+// accessors for. It's not elegant at all, but it works fine.
+
+fn Result(comptime T: type, comptime E: type) type {
+    return union(enum) {
+        ok: T,
+        err: E,
+    };
+}
+
+const CanvasInfo = extern struct {
+    pixels: [*]const u8,
+    width: usize,
+    height: usize,
+};
+
+var initRendererResult: Result(CanvasInfo, [:0]const u8) = undefined;
+
+export fn initRenderer(scene_ptr: [*:0]const u8) void {
     const allocator = std.heap.wasm_allocator;
 
     const scene = std.mem.span(scene_ptr);
     defer allocator.free(scene);
 
-    renderer = Renderer(f64).new(allocator, scene) catch @panic("Failed to initialize renderer\n");
-    return renderer.?.getCanvasInfo().pixels;
+    if (Renderer(f64).new(allocator, scene)) |r| {
+        renderer = r;
+        initRendererResult = .{ .ok = renderer.?.getCanvasInfo() };
+    } else |err| {
+        initRendererResult = .{ .err = @errorName(err) };
+    }
+}
+
+export fn initRendererIsOk() bool {
+    switch (initRendererResult) {
+        .ok => return true,
+        .err => return false,
+    }
+}
+
+export fn initRendererGetPixels() [*]const u8 {
+    return initRendererResult.ok.pixels;
+}
+
+export fn initRendererGetWidth() usize {
+    return initRendererResult.ok.width;
+}
+
+export fn initRendererGetHeight() usize {
+    return initRendererResult.ok.height;
+}
+
+export fn initRendererGetErrPtr() [*]const u8 {
+    return initRendererResult.err.ptr;
+}
+
+export fn initRendererGetErrLen() usize {
+    return initRendererResult.err.len;
 }
 
 export fn deinitRenderer() void {
@@ -137,19 +186,35 @@ export fn deinitRenderer() void {
     }
 }
 
-export fn getWidth() usize {
-    return renderer.?.getCanvasInfo().width;
+var renderResult: Result(bool, [:0]const u8) = undefined;
+
+export fn renderIsOk() bool {
+    switch (renderResult) {
+        .ok => return true,
+        .err => return false,
+    }
 }
 
-export fn getHeight() usize {
-    return renderer.?.getCanvasInfo().height;
+export fn renderGetStatus() bool {
+    return renderResult.ok;
 }
 
-export fn render(num_rows: usize) bool {
+export fn renderGetErrPtr() [*]const u8 {
+    return renderResult.err.ptr;
+}
+
+export fn renderGetErrLen() usize {
+    return renderResult.err.len;
+}
+
+export fn render(num_rows: usize) void {
     if (renderer) |*renderer_| {
-        return renderer_.render(num_rows) catch @panic("Failed to render\n");
+        if (renderer_.render(num_rows)) |status| {
+            renderResult = .{ .ok = status };
+        } else |err| {
+            renderResult = .{ .err = @errorName(err) };
+        }
     } else {
         @panic("Renderer is uninitialized\n");
     }
-    
 }
