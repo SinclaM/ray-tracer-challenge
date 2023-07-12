@@ -182,6 +182,7 @@ const render = () => {
 
     editor.setValue(default_scene);
     editor.clearSelection();
+    editor.session.getUndoManager().reset();
 
     textarea.value = default_scene;
 
