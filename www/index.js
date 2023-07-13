@@ -1,11 +1,48 @@
+// ============================== DOM ELEMENTS =================================
 const canvas = document.getElementById("image-canvas");
 const textarea = document.getElementById("scene-description");
 const render_button = document.getElementById("render");
 const editor = ace.edit("scene-description");
 const sceneChoices = document.getElementById("scene-choices");
+const split = document.querySelector(".split");
+const split0 = document.getElementById("split-0");
+const split1 = document.getElementById("split-1");
+// =============================================================================
 
-// Set up resizable split between editor and scene
-Split(["#split-0", "#split-1"]);
+
+// ============================ UI INITIALIZATION ==============================
+const initSplit = () => {
+    document.querySelectorAll(".gutter").forEach((gutter) => gutter.remove());
+
+    if (window.innerWidth > window.innerHeight) {
+        // Use a horizontal split on screens more long than wide.
+        Split(["#split-0", "#split-1"]);
+
+        split.style["grid-row"] = "2";
+        split.style["height"] = "90vh";
+        split.style["display"] = "flex";
+        split.style["flex-direction"] = "row";
+
+        split0.style["height"] = "100%";
+        split1.style["height"] = "100%";
+    } else {
+        // Otherwise, use a vertical split.
+        Split(["#split-0", "#split-1"], {
+            direction: "vertical",
+        });
+        split.style["grid-row"] = "";
+        split.style["height"] = "";
+        split.style["display"] = "";
+        split.style["flex-direction"] = "";
+
+        split0.style["width"] = "100%";
+        split1.style["width"] = "100%";
+    }
+}
+
+initSplit();
+window.addEventListener("resize", initSplit);
+
 
 // Set up Notyf
 let notyf = new Notyf();
@@ -22,7 +59,9 @@ sceneChoices.addEventListener("change", async (event) => {
     editor.setValue(await fetch(event.target.value).then((r) => r.text()));
     editor.clearSelection();
 });
+// =============================================================================
 
+// ============================= WASM INTERACTIONS =============================
 const text_decoder = new TextDecoder();
 let console_log_buffer = "";
 
@@ -81,7 +120,9 @@ const importObject = {
         },
     },
 };
+// =============================================================================
 
+// ============================== RENDER LOGIC =================================
 let rendering = false;
 
 const render = () => {
@@ -165,7 +206,9 @@ const render = () => {
 
     requestAnimationFrame(renderLoop);
 }
+// =============================================================================
 
+// ======================= WASM/REMAINING UI INITIALIZATION ====================
 (async () => {
     const start = window.performance.now();
 
@@ -195,3 +238,4 @@ const render = () => {
 
     render();
 })();
+// =============================================================================

@@ -29,7 +29,6 @@ pub fn Cylinder(comptime T: type) type {
         pub fn localIntersect(
             self: Self, allocator: Allocator, super: *const Shape(T), ray: Ray(T)
         ) !Intersections(T) {
-            _ = self;
             const a = ray.direction.x * ray.direction.x + ray.direction.z * ray.direction.z;
 
             var xs = Intersections(T).init(allocator);
@@ -49,11 +48,24 @@ pub fn Cylinder(comptime T: type) type {
                 return xs;
             }
 
-            const t0 = (-b - @sqrt(discriminant)) / (2.0 * a);
-            const t1 = (-b + @sqrt(discriminant)) / (2.0 * a);
+            var t0 = (-b - @sqrt(discriminant)) / (2.0 * a);
+            var t1 = (-b + @sqrt(discriminant)) / (2.0 * a);
 
-            try xs.append(Intersection(T).new(t0, super));
-            try xs.append(Intersection(T).new(t1, super));
+            if (t0 > t1) {
+                const save = t0;
+                t0 = t1;
+                t1 = save;
+            }
+
+            const y0 = ray.origin.y + t0 * ray.direction.y;
+            if (self.min < y0 and y0 < self.max) {
+                try xs.append(Intersection(T).new(t0, super));
+            }
+
+            const y1 = ray.origin.y + t1 * ray.direction.y;
+            if (self.min < y1 and y1 < self.max) {
+                try xs.append(Intersection(T).new(t1, super));
+            }
 
             return xs;
         }
@@ -169,4 +181,32 @@ fn testRayIntersectsTruncatedCylinder(
     defer xs.deinit();
 
     try testing.expectEqual(xs.items.len, count);
+}
+
+test "Intersecting a constrained cylinder" {
+    const allocator = testing.allocator;
+
+    try testRayIntersectsTruncatedCylinder(
+        f32, allocator, Tuple(f32).point(0.0, 1.5, 0.0), Tuple(f32).vec3(0.1, 1.0, 0.0), 0
+    );
+
+    try testRayIntersectsTruncatedCylinder(
+        f32, allocator, Tuple(f32).point(0.0, 3.0, -5.0), Tuple(f32).vec3(0.0, 0.0, 1.0), 0
+    );
+
+    try testRayIntersectsTruncatedCylinder(
+        f32, allocator, Tuple(f32).point(0.0, 0.0, -5.0), Tuple(f32).vec3(0.0, 0.0, 1.0), 0
+    );
+
+    try testRayIntersectsTruncatedCylinder(
+        f32, allocator, Tuple(f32).point(0.0, 2.0, -5.0), Tuple(f32).vec3(0.0, 0.0, 1.0), 0
+    );
+
+    try testRayIntersectsTruncatedCylinder(
+        f32, allocator, Tuple(f32).point(0.0, 1.0, -5.0), Tuple(f32).vec3(0.0, 0.0, 1.0), 0
+    );
+
+    try testRayIntersectsTruncatedCylinder(
+        f32, allocator, Tuple(f32).point(0.0, 1.5, -2.0), Tuple(f32).vec3(0.0, 0.0, 1.0), 2
+    );
 }
