@@ -9,7 +9,6 @@ const split0 = document.getElementById("split-0");
 const split1 = document.getElementById("split-1");
 // =============================================================================
 
-
 // ============================ UI INITIALIZATION ==============================
 const initSplit = () => {
     document.querySelectorAll(".gutter").forEach((gutter) => gutter.remove());
@@ -38,11 +37,10 @@ const initSplit = () => {
         split0.style["width"] = "100%";
         split1.style["width"] = "100%";
     }
-}
+};
 
 initSplit();
 window.addEventListener("resize", initSplit);
-
 
 // Set up Notyf
 let notyf = new Notyf();
@@ -190,10 +188,17 @@ const render = () => {
 
             const render_finised = window.performance.now();
             console.log(
-                `Render completed in ${render_finised - renderer_initialized}ms.`
+                `Render completed in ${
+                    render_finised - renderer_initialized
+                }ms.`
             );
 
-            notyf.success(`Render finished in ${render_finised - renderer_initialized}ms.`);
+            notyf.success(
+                `Render finished in ${(
+                    (render_finised - renderer_initialized) /
+                    1000
+                ).toFixed(3)}s.`
+            );
 
             rendering = false;
 
@@ -205,7 +210,7 @@ const render = () => {
     };
 
     requestAnimationFrame(renderLoop);
-}
+};
 // =============================================================================
 
 // ======================= WASM/REMAINING UI INITIALIZATION ====================
