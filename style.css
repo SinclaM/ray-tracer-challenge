@@ -52,15 +52,21 @@ body {
     font-size: 2.2vh;
 }
 
+.footer a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 #zig-logo {
     height: 2.5vh;
-    padding-right: 11px;
+    padding-right: 14px;
 }
 
 #wasm-logo {
     height: 2.3vh;
-    padding-left: 11px;
-    padding-right: 11px;
+    padding-left: 14px;
+    padding-right: 14px;
 }
 
 .split {
