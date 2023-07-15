@@ -23,7 +23,7 @@
     ],
     "objects": [
         {
-            "type": "plane",
+           "type": { "plane" : {} },
             "material": {
                 "pattern": { "type": { "solid": [1, 1, 1] } },
                 "ambient": 1,
@@ -36,7 +36,7 @@
             ]
         },
         {
-            "type": "sphere",
+           "type": { "sphere" : {} },
             "material": {
                 "pattern": { "type": { "solid": [0.373, 0.404, 0.55] } },
                 "diffuse": 0.2,
@@ -54,7 +54,7 @@
             ]
         },
         {
-            "type": "cube",
+           "type": { "cube" : {} },
             "material": {
                 "pattern": { "type": { "solid": [1, 1, 1] } },
                 "diffuse": 0.7,
@@ -70,7 +70,7 @@
             ]
         },
         {
-            "type": "cube",
+           "type": { "cube" : {} },
             "material": {
                 "pattern": { "type": { "solid": [0.537, 0.831, 0.914] } },
                 "diffuse": 0.7,
@@ -86,7 +86,7 @@
             ]
         },
         {
-            "type": "cube",
+           "type": { "cube" : {} },
             "material": {
                 "pattern": { "type": { "solid": [0.941, 0.322, 0.388] } },
                 "diffuse": 0.7,
@@ -102,7 +102,7 @@
             ]
         },
         {
-            "type": "cube",
+           "type": { "cube" : {} },
             "material": {
                 "pattern": { "type": { "solid": [1, 1, 1] } },
                 "diffuse": 0.7,
@@ -118,7 +118,7 @@
             ]
         },
         {
-            "type": "cube",
+           "type": { "cube" : {} },
             "material": {
                 "pattern": { "type": { "solid": [0.373, 0.404, 0.55] } },
                 "diffuse": 0.7,
@@ -134,7 +134,7 @@
             ]
         },
         {
-            "type": "cube",
+           "type": { "cube" : {} },
             "material": {
                 "pattern": { "type": { "solid": [1, 1, 1] } },
                 "diffuse": 0.7,
@@ -150,7 +150,7 @@
             ]
         },
         {
-            "type": "cube",
+           "type": { "cube" : {} },
             "material": {
                 "pattern": { "type": { "solid": [0.537, 0.831, 0.914] } },
                 "diffuse": 0.7,
@@ -166,7 +166,7 @@
             ]
         },
         {
-            "type": "cube",
+           "type": { "cube" : {} },
             "material": {
                 "pattern": { "type": { "solid": [0.941, 0.322, 0.388] } },
                 "diffuse": 0.7,
@@ -182,7 +182,7 @@
             ]
         },
         {
-            "type": "cube",
+           "type": { "cube" : {} },
             "material": {
                 "pattern": { "type": { "solid": [1, 1, 1] } },
                 "diffuse": 0.7,
@@ -198,7 +198,7 @@
             ]
         },
         {
-            "type": "cube",
+           "type": { "cube" : {} },
             "material": {
                 "pattern": { "type": { "solid": [1, 1, 1] } },
                 "diffuse": 0.7,
@@ -214,7 +214,7 @@
             ]
         },
         {
-            "type": "cube",
+           "type": { "cube" : {} },
             "material": {
                 "pattern": { "type": { "solid": [0.537, 0.831, 0.914] } },
                 "diffuse": 0.7,
@@ -230,7 +230,7 @@
             ]
         },
         {
-            "type": "cube",
+           "type": { "cube" : {} },
             "material": {
                 "pattern": { "type": { "solid": [0.941, 0.322, 0.388] } },
                 "diffuse": 0.7,
@@ -246,7 +246,7 @@
             ]
         },
         {
-            "type": "cube",
+           "type": { "cube" : {} },
             "material": {
                 "pattern": { "type": { "solid": [1, 1, 1] } },
                 "diffuse": 0.7,
@@ -262,7 +262,7 @@
             ]
         },
         {
-            "type": "cube",
+           "type": { "cube" : {} },
             "material": {
                 "pattern": { "type": { "solid": [1, 1, 1] } },
                 "diffuse": 0.7,
@@ -278,7 +278,7 @@
             ]
         },
         {
-            "type": "cube",
+           "type": { "cube" : {} },
             "material": {
                 "pattern": { "type": { "solid": [0.373, 0.404, 0.55] } },
                 "diffuse": 0.7,
@@ -294,7 +294,7 @@
             ]
         },
         {
-            "type": "cube",
+           "type": { "cube" : {} },
             "material": {
                 "pattern": { "type": { "solid": [1, 1, 1] } },
                 "diffuse": 0.7,
@@ -310,7 +310,7 @@
             ]
         },
         {
-            "type": "cube",
+           "type": { "cube" : {} },
             "material": {
                 "pattern": { "type": { "solid": [1, 1, 1] } },
                 "diffuse": 0.7,

@@ -24,8 +24,8 @@ fn CameraConfig(comptime T: type) type {
     };
 }
 
-fn SingleTransformConfig(comptime T: type) type {
-    return union(enum) {
+fn TransformConfig(comptime T: type) type {
+    return []union(enum) {
         translate: *[3]T,
         scale: *[3]T,
         @"rotate-x": *T,
@@ -35,28 +35,19 @@ fn SingleTransformConfig(comptime T: type) type {
     };
 }
 
-fn TransformConfig(comptime T: type) type {
-    return []SingleTransformConfig(T);
-}
-
-
-
-fn PatternType(comptime T: type) type {
-    return union(enum) {
-        solid: *[3]T,
-        stripes: [2]*PatternConfig(T),
-        rings: [2]*PatternConfig(T),
-        gradient: [2]*PatternConfig(T),
-        @"radial-gradient": [2]*PatternConfig(T),
-        checkers: [2]*PatternConfig(T),
-        perturb: *PatternConfig(T),
-        blend: [2]*PatternConfig(T),
-    };
-}
 fn PatternConfig(comptime T: type) type {
     return struct {
+        @"type": union(enum) {
+            solid: *[3]T,
+            stripes: [2]*PatternConfig(T),
+            rings: [2]*PatternConfig(T),
+            gradient: [2]*PatternConfig(T),
+            @"radial-gradient": [2]*PatternConfig(T),
+            checkers: [2]*PatternConfig(T),
+            perturb: *PatternConfig(T),
+            blend: [2]*PatternConfig(T),
+        },
         transform: ?TransformConfig(T) = null,
-        @"type": PatternType(T),
     };
 }
 
@@ -75,7 +66,15 @@ fn MaterialConfig(comptime T: type) type {
 
 fn ObjectConfig(comptime T: type) type {
     return struct {
-        @"type": []const u8,
+        @"type": union(enum) {
+            sphere: void,
+            plane: void,
+            cube: void,
+            cylinder: *struct {
+                min: T = -std.math.inf(T),
+                max: T = std.math.inf(T)
+            }
+        },
         transform: ?TransformConfig(T) = null,
         material: ?MaterialConfig(T) = null,
         @"casts-shadow": bool = true,
@@ -106,22 +105,22 @@ fn parseTransform(comptime T: type, transform: TransformConfig(T)) Matrix(T, 4) 
 
     for (transform) |t| {
         switch (t) {
-            SingleTransformConfig(T).translate => |buf| {
+            .translate => |buf| {
                 matrix = matrix.translate(buf[0], buf[1], buf[2]);
             },
-            SingleTransformConfig(T).scale => |buf| {
+            .scale => |buf| {
                 matrix = matrix.scale(buf[0], buf[1], buf[2]);
             },
-            SingleTransformConfig(T).@"rotate-x" => |angle| {
+            .@"rotate-x" => |angle| {
                 matrix = matrix.rotateX(angle.*);
             },
-            SingleTransformConfig(T).@"rotate-y" => |angle| {
+            .@"rotate-y" => |angle| {
                 matrix = matrix.rotateY(angle.*);
             },
-            SingleTransformConfig(T).@"rotate-z" => |angle| {
+            .@"rotate-z" => |angle| {
                 matrix = matrix.rotateZ(angle.*);
             },
-            SingleTransformConfig(T).shear => |args| {
+            .shear => |args| {
                 matrix = matrix.shear(args.*);
             }
         }
@@ -133,10 +132,10 @@ fn parseTransform(comptime T: type, transform: TransformConfig(T)) Matrix(T, 4) 
 fn parsePattern(comptime T: type, allocator: Allocator, pattern: PatternConfig(T)) !Pattern(T) {
     var pat = blk: {
         switch (pattern.@"type") {
-            PatternType(T).solid => |buf| {
+            .solid => |buf| {
                 break :blk Pattern(T).solid(Color(T).new(buf[0], buf[1], buf[2]));
             },
-            PatternType(T).stripes => |buf| {
+            .stripes => |buf| {
                 const p1 = try allocator.create(Pattern(T));
                 p1.* = try parsePattern(T, allocator, buf[0].*);
 
@@ -144,7 +143,7 @@ fn parsePattern(comptime T: type, allocator: Allocator, pattern: PatternConfig(T
                 p2.* = try parsePattern(T, allocator, buf[1].*);
                 break :blk Pattern(T).stripes(p1, p2);
             },
-            PatternType(T).rings => |buf| {
+            .rings => |buf| {
                 const p1 = try allocator.create(Pattern(T));
                 p1.* = try parsePattern(T, allocator, buf[0].*);
 
@@ -152,7 +151,7 @@ fn parsePattern(comptime T: type, allocator: Allocator, pattern: PatternConfig(T
                 p2.* = try parsePattern(T, allocator, buf[1].*);
                 break :blk Pattern(T).rings(p1, p2);
             },
-            PatternType(T).gradient => |buf| {
+            .gradient => |buf| {
                 const p1 = try allocator.create(Pattern(T));
                 p1.* = try parsePattern(T, allocator, buf[0].*);
 
@@ -160,7 +159,7 @@ fn parsePattern(comptime T: type, allocator: Allocator, pattern: PatternConfig(T
                 p2.* = try parsePattern(T, allocator, buf[1].*);
                 break :blk Pattern(T).gradient(p1, p2);
             },
-            PatternType(T).@"radial-gradient" => |buf| {
+            .@"radial-gradient" => |buf| {
                 const p1 = try allocator.create(Pattern(T));
                 p1.* = try parsePattern(T, allocator, buf[0].*);
 
@@ -168,7 +167,7 @@ fn parsePattern(comptime T: type, allocator: Allocator, pattern: PatternConfig(T
                 p2.* = try parsePattern(T, allocator, buf[1].*);
                 break :blk Pattern(T).radialGradient(p1, p2);
             },
-            PatternType(T).checkers => |buf| {
+            .checkers => |buf| {
                 const p1 = try allocator.create(Pattern(T));
                 p1.* = try parsePattern(T, allocator, buf[0].*);
 
@@ -176,13 +175,13 @@ fn parsePattern(comptime T: type, allocator: Allocator, pattern: PatternConfig(T
                 p2.* = try parsePattern(T, allocator, buf[1].*);
                 break :blk Pattern(T).checkers(p1, p2);
             },
-            PatternType(T).perturb => |p| {
+            .perturb => |p| {
                 const p1 = try allocator.create(Pattern(T));
                 p1.* = try parsePattern(T, allocator, p.*);
 
                 break :blk Pattern(T).perturb(p1, .{});
             },
-            PatternType(T).blend => |buf| {
+            .blend => |buf| {
                 const p1 = try allocator.create(Pattern(T));
                 p1.* = try parsePattern(T, allocator, buf[0].*);
 
@@ -215,16 +214,16 @@ fn parseMaterial(comptime T: type, allocator: Allocator, material: MaterialConfi
 }
 
 fn parseObject(comptime T: type, allocator: Allocator, object: ObjectConfig(T)) !Shape(T) {
-    var shape = blk: {
-        if (std.mem.eql(u8, object.@"type", "sphere")) {
-            break :blk Shape(T).sphere();
-        } else if (std.mem.eql(u8, object.@"type", "plane")) {
-            break :blk Shape(T).plane();
-        } else if (std.mem.eql(u8, object.@"type", "cube")) {
-            break :blk Shape(T).cube();
-        } else {
-            return SceneParseError.UnknownShape;
-        }
+    var shape = switch (object.@"type") {
+        .sphere => Shape(T).sphere(),
+        .plane => Shape(T).plane(),
+        .cube => Shape(T).cube(),
+        .cylinder => |cyl| blk: {
+            var c = Shape(T).cylinder();
+            c.variant.cylinder.min = cyl.min;
+            c.variant.cylinder.max = cyl.max;
+            break :blk c;
+        },
     };
 
     shape.casts_shadow = object.@"casts-shadow";

@@ -20,7 +20,7 @@
 
   "objects": [
       {
-          "type": "plane",
+         "type": { "plane" : {} },
           "transform": [
               { "rotate-y":  0.31415 }
           ],
@@ -38,7 +38,7 @@
           }
       },
       {
-          "type": "plane",
+         "type": { "plane" : {} },
           "transform": [
               { "translate":  [0, 5, 0] }
           ],
@@ -49,7 +49,7 @@
           }
       },
       {
-          "type": "plane",
+         "type": { "plane" : {} },
           "transform": [
               { "rotate-y":  1.5708 },
               { "rotate-z":  1.5708 },
@@ -75,7 +75,7 @@
           }
       },
       {
-          "type": "plane",
+         "type": { "plane" : {} },
           "transform": [
               { "rotate-y":  1.5708 },
               { "rotate-z":  1.5708 },
@@ -101,7 +101,7 @@
           }
       },
       {
-          "type": "plane",
+         "type": { "plane" : {} },
           "transform": [
               { "rotate-x":  1.5708 },
               { "translate":  [0, 0, 5] }
@@ -126,7 +126,7 @@
           }
       },
       {
-          "type": "plane",
+         "type": { "plane" : {} },
           "transform": [
               { "rotate-x":  1.5708 },
               { "translate":  [0, 0, -5] }
@@ -151,7 +151,7 @@
           }
       },
       {
-          "type": "sphere",
+         "type": { "sphere" : {} },
           "transform": [
               { "scale":  [0.4, 0.4, 0.4] },
               { "translate":  [4.6, 0.4, 1] }
@@ -162,7 +162,7 @@
           }
       },
       {
-          "type": "sphere",
+         "type": { "sphere" : {} },
           "transform": [
               { "scale":  [0.3, 0.3, 0.3] },
               { "translate":  [4.7, 0.3, 0.4] }
@@ -173,7 +173,7 @@
           }
       },
       {
-          "type": "sphere",
+         "type": { "sphere" : {} },
           "transform": [
               { "scale":  [0.5, 0.5, 0.5] },
               { "translate":  [-1, 0.5, 4.5] }
@@ -184,7 +184,7 @@
           }
       },
       {
-          "type": "sphere",
+         "type": { "sphere" : {} },
           "transform": [
               { "scale":  [0.3, 0.3, 0.3] },
               { "translate":  [-1.7, 0.3, 4.7] }
@@ -195,7 +195,7 @@
           }
       },
       {
-          "type": "sphere",
+         "type": { "sphere" : {} },
           "transform": [
               { "translate":  [-0.6, 1, 0.6] }
           ],
@@ -206,7 +206,7 @@
           }
       },
       {
-          "type": "sphere",
+         "type": { "sphere" : {} },
           "transform": [
               { "scale":  [0.7, 0.7, 0.7] },
               { "translate":  [0.6, 0.7, -0.6] }
@@ -223,7 +223,7 @@
           }
       },
       {
-          "type": "sphere",
+         "type": { "sphere" : {} },
           "transform": [
               { "scale":  [0.5, 0.5, 0.5] },
               { "translate":  [-0.7, 0.5, -0.8] }
