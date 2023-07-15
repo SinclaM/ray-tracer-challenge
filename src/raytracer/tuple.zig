@@ -107,7 +107,12 @@ pub fn Tuple(comptime T: type) type {
         ///
         /// Assumes `self` is a vector.
         pub inline fn normalized(self: Self) Self {
-            return self.div(self.magnitude());
+            const mag = self.magnitude();
+            if (mag == 0.0) {
+                return self;
+            } else {
+                return self.div(mag);
+            }
         }
 
         /// Computes the dot product.

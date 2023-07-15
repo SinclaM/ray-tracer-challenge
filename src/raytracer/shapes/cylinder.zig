@@ -144,7 +144,7 @@ test "A ray misses a cylinder" {
 fn testRayIntersectsCylinder(
     comptime T: type, allocator: Allocator, origin: Tuple(T), direction: Tuple(T), t0: T, t1: T
 ) !void {
-    var cyl = Shape(f32).cylinder();
+    var cyl = Shape(T).cylinder();
     const r = Ray(T).new(origin, direction.normalized());
 
     var xs = try cyl.intersect(allocator, r);
@@ -287,7 +287,7 @@ test "Intersecting the caps of a closed cylinder" {
     );
 }
 
-fn testNormalOnClosedCylinder(comptime T: type, point: Tuple(f32), normal: Tuple(f32)) !void {
+fn testNormalOnClosedCylinder(comptime T: type, point: Tuple(T), normal: Tuple(T)) !void {
     var cyl = Shape(T).cylinder();
 
     cyl.variant.cylinder.min = 1.0;

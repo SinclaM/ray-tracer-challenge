@@ -10,6 +10,7 @@ const Ray = @import("../ray.zig").Ray;
 const Sphere = @import("sphere.zig").Sphere;
 const Cube = @import("cube.zig").Cube;
 const Cylinder = @import("cylinder.zig").Cylinder;
+const Cone = @import("cone.zig").Cone;
 const Plane = @import("plane.zig").Plane;
 const PreComputations = @import("../world.zig").PreComputations;
 
@@ -78,6 +79,7 @@ pub fn Shape(comptime T: type) type {
             sphere: Sphere(T),
             cube: Cube(T),
             cylinder: Cylinder(T),
+            cone: Cone(T),
             plane: Plane(T),
         };
 
@@ -128,6 +130,11 @@ pub fn Shape(comptime T: type) type {
         /// Creates a new cylinder.
         pub fn cylinder() Self {
             return Self.new(Self.Variant { .cylinder = Cylinder(T) {} });
+        }
+
+        /// Creates a new cone.
+        pub fn cone() Self {
+            return Self.new(Self.Variant { .cone = Cone(T) {} });
         }
 
         /// Creates a new plane.

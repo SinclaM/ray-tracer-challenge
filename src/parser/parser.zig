@@ -74,6 +74,11 @@ fn ObjectConfig(comptime T: type) type {
                 min: T = -std.math.inf(T),
                 max: T = std.math.inf(T),
                 closed: bool = false,
+            },
+            cone: *struct {
+                min: T = -std.math.inf(T),
+                max: T = std.math.inf(T),
+                closed: bool = false,
             }
         },
         transform: ?TransformConfig(T) = null,
@@ -224,6 +229,13 @@ fn parseObject(comptime T: type, allocator: Allocator, object: ObjectConfig(T)) 
             c.variant.cylinder.min = cyl.min;
             c.variant.cylinder.max = cyl.max;
             c.variant.cylinder.closed = cyl.closed;
+            break :blk c;
+        },
+        .cone => |cyl| blk: {
+            var c = Shape(T).cone();
+            c.variant.cone.min = cyl.min;
+            c.variant.cone.max = cyl.max;
+            c.variant.cone.closed = cyl.closed;
             break :blk c;
         },
     };
