@@ -19,7 +19,7 @@
 
     "objects": [
         {
-            "type": "plane",
+           "type": { "plane" : {} },
             "material": {
                 "pattern": {
                     "type": {
@@ -34,7 +34,7 @@
             }
         },
         {
-            "type": "sphere",
+           "type": { "sphere" : {} },
             "material": {
                 "pattern": {
                     "type": {
@@ -56,7 +56,7 @@
             ]
         },
         {
-            "type": "sphere",
+           "type": { "sphere" : {} },
             "material": {
                 "pattern": { "type": { "solid": [0, 0, 0] } },
                 "diffuse": 0.1,
@@ -69,7 +69,7 @@
             ]
         },
         {
-            "type": "sphere",
+           "type": { "sphere" : {} },
             "material": {
                 "pattern": {
                     "type": {

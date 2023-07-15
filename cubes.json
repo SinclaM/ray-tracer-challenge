@@ -17,7 +17,7 @@
     ],
     "objects": [
         {
-            "type": "cube",
+           "type": { "cube" : {} },
             "transform": [{ "translate": [0, 1, 0] }, { "scale": [20, 7, 20] }],
             "material": {
                 "pattern": {
@@ -37,7 +37,7 @@
             }
         },
         {
-            "type": "cube",
+           "type": { "cube" : {} },
             "transform": [{ "scale": [10, 10, 10] }],
             "material": {
                 "pattern": {
@@ -57,7 +57,7 @@
             }
         },
         {
-            "type": "cube",
+           "type": { "cube" : {} },
             "transform": [
                 { "scale": [3, 0.1, 2] },
                 { "translate": [0, 3.1, 0] }
@@ -83,7 +83,7 @@
             }
         },
         {
-            "type": "cube",
+           "type": { "cube" : {} },
             "transform": [
                 { "scale": [0.1, 1.5, 0.1] },
                 { "translate": [2.7, 1.5, -1.7] }
@@ -97,7 +97,7 @@
             }
         },
         {
-            "type": "cube",
+           "type": { "cube" : {} },
             "transform": [
                 { "scale": [0.1, 1.5, 0.1] },
                 { "translate": [2.7, 1.5, 1.7] }
@@ -111,7 +111,7 @@
             }
         },
         {
-            "type": "cube",
+           "type": { "cube" : {} },
             "transform": [
                 { "scale": [0.1, 1.5, 0.1] },
                 { "translate": [-2.7, 1.5, -1.7] }
@@ -125,7 +125,7 @@
             }
         },
         {
-            "type": "cube",
+           "type": { "cube" : {} },
             "transform": [
                 { "scale": [0.1, 1.5, 0.1] },
                 { "translate": [-2.7, 1.5, 1.7] }
@@ -139,7 +139,7 @@
             }
         },
         {
-            "type": "cube",
+           "type": { "cube" : {} },
             "transform": [
                 { "scale": [0.25, 0.25, 0.25] },
                 { "rotate-y": 0.2 },
@@ -158,7 +158,7 @@
             "casts-shadow": false
         },
         {
-            "type": "cube",
+           "type": { "cube" : {} },
             "transform": [
                 { "scale": [0.15, 0.15, 0.15] },
                 { "rotate-y": -0.4 },
@@ -171,7 +171,7 @@
             }
         },
         {
-            "type": "cube",
+           "type": { "cube" : {} },
             "transform": [
                 { "scale": [0.15, 0.07, 0.15] },
                 { "rotate-y": 0.4 },
@@ -182,7 +182,7 @@
             }
         },
         {
-            "type": "cube",
+           "type": { "cube" : {} },
             "transform": [
                 { "scale": [0.2, 0.05, 0.05] },
                 { "rotate-y": 0.4 },
@@ -193,7 +193,7 @@
             }
         },
         {
-            "type": "cube",
+           "type": { "cube" : {} },
             "transform": [
                 { "scale": [0.05, 0.2, 0.05] },
                 { "rotate-y": 0.8 },
@@ -204,7 +204,7 @@
             }
         },
         {
-            "type": "cube",
+           "type": { "cube" : {} },
             "transform": [
                 { "scale": [0.05, 0.2, 0.05] },
                 { "rotate-y": 0.8 },
@@ -215,7 +215,7 @@
             }
         },
         {
-            "type": "cube",
+           "type": { "cube" : {} },
             "transform": [
                 { "scale": [0.05, 1, 1] },
                 { "translate": [-10, 4, 1] }
@@ -226,7 +226,7 @@
             }
         },
         {
-            "type": "cube",
+           "type": { "cube" : {} },
             "transform": [
                 { "scale": [0.05, 0.4, 0.4] },
                 { "translate": [-10, 3.4, 2.7] }
@@ -237,7 +237,7 @@
             }
         },
         {
-            "type": "cube",
+           "type": { "cube" : {} },
             "transform": [
                 { "scale": [0.05, 0.4, 0.4] },
                 { "translate": [-10, 4.6, 2.7] }
@@ -248,7 +248,7 @@
             }
         },
         {
-            "type": "cube",
+           "type": { "cube" : {} },
             "transform": [
                 { "scale": [5, 1.5, 0.05] },
                 { "translate": [-2, 3.5, 9.95] }
@@ -259,7 +259,7 @@
             }
         },
         {
-            "type": "cube",
+           "type": { "cube" : {} },
             "transform": [
                 { "scale": [4.8, 1.4, 0.06] },
                 { "translate": [-2, 3.5, 9.95] }
