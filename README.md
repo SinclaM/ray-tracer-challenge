@@ -5,7 +5,7 @@ This project is a simple [Zig](https://ziglang.org/) implementation of the ray t
 
 You can find an interactive demo of this ray tracer online at [sinclam.github.io/ray-tracer-challenge](https://sinclam.github.io/ray-tracer-challenge).
 
-<img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/565cc8a2-a0c8-4f4e-a86c-12e9bc8acd15 width=1200>
+<img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/fc5406c2-5929-40a8-b3f1-6bacc19eb55e width=1200>
 
 ## Status 
 
