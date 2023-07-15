@@ -313,7 +313,7 @@ test "Simple" {
         \\     },
         \\     "objects": [
         \\         {
-        \\             "type": "sphere",
+        \\             "type": { "sphere": {} },
         \\             "transform": [
         \\                 { "translate": [1.0, 2.0, 3.0] },
         \\                 { "scale": [0.5, 0.5, 0.5] }
