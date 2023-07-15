@@ -21,7 +21,7 @@ You can find an interactive demo of this ray tracer online at [sinclam.github.io
 - [x] Chapter 10 - Patterns
 - [x] Chapter 11 - Reflection and Refraction
 - [x] Chapter 12 - Cubes
-- [ ] Chapter 13 - Cylinders
+- [x] Chapter 13 - Cylinders
 - [ ] Chapter 14 - Groups
 - [ ] Chapter 15 - Triangles
 - [ ] Chapter 16 - Constructive Solid Geometry (CSG)
