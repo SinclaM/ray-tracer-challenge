@@ -241,6 +241,16 @@ const render = () => {
         }
     });
 
+    // Add a hotkey for rendering
+    document.addEventListener("keydown", (event) => {
+        if ((event.ctrlKey || event.metaKey) && event.key === ".") {
+            // FIXME: probably a TOCTOU race here.
+            if (!rendering) {
+                render();
+            }
+        }
+    });
+
     render();
 })();
 // =============================================================================
