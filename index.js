@@ -226,7 +226,7 @@ const render = () => {
     const wasm_initialized = window.performance.now();
     console.log(`WASM initialized in ${wasm_initialized - start}ms`);
 
-    const default_scene = await fetch("cubes.json").then((r) => r.text());
+    const default_scene = await fetch("cylinders.json").then((r) => r.text());
 
     editor.setValue(default_scene);
     editor.clearSelection();
