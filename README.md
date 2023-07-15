@@ -3,6 +3,10 @@
 This project is a simple [Zig](https://ziglang.org/) implementation of the ray tracer described in
 [The Ray Tracer Challenge](http://raytracerchallenge.com/).
 
+You can find an interactive demo of this ray tracer online at [sinclam.github.io/ray-tracer-challenge](https://sinclam.github.io/ray-tracer-challenge).
+
+<img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/565cc8a2-a0c8-4f4e-a86c-12e9bc8acd15 width=1200>
+
 ## Status 
 
 - [x] Chapter 1 - Tuples, Points, and Vectors
@@ -44,13 +48,20 @@ This project is a simple [Zig](https://ziglang.org/) implementation of the ray t
 
 ## Performance profiling
 
-Not much effort has (yet) been put into optimizations, although I do try to avoid unnecessary performance hits.
-The ray tracer is not (yet) multithreaded and the small vector math library it uses does not (yet) leverage Zig's
-SIMD builtins. Do not expect it to compete with a real ray tracer.
+Although the ray tracer is not (yet) multithreaded and the small vector math library it uses does not (yet) leverage Zig's
+SIMD builtins, it is still very fast. Running on a single thread, this ray tracer has outperformed every other Ray Tracer
+Challenge implementation (even the multithreaded ones!) I've compared it with—except
+[https://iliathoughts.com/posts/raytracer2/](https://iliathoughts.com/posts/raytracer2/) (for now). And there is still
+significant room for optimization.
 
-What optimizations I do make are largely informed by profilers. The binary is profiled with `valgrind --tool=callgrind`
-and the results are inspected with `qcachegrind`, which works well enough.
+The optimizations I do make are largely informed by profilers. When built for native, the binary can be profiled with
+`valgrind --tool=callgrind` and the results inspected with `qcachegrind`, which works well enough. Unfortunately,
+[Valgrind's troubled state on macOS](https://www.reddit.com/r/cpp/comments/13n3tjt/i_find_its_not_possible_to_do_serious_cc_coding/),
+combined with [Zig's incomplete Valgrind support](https://github.com/ziglang/zig/issues/1837), means profiling is not
+always simple. For example, I've seen Valgrind erroneously run into `SIGILL` and the like. Using `std.heap.raw_c_allocator`
+seems to fix most of these issues.
 
-Unfortunately, Zig does not have first-class profiler support in its current ecosystem.
+The ray tracer currently runs about 2x slower on WebAssembly than on native, which is reasonable. I use Firefox's
+"performance" tab in the developer tools for profiling on the web.
 
 I also use [hyperfine](https://github.com/sharkdp/hyperfine) for benchmarking.
