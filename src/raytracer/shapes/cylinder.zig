@@ -25,6 +25,30 @@ pub fn Cylinder(comptime T: type) type {
 
         min: T = -inf(T),
         max: T = inf(T),
+        closed: bool = false,
+
+        fn check_cap(ray: Ray(T), t: T) bool {
+            const x = ray.origin.x + t * ray.direction.x;
+            const z = ray.origin.z + t * ray.direction.z;
+
+            return x * x + z * z <= 1.0;
+        }
+
+        fn intersect_caps(cyl: *const Shape(T), ray: Ray(T), xs: *Intersections(T)) !void {
+            if (!cyl.variant.cylinder.closed or @fabs(ray.direction.y) < Self.tolerance) {
+                return;
+            }
+
+            var t = (cyl.variant.cylinder.min - ray.origin.y) / ray.direction.y;
+            if (check_cap(ray, t)) {
+                try xs.append(Intersection(T).new(t, cyl));
+            }
+
+            t = (cyl.variant.cylinder.max - ray.origin.y) / ray.direction.y;
+            if (check_cap(ray, t)) {
+                try xs.append(Intersection(T).new(t, cyl));
+            }
+        }
 
         pub fn localIntersect(
             self: Self, allocator: Allocator, super: *const Shape(T), ray: Ray(T)
@@ -35,6 +59,7 @@ pub fn Cylinder(comptime T: type) type {
 
             if (@fabs(a) < Self.tolerance) {
                 // Ray is parallel to y-axis
+                try Self.intersect_caps(super, ray, &xs);
                 return xs;
             }
 
@@ -67,14 +92,23 @@ pub fn Cylinder(comptime T: type) type {
                 try xs.append(Intersection(T).new(t1, super));
             }
 
+            try Self.intersect_caps(super, ray, &xs);
+
             return xs;
         }
 
         pub fn localNormalAt(self: Self, super: Shape(T), point: Tuple(T)) Tuple(T) {
-            _ = self;
             _ = super;
 
-            return Tuple(T).vec3(point.x, 0.0, point.z);
+            const dist = point.x * point.x + point.z * point.z;
+
+            if (dist < 1.0 and point.y >= self.max - Self.tolerance) {
+                return Tuple(T).vec3(0.0, 1.0, 0.0);
+            } else if (dist < 1.0 and point.y <= self.min + Self.tolerance) {
+                return Tuple(T).vec3(0.0, -1.0, 0.0);
+            } else {
+                return Tuple(T).vec3(point.x, 0.0, point.z);
+            }
         }
     };
 }
@@ -143,19 +177,19 @@ fn testNormalOnCylinder(comptime T: type, point: Tuple(f32), normal: Tuple(f32))
 }
 
 test "Normal vector on a cylinder" {
-    try testNormalOnCylinder (
+    try testNormalOnCylinder(
         f32, Tuple(f32).point(1.0, 0.0, 0.0), Tuple(f32).vec3(1.0, 0.0, 0.0)
     );
 
-    try testNormalOnCylinder (
+    try testNormalOnCylinder(
         f32, Tuple(f32).point(0.0, 5.0, -1.0), Tuple(f32).vec3(0.0, 0.0, -1.0)
     );
 
-    try testNormalOnCylinder (
+    try testNormalOnCylinder(
         f32, Tuple(f32).point(0.0, -2.0, 1.0), Tuple(f32).vec3(0.0, 0.0, 1.0)
     );
 
-    try testNormalOnCylinder (
+    try testNormalOnCylinder(
         f32, Tuple(f32).point(-1.0, 1.0, 0.0), Tuple(f32).vec3(-1.0, 0.0, 0.0)
     );
 }
@@ -208,5 +242,83 @@ test "Intersecting a constrained cylinder" {
 
     try testRayIntersectsTruncatedCylinder(
         f32, allocator, Tuple(f32).point(0.0, 1.5, -2.0), Tuple(f32).vec3(0.0, 0.0, 1.0), 2
+    );
+}
+
+fn testRayIntersectsClosedCylinder(
+    comptime T: type, allocator: Allocator, origin: Tuple(T), direction: Tuple(T), count: usize
+) !void {
+    var cyl = Shape(T).cylinder();
+
+    cyl.variant.cylinder.min = 1.0;
+    cyl.variant.cylinder.max = 2.0;
+    cyl.variant.cylinder.closed = true;
+
+    const r = Ray(T).new(origin, direction.normalized());
+
+    const xs = try cyl.intersect(allocator, r);
+    defer xs.deinit();
+
+    try testing.expectEqual(xs.items.len, count);
+}
+
+test "Intersecting the caps of a closed cylinder" {
+    const allocator = testing.allocator;
+
+    // Use f64 for this test because of precision needs.
+    try testRayIntersectsClosedCylinder(
+        f64, allocator, Tuple(f64).point(0.0, 3.0, 0.0), Tuple(f64).vec3(0.0, -1.0, 0.0), 2
+    );
+
+    try testRayIntersectsClosedCylinder(
+        f64, allocator, Tuple(f64).point(0.0, 3.0, -2.0), Tuple(f64).vec3(0.0, -1.0, 2.0), 2
+    );
+
+    try testRayIntersectsClosedCylinder(
+        f64, allocator, Tuple(f64).point(0.0, 4.0, -2.0), Tuple(f64).vec3(0.0, -1.0, 1.0), 2
+    );
+
+    try testRayIntersectsClosedCylinder(
+        f64, allocator, Tuple(f64).point(0.0, 0.0, -2.0), Tuple(f64).vec3(0.0, 1.0, 2.0), 2
+    );
+
+    try testRayIntersectsClosedCylinder(
+        f64, allocator, Tuple(f64).point(0.0, -1.0, -2.0), Tuple(f64).vec3(0.0, 1.0, 1.0), 2
+    );
+}
+
+fn testNormalOnClosedCylinder(comptime T: type, point: Tuple(f32), normal: Tuple(f32)) !void {
+    var cyl = Shape(T).cylinder();
+
+    cyl.variant.cylinder.min = 1.0;
+    cyl.variant.cylinder.max = 2.0;
+    cyl.variant.cylinder.closed = true;
+
+    try testing.expect(cyl.normalAt(point).approxEqual(normal));
+}
+
+test "The normal vector on a cylinder's end caps" {
+    try testNormalOnClosedCylinder(
+        f32, Tuple(f32).point(0.0, 1.0, 0.0), Tuple(f32).vec3(0.0, -1.0, 0.0)
+    );
+
+    try testNormalOnClosedCylinder(
+        f32, Tuple(f32).point(0.5, 1.0, 0.0), Tuple(f32).vec3(0.0, -1.0, 0.0)
+    );
+
+    try testNormalOnClosedCylinder(
+        f32, Tuple(f32).point(0.0, 1.0, 0.5), Tuple(f32).vec3(0.0, -1.0, 0.0)
+    );
+
+    try testNormalOnClosedCylinder(
+        f32, Tuple(f32).point(0.0, 2.0, 0.0), Tuple(f32).vec3(0.0, 1.0, 0.0)
+    );
+
+    try testNormalOnClosedCylinder(
+        f32, Tuple(f32).point(0.5, 2.0, 0.0), Tuple(f32).vec3(0.0, 1.0, 0.0)
+    );
+
+    try testNormalOnClosedCylinder(
+        f32, Tuple(f32).point(0.0, 2.0, 0.5), Tuple(f32).vec3(0.0, 1.0, 0.0)
     );
 }

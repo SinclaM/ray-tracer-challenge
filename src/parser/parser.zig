@@ -72,7 +72,8 @@ fn ObjectConfig(comptime T: type) type {
             cube: void,
             cylinder: *struct {
                 min: T = -std.math.inf(T),
-                max: T = std.math.inf(T)
+                max: T = std.math.inf(T),
+                closed: bool = false,
             }
         },
         transform: ?TransformConfig(T) = null,
@@ -222,6 +223,7 @@ fn parseObject(comptime T: type, allocator: Allocator, object: ObjectConfig(T)) 
             var c = Shape(T).cylinder();
             c.variant.cylinder.min = cyl.min;
             c.variant.cylinder.max = cyl.max;
+            c.variant.cylinder.closed = cyl.closed;
             break :blk c;
         },
     };
