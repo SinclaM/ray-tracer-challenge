@@ -21,7 +21,9 @@ pub fn main() !void {
 
     const scenes_to_render = [_][]const u8 {
         "ch11_reflection_and_refraction",
-        "cover"
+        "cover",
+        "cubes",
+        "xyz"
     };
 
     // `raw_c_allocator` seems to play more nicely with Valgrind.
