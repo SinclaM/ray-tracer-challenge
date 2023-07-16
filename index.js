@@ -85,12 +85,15 @@ let wasm = {
                 width * height * 4
             );
     },
-    drawCanvas: function () {
-        const ctx = canvas.getContext("2d");
+    drawCanvas: function (current_y, dy) {
+        const start = current_y * canvas.width * 4;
+        const end = (current_y + dy) * canvas.width * 4;
 
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        imageData.data.set(this.pixels());
-        ctx.putImageData(imageData, 0, 0);
+        const height = Math.min(dy, canvas.height - current_y);
+        const imageData = new ImageData(this.pixels().slice(start, end), canvas.width, height);
+
+        const ctx = canvas.getContext("2d");
+        ctx.putImageData(imageData, 0, current_y);
     },
     // Convert a JavaScript string to a pointer to multi byte character array
     encodeString: function (string) {
@@ -156,6 +159,7 @@ const render = () => {
     // We will render in batches of `dy` rows.
     const dy = 10;
 
+    let current_y = 0;
     const renderLoop = () => {
         // Render `dy` more rows of the scene.
         wasm.instance.exports.render(dy);
@@ -179,7 +183,8 @@ const render = () => {
         const done = wasm.instance.exports.renderGetStatus();
 
         // Update the UI.
-        wasm.drawCanvas();
+        wasm.drawCanvas(current_y, dy);
+        current_y += dy;
 
         // If there are no more rows left to render, we can clean up and exit.
         if (done) {
