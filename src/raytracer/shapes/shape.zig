@@ -12,6 +12,7 @@ const Cube = @import("cube.zig").Cube;
 const Cylinder = @import("cylinder.zig").Cylinder;
 const Cone = @import("cone.zig").Cone;
 const Plane = @import("plane.zig").Plane;
+const Group = @import("group.zig").Group;
 const PreComputations = @import("../world.zig").PreComputations;
 
 pub fn Intersection(comptime T: type) type {
@@ -81,6 +82,7 @@ pub fn Shape(comptime T: type) type {
             cylinder: Cylinder(T),
             cone: Cone(T),
             plane: Plane(T),
+            group: Group(T),
         };
 
         id: usize,
@@ -88,9 +90,9 @@ pub fn Shape(comptime T: type) type {
         _inverse_transform: Matrix(T, 4) = Matrix(T, 4).identity(),
         _inverse_transform_transpose: Matrix(T, 4) = Matrix(T, 4).identity(),
         material: Material(T) = Material(T).new(),
-        _saved_ray: ?Ray(T) = null,
         variant: Variant,
         casts_shadow: bool = true,
+        parent: ?*Shape(T) = null,
 
         /// Creates a new `Shape`.
         fn new(variant: Variant) Self {
@@ -104,8 +106,30 @@ pub fn Shape(comptime T: type) type {
             return .{ .id = save, .variant = variant };
         }
 
+        pub fn worldToObject(self: *const Self, point: Tuple(T)) Tuple(T) {
+            var p = point;
+        
+            if (self.parent) |parent| {
+                p = parent.worldToObject(p);
+            }
+
+            return self._inverse_transform.tupleMul(p);
+        }
+
+        pub fn normalToWorld(self: Self, normal: Tuple(T)) Tuple(T) {
+            var n = self._inverse_transform_transpose.tupleMul(normal);
+            n.w = 0.0;
+            n = n.normalized();
+
+            if (self.parent) |parent| {
+                n = parent.normalToWorld(n);
+            }
+
+            return n;
+        }
+
         /// Creates a new test shape.
-        fn testShape() Self {
+        pub fn testShape() Self {
             return Self.new(Self.Variant { .test_shape = TestShape(T).new() });
         }
 
@@ -142,6 +166,22 @@ pub fn Shape(comptime T: type) type {
             return Self.new(Self.Variant { .plane = Plane(T) {} });
         }
 
+        /// Creates a new group.
+        pub fn group(allocator: Allocator) Self {
+            const children = ArrayList(*Shape(T)).init(allocator);
+            return Self.new(
+                Self.Variant { .group = Group(T) { .children = children } }
+            );
+        }
+
+        /// Adds `child` to a group.
+        ///
+        /// Assumes `self.variant` is a group.
+        pub fn addChild(self: *Shape(T), child: *Shape(T)) !void {
+            child.parent = self;
+            try self.variant.group.children.append(child);
+        }
+
         /// Sets the shape's transformation matrix to `matrix`.
         ///
         /// Fails if `matrix` is not invertible.
@@ -152,8 +192,8 @@ pub fn Shape(comptime T: type) type {
         }
 
         /// Finds the intersections of `ray` with `self`.
-        pub fn intersect(self: *Self, allocator: Allocator, ray: Ray(T)) !Intersections(T) {
-            self._saved_ray = ray.transform(self._inverse_transform);
+        pub fn intersect(self: *const Self, allocator: Allocator, ray: Ray(T)) !Intersections(T) {
+            const transformed = ray.transform(self._inverse_transform);
 
             // At this point we need to call the variant's implementation of
             // `localIntersect`. The normal way to do this is with `inline else` in
@@ -165,7 +205,7 @@ pub fn Shape(comptime T: type) type {
             const Tag = @typeInfo(@TypeOf(self.variant)).Union.tag_type.?;
             inline for (@typeInfo(Tag).Enum.fields) |field| {
                 if (field.value == @intFromEnum(self.variant)) {
-                    return @field(self.variant, field.name).localIntersect(allocator, self, self._saved_ray.?);
+                    return @field(self.variant, field.name).localIntersect(allocator, self, transformed);
                 }
             }
 
@@ -174,14 +214,13 @@ pub fn Shape(comptime T: type) type {
 
         /// Finds the surface normal vector at the `point` in world space.
         pub fn normalAt(self: Self, point: Tuple(T)) Tuple(T) {
-            const local_point = self._inverse_transform.tupleMul(point);
+            const local_point = self.worldToObject(point);
+
             const Tag = @typeInfo(@TypeOf(self.variant)).Union.tag_type.?;
             inline for (@typeInfo(Tag).Enum.fields) |field| {
                 if (field.value == @intFromEnum(self.variant)) {
                     const local_normal = @field(self.variant, field.name).localNormalAt(self, local_point);
-                    var world_normal = self._inverse_transform_transpose.tupleMul(local_normal);
-                    world_normal.w = 0.0;
-                    return world_normal.normalized();
+                    return self.normalToWorld(local_normal);
                 }
             }
 
@@ -334,4 +373,76 @@ test "Refraction" {
     try testRefraction(f32, allocator, 3, 2.5, 2.5);
     try testRefraction(f32, allocator, 4, 2.5, 1.5);
     try testRefraction(f32, allocator, 5, 1.5, 1.0);
+}
+
+test "A shape has a parent attribute" {
+    const s = Shape(f32).testShape();
+    try testing.expectEqual(s.parent, null);
+}
+
+test "Converting a point from world to object space" {
+    const allocator = testing.allocator;
+
+    var g1 = Shape(f32).group(allocator);
+    defer g1.variant.group.destroy();
+    try g1.setTransform(Matrix(f32, 4).identity().rotateY(std.math.pi / 2.0));
+
+    var g2 = Shape(f32).group(allocator);
+    defer g2.variant.group.destroy();
+    try g2.setTransform(Matrix(f32, 4).identity().scale(2.0, 2.0, 2.0));
+
+    try g1.addChild(&g2);
+
+    var s = Shape(f32).sphere();
+    try s.setTransform(Matrix(f32, 4).identity().translate(5.0, 0.0, 0.0));
+
+    try g2.addChild(&s);
+
+    const p = s.worldToObject(Tuple(f32).point(-2.0, 0.0, -10.0));
+    try testing.expect(p.approxEqual(Tuple(f32).point(0.0, 0.0, -1.0)));
+}
+
+test "Converting a normal from object to world space" {
+    const allocator = testing.allocator;
+
+    var g1 = Shape(f32).group(allocator);
+    defer g1.variant.group.destroy();
+    try g1.setTransform(Matrix(f32, 4).identity().rotateY(std.math.pi / 2.0));
+
+    var g2 = Shape(f32).group(allocator);
+    defer g2.variant.group.destroy();
+    try g2.setTransform(Matrix(f32, 4).identity().scale(1.0, 2.0, 3.0));
+
+    try g1.addChild(&g2);
+
+    var s = Shape(f32).sphere();
+    try s.setTransform(Matrix(f32, 4).identity().translate(5.0, 0.0, 0.0));
+
+    try g2.addChild(&s);
+
+    const n = s.normalToWorld(Tuple(f32).vec3(1.0 / @sqrt(3.0), 1.0 / @sqrt(3.0), 1.0 / @sqrt(3.0)));
+    try testing.expect(n.approxEqual(Tuple(f32).vec3(0.28571, 0.42857, -0.85714)));
+}
+
+test "Finding the normal on a child object" {
+    const allocator = testing.allocator;
+
+    var g1 = Shape(f32).group(allocator);
+    defer g1.variant.group.destroy();
+    try g1.setTransform(Matrix(f32, 4).identity().rotateY(std.math.pi / 2.0));
+
+    var g2 = Shape(f32).group(allocator);
+    defer g2.variant.group.destroy();
+    try g2.setTransform(Matrix(f32, 4).identity().scale(1.0, 2.0, 3.0));
+
+    try g1.addChild(&g2);
+
+    var s = Shape(f32).sphere();
+    try s.setTransform(Matrix(f32, 4).identity().translate(5.0, 0.0, 0.0));
+
+    try g2.addChild(&s);
+
+    const n = s.normalAt(Tuple(f32).point(1.7321, 1.1547, -5.5774));
+
+    try testing.expect(n.approxEqual(Tuple(f32).vec3(0.2857, 0.42854, -0.85716)));
 }

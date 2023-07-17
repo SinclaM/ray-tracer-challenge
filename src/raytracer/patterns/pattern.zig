@@ -118,7 +118,7 @@ pub fn Pattern(comptime T: type) type {
         ///
         /// Assumes `world_point` is a point.
         pub fn patternAtShape(self: Self, shape: *const Shape(T), world_point: Tuple(T)) Color(T) {
-            const object_point = shape._inverse_transform.tupleMul(world_point);
+            const object_point = shape.worldToObject(world_point);
             return self.patternAt(object_point);
         }
     };
