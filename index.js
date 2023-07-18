@@ -129,6 +129,20 @@ let rendering = false;
 const render = () => {
     rendering = true;
 
+    // Log the current mem usage for debugging
+    mem = (function formatBytes(bytes, decimals = 2) {
+        if (!+bytes) return '0 Bytes'
+
+        const k = 1024
+        const dm = decimals < 0 ? 0 : decimals
+        const sizes = ['Bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB']
+
+        const i = Math.floor(Math.log(bytes) / Math.log(k))
+
+        return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`
+    })(wasm.instance.exports.memory.buffer.byteLength, 5);
+    console.log(`WASM memory size: ${mem}.`);
+
     scene = editor.getValue();
 
     // Tell the WASM code to initialize the renderer.
@@ -229,9 +243,9 @@ const render = () => {
     wasm.init(result);
 
     const wasm_initialized = window.performance.now();
-    console.log(`WASM initialized in ${wasm_initialized - start}ms`);
+    console.log(`WASM initialized in ${wasm_initialized - start}ms.`);
 
-    const default_scene = await fetch("cylinders.json").then((r) => r.text());
+    const default_scene = await fetch("groups.json").then((r) => r.text());
 
     editor.setValue(default_scene);
     editor.clearSelection();
