@@ -54,13 +54,13 @@ fn PatternConfig(comptime T: type) type {
 fn MaterialConfig(comptime T: type) type {
     return struct {
         pattern: PatternConfig(T),
-        ambient: T = 0.1,
-        diffuse: T = 0.9,
-        specular: T = 0.9,
-        shininess: T = 200.0,
-        reflective: T = 0.0,
-        transparency: T = 0.0,
-        @"refractive-index": T = 1.0,
+        ambient: ?T = null,
+        diffuse: ?T = null,
+        specular: ?T = null,
+        shininess: ?T = null,
+        reflective: ?T = null,
+        transparency: ?T = null,
+        @"refractive-index": ?T = null,
     };
 }
 
@@ -206,24 +206,36 @@ fn parsePattern(comptime T: type, allocator: Allocator, pattern: PatternConfig(T
     return pat;
 }
 
-fn parseMaterial(comptime T: type, allocator: Allocator, material: MaterialConfig(T)) !Material(T) {
-    var mat = Material(T).new();
+fn parseMaterial(
+    comptime T: type, allocator: Allocator, material: MaterialConfig(T), inherited_material: ?Material(T)
+) !Material(T) {
+    var mat = inherited_material orelse Material(T).new();
     mat.pattern = try parsePattern(T, allocator, material.pattern);
-    mat.ambient = material.ambient;
-    mat.diffuse = material.diffuse;
-    mat.specular = material.specular;
-    mat.shininess = material.shininess;
-    mat.reflective = material.reflective;
-    mat.transparency = material.transparency;
-    mat.refractive_index = material.@"refractive-index";
+
+    mat.ambient = material.ambient orelse mat.ambient;
+    mat.diffuse = material.diffuse orelse mat.diffuse;
+    mat.specular = material.specular orelse mat.specular;
+    mat.shininess = material.shininess orelse mat.shininess;
+    mat.reflective = material.reflective orelse mat.reflective;
+    mat.transparency = material.transparency orelse mat.transparency;
+    mat.refractive_index = material.@"refractive-index" orelse mat.refractive_index;
 
     return mat;
 }
 
 // `parseObject` must return `!*Shape(T)` instead of `!Shape(T)` so that internal
 // pointers in groups are not invalidated by moving the struct.
-fn parseObject(comptime T: type, allocator: Allocator, object: ObjectConfig(T)) !*Shape(T) {
+fn parseObject(
+    comptime T: type, allocator: Allocator, object: ObjectConfig(T), inherited_material: ?Material(T)
+) !*Shape(T) {
+    const material = if (object.material) |mat| blk: {
+        break :blk try parseMaterial(T, allocator, mat, inherited_material);
+    } else blk: {
+        break :blk inherited_material;
+    };
+
     var shape = try allocator.create(Shape(T));
+
     switch (object.@"type") {
         .sphere => shape.* = Shape(T).sphere(),
         .plane => shape.* = Shape(T).plane(),
@@ -243,8 +255,12 @@ fn parseObject(comptime T: type, allocator: Allocator, object: ObjectConfig(T)) 
         .group => |children| {
             shape.* = Shape(T).group(allocator);
 
+            if (material) |mat| {
+                shape.material = mat;
+            }
+
             for (children) |child| {
-                var s = try parseObject(T, allocator, child);
+                var s = try parseObject(T, allocator, child, shape.material);
                 try shape.addChild(s);
             }
         }
@@ -256,8 +272,8 @@ fn parseObject(comptime T: type, allocator: Allocator, object: ObjectConfig(T)) 
         try shape.setTransform(parseTransform(T, transform));
     }
 
-    if (object.material) |material| {
-        shape.material = try parseMaterial(T, allocator, material);
+    if (material) |mat| {
+        shape.material = mat;
     }
 
     return shape;
@@ -309,7 +325,7 @@ pub fn parseScene(
     var world = World(T).new(allocator);
 
     for (parsed.value.objects) |object| {
-        try world.objects.append((try parseObject(T, allocator, object)).*);
+        try world.objects.append((try parseObject(T, allocator, object, null)).*);
     }
 
     for (parsed.value.lights) |light| {

@@ -177,8 +177,9 @@ pub fn Shape(comptime T: type) type {
         /// Adds `child` to a group.
         ///
         /// Assumes `self.variant` is a group.
-        pub fn addChild(self: *Shape(T), child: *Shape(T)) !void {
+        pub fn addChild(self: *Self, child: *Self) !void {
             child.parent = self;
+
             try self.variant.group.children.append(child);
         }
 

@@ -35,7 +35,7 @@ pub fn main() !void {
     inline for (scenes_to_render) |scene| {
         // Use an arena for the scene building, because I'm too lazy
         // to individually free the (relatively few) allocations that will
-        // be made (e.g. for `Pattern`s) in `parseScene`.
+        // be made (e.g. for `Pattern`s and `Group`s) in `parseScene`.
         //
         // Don't use an arena for the main rendering allocator, though,
         // since there are many small allocs and frees made for intersections
