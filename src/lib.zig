@@ -1,5 +1,6 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
+const ArenaAllocator = std.heap.ArenaAllocator;
 
 const Canvas = @import("raytracer/canvas.zig").Canvas;
 const parseScene = @import("parser/parser.zig").parseScene;
@@ -34,20 +35,22 @@ pub fn Renderer(comptime T: type) type {
     return struct {
         const Self = @This();
 
-        allocator: Allocator,
+        rendering_allocator: Allocator,
+        scene_arena: ArenaAllocator,
         scene_info: SceneInfo(T),
         pixels: []u8,
         current_y: usize = 0,
 
         fn new(allocator: Allocator, scene: []const u8) !Self {
+            var scene_arena = ArenaAllocator.init(allocator);
+            errdefer scene_arena.deinit();
+
             // Parse the scene description.
-            const scene_info = try parseScene(T, allocator, scene);
+            const scene_info = try parseScene(T, scene_arena.allocator(), scene);
 
-            const pixels = try allocator.alloc(u8, 4 * scene_info.camera.hsize * scene_info.camera.vsize);
-            // At this point nothing else can fail, but we might as well explicitly
-            // include the `errdefer` if that changes in the future.
-            errdefer allocator.free(pixels);
-
+            const pixels = try scene_arena.allocator().alloc(
+                u8, 4 * scene_info.camera.hsize * scene_info.camera.vsize
+            );
             for (0..scene_info.camera.hsize) |x| {
                 for (0..scene_info.camera.vsize) |y| {
                     pixels[(y * scene_info.camera.hsize + x) * 4] = 0;
@@ -58,15 +61,15 @@ pub fn Renderer(comptime T: type) type {
             }
 
             return .{
-                .allocator = allocator,
+                .rendering_allocator = allocator,
+                .scene_arena = scene_arena,
                 .scene_info = scene_info,
                 .pixels = pixels,
             }; 
         }
 
         fn destroy(self: *Self) void {
-            self.allocator.free(self.pixels);
-            self.scene_info.world.destroy();
+            self.scene_arena.deinit();
         }
 
         fn getCanvasInfo(self: Self) CanvasInfo {
@@ -84,8 +87,8 @@ pub fn Renderer(comptime T: type) type {
             // TODO: An fba is every so slightly faster than an arena here, but is
             // more susceptible to OOM. I should probably just use the arena for
             // generality.
-            var buffer = try self.allocator.alloc(u8, 1024 * 128);
-            defer self.allocator.free(buffer);
+            var buffer = try self.rendering_allocator.alloc(u8, 1024 * 128);
+            defer self.rendering_allocator.free(buffer);
             var fba = std.heap.FixedBufferAllocator.init(buffer);
 
             for (0..camera.hsize) |x| {

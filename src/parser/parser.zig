@@ -79,7 +79,8 @@ fn ObjectConfig(comptime T: type) type {
                 min: T = -std.math.inf(T),
                 max: T = std.math.inf(T),
                 closed: bool = false,
-            }
+            },
+            group: []ObjectConfig(T),
         },
         transform: ?TransformConfig(T) = null,
         material: ?MaterialConfig(T) = null,
@@ -219,26 +220,35 @@ fn parseMaterial(comptime T: type, allocator: Allocator, material: MaterialConfi
     return mat;
 }
 
-fn parseObject(comptime T: type, allocator: Allocator, object: ObjectConfig(T)) !Shape(T) {
-    var shape = switch (object.@"type") {
-        .sphere => Shape(T).sphere(),
-        .plane => Shape(T).plane(),
-        .cube => Shape(T).cube(),
-        .cylinder => |cyl| blk: {
-            var c = Shape(T).cylinder();
-            c.variant.cylinder.min = cyl.min;
-            c.variant.cylinder.max = cyl.max;
-            c.variant.cylinder.closed = cyl.closed;
-            break :blk c;
+// `parseObject` must return `!*Shape(T)` instead of `!Shape(T)` so that internal
+// pointers in groups are not invalidated by moving the struct.
+fn parseObject(comptime T: type, allocator: Allocator, object: ObjectConfig(T)) !*Shape(T) {
+    var shape = try allocator.create(Shape(T));
+    switch (object.@"type") {
+        .sphere => shape.* = Shape(T).sphere(),
+        .plane => shape.* = Shape(T).plane(),
+        .cube => shape.* = Shape(T).cube(),
+        .cylinder => |cyl| {
+            shape.* = Shape(T).cylinder();
+            shape.*.variant.cylinder.min = cyl.min;
+            shape.*.variant.cylinder.max = cyl.max;
+            shape.*.variant.cylinder.closed = cyl.closed;
         },
-        .cone => |cyl| blk: {
-            var c = Shape(T).cone();
-            c.variant.cone.min = cyl.min;
-            c.variant.cone.max = cyl.max;
-            c.variant.cone.closed = cyl.closed;
-            break :blk c;
+        .cone => |cyl| {
+            shape.* = Shape(T).cone();
+            shape.*.variant.cone.min = cyl.min;
+            shape.*.variant.cone.max = cyl.max;
+            shape.*.variant.cone.closed = cyl.closed;
         },
-    };
+        .group => |children| {
+            shape.* = Shape(T).group(allocator);
+
+            for (children) |child| {
+                var s = try parseObject(T, allocator, child);
+                try shape.addChild(s);
+            }
+        }
+    }
 
     shape.casts_shadow = object.@"casts-shadow";
 
@@ -299,7 +309,7 @@ pub fn parseScene(
     var world = World(T).new(allocator);
 
     for (parsed.value.objects) |object| {
-        try world.objects.append(try parseObject(T, allocator, object));
+        try world.objects.append((try parseObject(T, allocator, object)).*);
     }
 
     for (parsed.value.lights) |light| {

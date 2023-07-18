@@ -1,0 +1,845 @@
+{
+    "camera": {
+        "width": 600,
+        "height": 200,
+        "field-of-view": 0.9,
+        "from": [0, 0, -9],
+        "to": [0, 0, 0],
+        "up": [0, 1, 0]
+    },
+    "lights": [
+        {
+            "point-light": {
+                "position": [10000, 10000, -10000],
+                "intensity": [0.25, 0.25, 0.25]
+            }
+        },
+        {
+            "point-light": {
+                "position": [-10000, 10000, -10000],
+                "intensity": [0.25, 0.25, 0.25]
+            }
+        },
+        {
+            "point-light": {
+                "position": [10000, -10000, -10000],
+                "intensity": [0.25, 0.25, 0.25]
+            }
+        },
+        {
+            "point-light": {
+                "position": [-10000, -10000, -10000],
+                "intensity": [0.25, 0.25, 0.25]
+            }
+        }
+    ],
+    "objects": [
+        {
+            "type": { "plane": {} },
+            "transform": [
+                { "rotate-x": 1.5708 },
+                { "translate": [0, 0, 100] }
+            ],
+            "material": {
+                "pattern": { "type": { "solid": [1, 1, 1] } },
+                "ambient": 1,
+                "diffuse": 0,
+                "specular": 0
+            }
+        },
+        {
+            "type": {
+                "group": [
+                    {
+                        "type": {
+                            "group": [
+                                {
+                                    "type": { "sphere": {} },
+                                    "transform": [
+                                        {"scale": [0.25, 0.25, 0.25] },
+                                        {"translate": [0, 0, -1] }
+                                    ]
+                                },
+                                {
+                                    "type": { "cylinder": { "min": 0, "max": 1, "closed": false } },
+                                    "transform": [
+                                        {"scale": [0.25, 1, 0.25] },
+                                        {"rotate-z": -1.5708 },
+                                        {"rotate-y": -0.5236 },
+                                        {"translate": [0, 0, -1] }
+                                    ]
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "type": {
+                            "group": [
+                                {
+                                    "type": { "sphere": {} },
+                                    "transform": [
+                                        {"scale": [0.25, 0.25, 0.25] },
+                                        {"translate": [0, 0, -1] }
+                                    ]
+                                },
+                                {
+                                    "type": { "cylinder": { "min": 0, "max": 1, "closed": false } },
+                                    "transform": [
+                                        {"scale": [0.25, 1, 0.25] },
+                                        {"rotate-z": -1.5708 },
+                                        {"rotate-y": -0.5236 },
+                                        {"translate": [0, 0, -1] }
+                                    ]
+                                }
+                            ]
+                        },
+                        "transform": [{ "rotate-y": 1.0472 }]
+                    },
+                    {
+                        "type": {
+                            "group": [
+                                {
+                                    "type": { "sphere": {} },
+                                    "transform": [
+                                        {"scale": [0.25, 0.25, 0.25] },
+                                        {"translate": [0, 0, -1] }
+                                    ]
+                                },
+                                {
+                                    "type": { "cylinder": { "min": 0, "max": 1, "closed": false } },
+                                    "transform": [
+                                        {"scale": [0.25, 1, 0.25] },
+                                        {"rotate-z": -1.5708 },
+                                        {"rotate-y": -0.5236 },
+                                        {"translate": [0, 0, -1] }
+                                    ]
+                                }
+                            ]
+                        },
+                        "transform": [{ "rotate-y": 2.0944 }]
+                    },
+                    {
+                        "type": {
+                            "group": [
+                                {
+                                    "type": { "sphere": {} },
+                                    "transform": [
+                                        {"scale": [0.25, 0.25, 0.25] },
+                                        {"translate": [0, 0, -1] }
+                                    ]
+                                },
+                                {
+                                    "type": { "cylinder": { "min": 0, "max": 1, "closed": false } },
+                                    "transform": [
+                                        {"scale": [0.25, 1, 0.25] },
+                                        {"rotate-z": -1.5708 },
+                                        {"rotate-y": -0.5236 },
+                                        {"translate": [0, 0, -1] }
+                                    ]
+                                }
+                            ]
+                        },
+                        "transform": [{ "rotate-y": 3.1416 }]
+                    },
+                    {
+                        "type": {
+                            "group": [
+                                {
+                                    "type": { "sphere": {} },
+                                    "transform": [
+                                        {"scale": [0.25, 0.25, 0.25] },
+                                        {"translate": [0, 0, -1] }
+                                    ]
+                                },
+                                {
+                                    "type": { "cylinder": { "min": 0, "max": 1, "closed": false } },
+                                    "transform": [
+                                        {"scale": [0.25, 1, 0.25] },
+                                        {"rotate-z": -1.5708 },
+                                        {"rotate-y": -0.5236 },
+                                        {"translate": [0, 0, -1] }
+                                    ]
+                                }
+                            ]
+                        },
+                        "transform": [{ "rotate-y": 4.1888 }]
+                    },
+                    {
+                        "type": {
+                            "group": [
+                                {
+                                    "type": { "sphere": {} },
+                                    "transform": [
+                                        {"scale": [0.25, 0.25, 0.25] },
+                                        {"translate": [0, 0, -1] }
+                                    ]
+                                },
+                                {
+                                    "type": { "cylinder": { "min": 0, "max": 1, "closed": false } },
+                                    "transform": [
+                                        {"scale": [0.25, 1, 0.25] },
+                                        {"rotate-z": -1.5708 },
+                                        {"rotate-y": -0.5236 },
+                                        {"translate": [0, 0, -1] }
+                                    ]
+                                }
+                            ]
+                        },
+                        "transform": [{ "rotate-y": 5.236 }]
+                    },
+                    {
+                        "type": {
+                            "group": [
+                                {
+                                    "type": { "cone" : { "min": -1, "max": 0, "closed": false } },
+                                    "transform": [
+                                        { "scale": [0.24606, 1.37002, 0.24606] },
+                                        { "rotate-x": -0.7854 }
+                                    ]
+                                },
+                                {
+                                    "type": { "cone" : { "min": -1, "max": 0, "closed": false } },
+                                    "transform": [
+                                        { "scale": [0.24606, 1.37002, 0.24606] },
+                                        { "rotate-x": -0.7854 },
+                                        { "rotate-y": 1.0472 }
+                                    ]
+                                },
+                                {
+                                    "type": { "cone" : { "min": -1, "max": 0, "closed": false } },
+                                    "transform": [
+                                        { "scale": [0.24606, 1.37002, 0.24606] },
+                                        { "rotate-x": -0.7854 },
+                                        { "rotate-y": 2.0944 }
+                                    ]
+                                },
+                                {
+                                    "type": { "cone" : { "min": -1, "max": 0, "closed": false } },
+                                    "transform": [
+                                        { "scale": [0.24606, 1.37002, 0.24606] },
+                                        { "rotate-x": -0.7854 },
+                                        { "rotate-y": 3.1416 }
+                                    ]
+                                },
+                                {
+                                    "type": { "cone" : { "min": -1, "max": 0, "closed": false } },
+                                    "transform": [
+                                        { "scale": [0.24606, 1.37002, 0.24606] },
+                                        { "rotate-x": -0.7854 },
+                                        { "rotate-y": 4.1888 }
+                                    ]
+                                },
+                                {
+                                    "type": { "cone" : { "min": -1, "max": 0, "closed": false } },
+                                    "transform": [
+                                        { "scale": [0.24606, 1.37002, 0.24606] },
+                                        { "rotate-x": -0.7854 },
+                                        { "rotate-y": 5.236 }
+                                    ]
+                                }
+                            ]
+                        },
+                        "transform": [{ "translate": [0, 1, 0] }]
+                    },
+                    {
+                        "type": {
+                            "group": [
+                                {
+                                    "type": { "cone" : { "min": -1, "max": 0, "closed": false } },
+                                    "transform": [
+                                        { "scale": [0.24606, 1.37002, 0.24606] },
+                                        { "rotate-x": -0.7854 }
+                                    ]
+                                },
+                                {
+                                    "type": { "cone" : { "min": -1, "max": 0, "closed": false } },
+                                    "transform": [
+                                        { "scale": [0.24606, 1.37002, 0.24606] },
+                                        { "rotate-x": -0.7854 },
+                                        { "rotate-y": 1.0472 }
+                                    ]
+                                },
+                                {
+                                    "type": { "cone" : { "min": -1, "max": 0, "closed": false } },
+                                    "transform": [
+                                        { "scale": [0.24606, 1.37002, 0.24606] },
+                                        { "rotate-x": -0.7854 },
+                                        { "rotate-y": 2.0944 }
+                                    ]
+                                },
+                                {
+                                    "type": { "cone" : { "min": -1, "max": 0, "closed": false } },
+                                    "transform": [
+                                        { "scale": [0.24606, 1.37002, 0.24606] },
+                                        { "rotate-x": -0.7854 },
+                                        { "rotate-y": 3.1416 }
+                                    ]
+                                },
+                                {
+                                    "type": { "cone" : { "min": -1, "max": 0, "closed": false } },
+                                    "transform": [
+                                        { "scale": [0.24606, 1.37002, 0.24606] },
+                                        { "rotate-x": -0.7854 },
+                                        { "rotate-y": 4.1888 }
+                                    ]
+                                },
+                                {
+                                    "type": { "cone" : { "min": -1, "max": 0, "closed": false } },
+                                    "transform": [
+                                        { "scale": [0.24606, 1.37002, 0.24606] },
+                                        { "rotate-x": -0.7854 },
+                                        { "rotate-y": 5.236 }
+                                    ]
+                                }
+                            ]
+                        },
+                        "transform": [
+                            {"translate": [0, 1, 0] },
+                            { "rotate-x": 3.1416 }
+                        ]
+                    }
+                ]
+            },
+            "transform": [
+                {"rotate-y": 0.1745 },
+                {"rotate-x": 0.4363 },
+                {"translate": [-2.8, 0, 0] }
+            ],
+            "material": {
+                "pattern": { "type": { "solid": [0.9, 0.2, 0.4] } },
+                "ambient": 0.2,
+                "diffuse": 0.8,
+                "specular": 0.7,
+                "shininess": 20
+            }
+        },
+        {
+            "type": {
+                "group": [
+                    {
+                        "type": {
+                            "group": [
+                                {
+                                    "type": { "sphere": {} },
+                                    "transform": [
+                                        {"scale": [0.25, 0.25, 0.25] },
+                                        {"translate": [0, 0, -1] }
+                                    ]
+                                },
+                                {
+                                    "type": { "cylinder": { "min": 0, "max": 1, "closed": false } },
+                                    "transform": [
+                                        {"scale": [0.25, 1, 0.25] },
+                                        {"rotate-z": -1.5708 },
+                                        {"rotate-y": -0.5236 },
+                                        {"translate": [0, 0, -1] }
+                                    ]
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "type": {
+                            "group": [
+                                {
+                                    "type": { "sphere": {} },
+                                    "transform": [
+                                        {"scale": [0.25, 0.25, 0.25] },
+                                        {"translate": [0, 0, -1] }
+                                    ]
+                                },
+                                {
+                                    "type": { "cylinder": { "min": 0, "max": 1, "closed": false } },
+                                    "transform": [
+                                        {"scale": [0.25, 1, 0.25] },
+                                        {"rotate-z": -1.5708 },
+                                        {"rotate-y": -0.5236 },
+                                        {"translate": [0, 0, -1] }
+                                    ]
+                                }
+                            ]
+                        },
+                        "transform": [{ "rotate-y": 1.0472 }]
+                    },
+                    {
+                        "type": {
+                            "group": [
+                                {
+                                    "type": { "sphere": {} },
+                                    "transform": [
+                                        {"scale": [0.25, 0.25, 0.25] },
+                                        {"translate": [0, 0, -1] }
+                                    ]
+                                },
+                                {
+                                    "type": { "cylinder": { "min": 0, "max": 1, "closed": false } },
+                                    "transform": [
+                                        {"scale": [0.25, 1, 0.25] },
+                                        {"rotate-z": -1.5708 },
+                                        {"rotate-y": -0.5236 },
+                                        {"translate": [0, 0, -1] }
+                                    ]
+                                }
+                            ]
+                        },
+                        "transform": [{ "rotate-y": 2.0944 }]
+                    },
+                    {
+                        "type": {
+                            "group": [
+                                {
+                                    "type": { "sphere": {} },
+                                    "transform": [
+                                        {"scale": [0.25, 0.25, 0.25] },
+                                        {"translate": [0, 0, -1] }
+                                    ]
+                                },
+                                {
+                                    "type": { "cylinder": { "min": 0, "max": 1, "closed": false } },
+                                    "transform": [
+                                        {"scale": [0.25, 1, 0.25] },
+                                        {"rotate-z": -1.5708 },
+                                        {"rotate-y": -0.5236 },
+                                        {"translate": [0, 0, -1] }
+                                    ]
+                                }
+                            ]
+                        },
+                        "transform": [{ "rotate-y": 3.1416 }]
+                    },
+                    {
+                        "type": {
+                            "group": [
+                                {
+                                    "type": { "sphere": {} },
+                                    "transform": [
+                                        {"scale": [0.25, 0.25, 0.25] },
+                                        {"translate": [0, 0, -1] }
+                                    ]
+                                },
+                                {
+                                    "type": { "cylinder": { "min": 0, "max": 1, "closed": false } },
+                                    "transform": [
+                                        {"scale": [0.25, 1, 0.25] },
+                                        {"rotate-z": -1.5708 },
+                                        {"rotate-y": -0.5236 },
+                                        {"translate": [0, 0, -1] }
+                                    ]
+                                }
+                            ]
+                        },
+                        "transform": [{ "rotate-y": 4.1888 }]
+                    },
+                    {
+                        "type": {
+                            "group": [
+                                {
+                                    "type": { "sphere": {} },
+                                    "transform": [
+                                        {"scale": [0.25, 0.25, 0.25] },
+                                        {"translate": [0, 0, -1] }
+                                    ]
+                                },
+                                {
+                                    "type": { "cylinder": { "min": 0, "max": 1, "closed": false } },
+                                    "transform": [
+                                        {"scale": [0.25, 1, 0.25] },
+                                        {"rotate-z": -1.5708 },
+                                        {"rotate-y": -0.5236 },
+                                        {"translate": [0, 0, -1] }
+                                    ]
+                                }
+                            ]
+                        },
+                        "transform": [{ "rotate-y": 5.236 }]
+                    },
+                    {
+                        "type": {
+                            "group": [
+                                {
+                                    "type": { "cone" : { "min": -1, "max": 0, "closed": false } },
+                                    "transform": [
+                                        { "scale": [0.24606, 1.37002, 0.24606] },
+                                        { "rotate-x": -0.7854 }
+                                    ]
+                                },
+                                {
+                                    "type": { "cone" : { "min": -1, "max": 0, "closed": false } },
+                                    "transform": [
+                                        { "scale": [0.24606, 1.37002, 0.24606] },
+                                        { "rotate-x": -0.7854 },
+                                        { "rotate-y": 1.0472 }
+                                    ]
+                                },
+                                {
+                                    "type": { "cone" : { "min": -1, "max": 0, "closed": false } },
+                                    "transform": [
+                                        { "scale": [0.24606, 1.37002, 0.24606] },
+                                        { "rotate-x": -0.7854 },
+                                        { "rotate-y": 2.0944 }
+                                    ]
+                                },
+                                {
+                                    "type": { "cone" : { "min": -1, "max": 0, "closed": false } },
+                                    "transform": [
+                                        { "scale": [0.24606, 1.37002, 0.24606] },
+                                        { "rotate-x": -0.7854 },
+                                        { "rotate-y": 3.1416 }
+                                    ]
+                                },
+                                {
+                                    "type": { "cone" : { "min": -1, "max": 0, "closed": false } },
+                                    "transform": [
+                                        { "scale": [0.24606, 1.37002, 0.24606] },
+                                        { "rotate-x": -0.7854 },
+                                        { "rotate-y": 4.1888 }
+                                    ]
+                                },
+                                {
+                                    "type": { "cone" : { "min": -1, "max": 0, "closed": false } },
+                                    "transform": [
+                                        { "scale": [0.24606, 1.37002, 0.24606] },
+                                        { "rotate-x": -0.7854 },
+                                        { "rotate-y": 5.236 }
+                                    ]
+                                }
+                            ]
+                        },
+                        "transform": [{ "translate": [0, 1, 0] }]
+                    },
+                    {
+                        "type": {
+                            "group": [
+                                {
+                                    "type": { "cone" : { "min": -1, "max": 0, "closed": false } },
+                                    "transform": [
+                                        { "scale": [0.24606, 1.37002, 0.24606] },
+                                        { "rotate-x": -0.7854 }
+                                    ]
+                                },
+                                {
+                                    "type": { "cone" : { "min": -1, "max": 0, "closed": false } },
+                                    "transform": [
+                                        { "scale": [0.24606, 1.37002, 0.24606] },
+                                        { "rotate-x": -0.7854 },
+                                        { "rotate-y": 1.0472 }
+                                    ]
+                                },
+                                {
+                                    "type": { "cone" : { "min": -1, "max": 0, "closed": false } },
+                                    "transform": [
+                                        { "scale": [0.24606, 1.37002, 0.24606] },
+                                        { "rotate-x": -0.7854 },
+                                        { "rotate-y": 2.0944 }
+                                    ]
+                                },
+                                {
+                                    "type": { "cone" : { "min": -1, "max": 0, "closed": false } },
+                                    "transform": [
+                                        { "scale": [0.24606, 1.37002, 0.24606] },
+                                        { "rotate-x": -0.7854 },
+                                        { "rotate-y": 3.1416 }
+                                    ]
+                                },
+                                {
+                                    "type": { "cone" : { "min": -1, "max": 0, "closed": false } },
+                                    "transform": [
+                                        { "scale": [0.24606, 1.37002, 0.24606] },
+                                        { "rotate-x": -0.7854 },
+                                        { "rotate-y": 4.1888 }
+                                    ]
+                                },
+                                {
+                                    "type": { "cone" : { "min": -1, "max": 0, "closed": false } },
+                                    "transform": [
+                                        { "scale": [0.24606, 1.37002, 0.24606] },
+                                        { "rotate-x": -0.7854 },
+                                        { "rotate-y": 5.236 }
+                                    ]
+                                }
+                            ]
+                        },
+                        "transform": [
+                            {"translate": [0, 1, 0] },
+                            { "rotate-x": 3.1416 }
+                        ]
+                    }
+                ]
+            },
+            "transform": [{ "rotate-y": 0.1745 }],
+            "material": {
+                "pattern": { "type": { "solid": [0.2, 0.9, 0.6] } },
+                "ambient": 0.2,
+                "diffuse": 0.8,
+                "specular": 0.7,
+                "shininess": 20
+            }
+        },
+        {
+            "type": {
+                "group": [
+                    {
+                        "type": {
+                            "group": [
+                                {
+                                    "type": { "sphere": {} },
+                                    "transform": [
+                                        {"scale": [0.25, 0.25, 0.25] },
+                                        {"translate": [0, 0, -1] }
+                                    ]
+                                },
+                                {
+                                    "type": { "cylinder": { "min": 0, "max": 1, "closed": false } },
+                                    "transform": [
+                                        {"scale": [0.25, 1, 0.25] },
+                                        {"rotate-z": -1.5708 },
+                                        {"rotate-y": -0.5236 },
+                                        {"translate": [0, 0, -1] }
+                                    ]
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "type": {
+                            "group": [
+                                {
+                                    "type": { "sphere": {} },
+                                    "transform": [
+                                        {"scale": [0.25, 0.25, 0.25] },
+                                        {"translate": [0, 0, -1] }
+                                    ]
+                                },
+                                {
+                                    "type": { "cylinder": { "min": 0, "max": 1, "closed": false } },
+                                    "transform": [
+                                        {"scale": [0.25, 1, 0.25] },
+                                        {"rotate-z": -1.5708 },
+                                        {"rotate-y": -0.5236 },
+                                        {"translate": [0, 0, -1] }
+                                    ]
+                                }
+                            ]
+                        },
+                        "transform": [{ "rotate-y": 1.0472 }]
+                    },
+                    {
+                        "type": {
+                            "group": [
+                                {
+                                    "type": { "sphere": {} },
+                                    "transform": [
+                                        {"scale": [0.25, 0.25, 0.25] },
+                                        {"translate": [0, 0, -1] }
+                                    ]
+                                },
+                                {
+                                    "type": { "cylinder": { "min": 0, "max": 1, "closed": false } },
+                                    "transform": [
+                                        {"scale": [0.25, 1, 0.25] },
+                                        {"rotate-z": -1.5708 },
+                                        {"rotate-y": -0.5236 },
+                                        {"translate": [0, 0, -1] }
+                                    ]
+                                }
+                            ]
+                        },
+                        "transform": [{ "rotate-y": 2.0944 }]
+                    },
+                    {
+                        "type": {
+                            "group": [
+                                {
+                                    "type": { "sphere": {} },
+                                    "transform": [
+                                        {"scale": [0.25, 0.25, 0.25] },
+                                        {"translate": [0, 0, -1] }
+                                    ]
+                                },
+                                {
+                                    "type": { "cylinder": { "min": 0, "max": 1, "closed": false } },
+                                    "transform": [
+                                        {"scale": [0.25, 1, 0.25] },
+                                        {"rotate-z": -1.5708 },
+                                        {"rotate-y": -0.5236 },
+                                        {"translate": [0, 0, -1] }
+                                    ]
+                                }
+                            ]
+                        },
+                        "transform": [{ "rotate-y": 3.1416 }]
+                    },
+                    {
+                        "type": {
+                            "group": [
+                                {
+                                    "type": { "sphere": {} },
+                                    "transform": [
+                                        {"scale": [0.25, 0.25, 0.25] },
+                                        {"translate": [0, 0, -1] }
+                                    ]
+                                },
+                                {
+                                    "type": { "cylinder": { "min": 0, "max": 1, "closed": false } },
+                                    "transform": [
+                                        {"scale": [0.25, 1, 0.25] },
+                                        {"rotate-z": -1.5708 },
+                                        {"rotate-y": -0.5236 },
+                                        {"translate": [0, 0, -1] }
+                                    ]
+                                }
+                            ]
+                        },
+                        "transform": [{ "rotate-y": 4.1888 }]
+                    },
+                    {
+                        "type": {
+                            "group": [
+                                {
+                                    "type": { "sphere": {} },
+                                    "transform": [
+                                        {"scale": [0.25, 0.25, 0.25] },
+                                        {"translate": [0, 0, -1] }
+                                    ]
+                                },
+                                {
+                                    "type": { "cylinder": { "min": 0, "max": 1, "closed": false } },
+                                    "transform": [
+                                        {"scale": [0.25, 1, 0.25] },
+                                        {"rotate-z": -1.5708 },
+                                        {"rotate-y": -0.5236 },
+                                        {"translate": [0, 0, -1] }
+                                    ]
+                                }
+                            ]
+                        },
+                        "transform": [{ "rotate-y": 5.236 }]
+                    },
+                    {
+                        "type": {
+                            "group": [
+                                {
+                                    "type": { "cone" : { "min": -1, "max": 0, "closed": false } },
+                                    "transform": [
+                                        { "scale": [0.24606, 1.37002, 0.24606] },
+                                        { "rotate-x": -0.7854 }
+                                    ]
+                                },
+                                {
+                                    "type": { "cone" : { "min": -1, "max": 0, "closed": false } },
+                                    "transform": [
+                                        { "scale": [0.24606, 1.37002, 0.24606] },
+                                        { "rotate-x": -0.7854 },
+                                        { "rotate-y": 1.0472 }
+                                    ]
+                                },
+                                {
+                                    "type": { "cone" : { "min": -1, "max": 0, "closed": false } },
+                                    "transform": [
+                                        { "scale": [0.24606, 1.37002, 0.24606] },
+                                        { "rotate-x": -0.7854 },
+                                        { "rotate-y": 2.0944 }
+                                    ]
+                                },
+                                {
+                                    "type": { "cone" : { "min": -1, "max": 0, "closed": false } },
+                                    "transform": [
+                                        { "scale": [0.24606, 1.37002, 0.24606] },
+                                        { "rotate-x": -0.7854 },
+                                        { "rotate-y": 3.1416 }
+                                    ]
+                                },
+                                {
+                                    "type": { "cone" : { "min": -1, "max": 0, "closed": false } },
+                                    "transform": [
+                                        { "scale": [0.24606, 1.37002, 0.24606] },
+                                        { "rotate-x": -0.7854 },
+                                        { "rotate-y": 4.1888 }
+                                    ]
+                                },
+                                {
+                                    "type": { "cone" : { "min": -1, "max": 0, "closed": false } },
+                                    "transform": [
+                                        { "scale": [0.24606, 1.37002, 0.24606] },
+                                        { "rotate-x": -0.7854 },
+                                        { "rotate-y": 5.236 }
+                                    ]
+                                }
+                            ]
+                        },
+                        "transform": [{ "translate": [0, 1, 0] }]
+                    },
+                    {
+                        "type": {
+                            "group": [
+                                {
+                                    "type": { "cone" : { "min": -1, "max": 0, "closed": false } },
+                                    "transform": [
+                                        { "scale": [0.24606, 1.37002, 0.24606] },
+                                        { "rotate-x": -0.7854 }
+                                    ]
+                                },
+                                {
+                                    "type": { "cone" : { "min": -1, "max": 0, "closed": false } },
+                                    "transform": [
+                                        { "scale": [0.24606, 1.37002, 0.24606] },
+                                        { "rotate-x": -0.7854 },
+                                        { "rotate-y": 1.0472 }
+                                    ]
+                                },
+                                {
+                                    "type": { "cone" : { "min": -1, "max": 0, "closed": false } },
+                                    "transform": [
+                                        { "scale": [0.24606, 1.37002, 0.24606] },
+                                        { "rotate-x": -0.7854 },
+                                        { "rotate-y": 2.0944 }
+                                    ]
+                                },
+                                {
+                                    "type": { "cone" : { "min": -1, "max": 0, "closed": false } },
+                                    "transform": [
+                                        { "scale": [0.24606, 1.37002, 0.24606] },
+                                        { "rotate-x": -0.7854 },
+                                        { "rotate-y": 3.1416 }
+                                    ]
+                                },
+                                {
+                                    "type": { "cone" : { "min": -1, "max": 0, "closed": false } },
+                                    "transform": [
+                                        { "scale": [0.24606, 1.37002, 0.24606] },
+                                        { "rotate-x": -0.7854 },
+                                        { "rotate-y": 4.1888 }
+                                    ]
+                                },
+                                {
+                                    "type": { "cone" : { "min": -1, "max": 0, "closed": false } },
+                                    "transform": [
+                                        { "scale": [0.24606, 1.37002, 0.24606] },
+                                        { "rotate-x": -0.7854 },
+                                        { "rotate-y": 5.236 }
+                                    ]
+                                }
+                            ]
+                        },
+                        "transform": [
+                            {"translate": [0, 1, 0] },
+                            { "rotate-x": 3.1416 }
+                        ]
+                    }
+                ]
+            },
+            "transform": [
+                { "rotate-y": -0.1745 },
+                { "rotate-x": -0.4363 },
+                { "translate": [2.8, 0, 0] }
+            ],
+            "material": {
+                "pattern": { "type": { "solid": [0.2, 0.3, 1] } },
+                "ambient": 0.2,
+                "diffuse": 0.8,
+                "specular": 0.7,
+                "shininess": 20
+            }
+        }
+    ]
+}

@@ -25,7 +25,8 @@ pub fn main() !void {
         "ch11_reflection_and_refraction",
         "cover",
         "cubes",
-        "xyz"
+        "xyz",
+        "groups"
     };
 
     // `raw_c_allocator` seems to play more nicely with Valgrind.
