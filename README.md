@@ -22,11 +22,14 @@ You can find an interactive demo of this ray tracer online at [sinclam.github.io
 - [x] Chapter 11 - Reflection and Refraction
 - [x] Chapter 12 - Cubes
 - [x] Chapter 13 - Cylinders
-- [ ] Chapter 14 - Groups
+- [x] Chapter 14 - Groups
 - [ ] Chapter 15 - Triangles
 - [ ] Chapter 16 - Constructive Solid Geometry (CSG)
 - [ ] Chapter 17 - Next Steps
 - [x] A1 - Rendering the Cover Image
+- [ ] Bonus Chapter - Rendering soft shadows
+- [ ] Bonus Chapter - Bounding boxes and hierarchies
+
 
 ## Examples
 
@@ -40,11 +43,13 @@ You can find an interactive demo of this ray tracer online at [sinclam.github.io
 
 <img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/8c29e0ca-9f3c-4509-ac19-50e8f155913c width=800> 
 
+<br/><br/>
+
+<img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/e543b4ea-e6a3-4091-a9d6-8c9d3cc51487 width=800> 
 
 <br/><br/>
 
-<img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/590d80a2-0801-4fea-9979-e92128c6f38a width=800> 
-
+<img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/1a76dce9-9c63-41d8-a351-12b5931d5eab width=800> 
 
 ## Performance profiling
 
