@@ -11,6 +11,7 @@ const Sphere = @import("sphere.zig").Sphere;
 const Cube = @import("cube.zig").Cube;
 const Cylinder = @import("cylinder.zig").Cylinder;
 const Cone = @import("cone.zig").Cone;
+const Triangle = @import("triangle.zig").Triangle;
 const Plane = @import("plane.zig").Plane;
 const Group = @import("group.zig").Group;
 const PreComputations = @import("../world.zig").PreComputations;
@@ -82,6 +83,7 @@ pub fn Shape(comptime T: type) type {
             cylinder: Cylinder(T),
             cone: Cone(T),
             plane: Plane(T),
+            triangle: Triangle(T),
             group: Group(T),
         };
 
@@ -159,6 +161,27 @@ pub fn Shape(comptime T: type) type {
         /// Creates a new cone.
         pub fn cone() Self {
             return Self.new(Self.Variant { .cone = Cone(T) {} });
+        }
+
+        /// Creates a new triangle.
+        pub fn triangle(p1: Tuple(T), p2: Tuple(T), p3: Tuple(T)) Self {
+            const e1 = p2.sub(p1);
+            const e2 = p3.sub(p1);
+
+            const normal = e2.cross(e1).normalized();
+
+            return Self.new(
+                Self.Variant {
+                    .triangle = Triangle(T) {
+                        .p1 = p1,
+                        .p2 = p2,
+                        .p3 = p3,
+                        .e1 = e1,
+                        .e2 = e2,
+                        .normal = normal
+                    }
+                }
+            );
         }
 
         /// Creates a new plane.

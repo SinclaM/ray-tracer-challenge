@@ -77,7 +77,6 @@ fn ObjectConfig(comptime T: type) type {
         @"type": union(enum) {
             @"from-definition": []const u8,
             sphere: void,
-            plane: void,
             cube: void,
             cylinder: *struct {
                 min: T = -std.math.inf(T),
@@ -89,6 +88,12 @@ fn ObjectConfig(comptime T: type) type {
                 max: T = std.math.inf(T),
                 closed: bool = false,
             },
+            triangle: *struct {
+                p1: [3]T,
+                p2: [3]T,
+                p3: [3]T,
+            },
+            plane: void,
             group: []ObjectConfig(T),
         },
         transform: ?TransformConfig(T) = null,
@@ -275,6 +280,13 @@ fn parseObject(
             shape.*.variant.cone.min = cyl.min;
             shape.*.variant.cone.max = cyl.max;
             shape.*.variant.cone.closed = cyl.closed;
+        },
+        .triangle => |tri| {
+            shape.* = Shape(T).triangle(
+                Tuple(T).point(tri.p1[0], tri.p1[1], tri.p1[2]),
+                Tuple(T).point(tri.p2[0], tri.p2[1], tri.p2[2]),
+                Tuple(T).point(tri.p3[0], tri.p3[1], tri.p3[2])
+            );
         },
         .group => |children| {
             shape.* = Shape(T).group(allocator);
