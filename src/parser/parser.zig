@@ -2,6 +2,7 @@ const std = @import("std");
 const testing = std.testing;
 const json = std.json;
 const Allocator = std.mem.Allocator;
+const StringHashMap = std.StringHashMap;
 
 const Tuple = @import("../raytracer/tuple.zig").Tuple;
 const Matrix = @import("../raytracer/matrix.zig").Matrix;
@@ -12,6 +13,13 @@ const Material = @import("../raytracer/material.zig").Material;
 const Light = @import("../raytracer/light.zig").Light;
 const World = @import("../raytracer/world.zig").World;
 const Camera = @import("../raytracer/camera.zig").Camera;
+
+fn ObjectDefinitionConfig(comptime T: type) type {
+    return struct {
+        name: []const u8,
+        value: ObjectConfig(T),
+    };
+}
 
 fn CameraConfig(comptime T: type) type {
     return struct {
@@ -53,7 +61,7 @@ fn PatternConfig(comptime T: type) type {
 
 fn MaterialConfig(comptime T: type) type {
     return struct {
-        pattern: PatternConfig(T),
+        pattern: ?PatternConfig(T) = null,
         ambient: ?T = null,
         diffuse: ?T = null,
         specular: ?T = null,
@@ -67,6 +75,7 @@ fn MaterialConfig(comptime T: type) type {
 fn ObjectConfig(comptime T: type) type {
     return struct {
         @"type": union(enum) {
+            @"from-definition": []const u8,
             sphere: void,
             plane: void,
             cube: void,
@@ -99,13 +108,14 @@ fn LightConfig(comptime T: type) type {
 
 fn SceneConfig(comptime T: type) type {
     return struct {
+        @"shape-definitions": []ObjectDefinitionConfig(T) = &.{},
         camera: CameraConfig(T),
-        objects: []ObjectConfig(T),
         lights: []LightConfig(T),
+        objects: []ObjectConfig(T),
     };
 }
 
-const SceneParseError = error { UnknownShape };
+const SceneParseError = error { UnknownShape, UnknownDefinition };
 
 fn parseTransform(comptime T: type, transform: TransformConfig(T)) Matrix(T, 4) {
     var matrix = Matrix(T, 4).identity();
@@ -210,7 +220,10 @@ fn parseMaterial(
     comptime T: type, allocator: Allocator, material: MaterialConfig(T), inherited_material: ?Material(T)
 ) !Material(T) {
     var mat = inherited_material orelse Material(T).new();
-    mat.pattern = try parsePattern(T, allocator, material.pattern);
+
+    if (material.pattern) |pattern| {
+        mat.pattern = try parsePattern(T, allocator, pattern);
+    }
 
     mat.ambient = material.ambient orelse mat.ambient;
     mat.diffuse = material.diffuse orelse mat.diffuse;
@@ -226,7 +239,11 @@ fn parseMaterial(
 // `parseObject` must return `!*Shape(T)` instead of `!Shape(T)` so that internal
 // pointers in groups are not invalidated by moving the struct.
 fn parseObject(
-    comptime T: type, allocator: Allocator, object: ObjectConfig(T), inherited_material: ?Material(T)
+    comptime T: type,
+    allocator: Allocator,
+    object: ObjectConfig(T),
+    inherited_material: ?Material(T),
+    definitions: StringHashMap(ObjectDefinitionConfig(T))
 ) !*Shape(T) {
     const material = if (object.material) |mat| blk: {
         break :blk try parseMaterial(T, allocator, mat, inherited_material);
@@ -237,6 +254,13 @@ fn parseObject(
     var shape = try allocator.create(Shape(T));
 
     switch (object.@"type") {
+        .@"from-definition" => |name| {
+            if (definitions.get(name)) |def| {
+                shape = try parseObject(T, allocator, def.value, material, definitions);
+            } else {
+                return SceneParseError.UnknownDefinition;
+            }
+        },
         .sphere => shape.* = Shape(T).sphere(),
         .plane => shape.* = Shape(T).plane(),
         .cube => shape.* = Shape(T).cube(),
@@ -255,12 +279,8 @@ fn parseObject(
         .group => |children| {
             shape.* = Shape(T).group(allocator);
 
-            if (material) |mat| {
-                shape.material = mat;
-            }
-
             for (children) |child| {
-                var s = try parseObject(T, allocator, child, shape.material);
+                var s = try parseObject(T, allocator, child, material, definitions);
                 try shape.addChild(s);
             }
         }
@@ -304,6 +324,13 @@ pub fn parseScene(
     const parsed = try std.json.parseFromSlice(SceneConfig(T), allocator, scene_json, .{});
     defer parsed.deinit();
 
+    var definitions = StringHashMap(ObjectDefinitionConfig(T)).init(allocator);
+    defer definitions.deinit();
+
+    for (parsed.value.@"shape-definitions") |definition| {
+        try definitions.put(definition.name, definition);
+    }
+
     var camera = Camera(T).new(
         parsed.value.camera.width, parsed.value.camera.height, parsed.value.camera.@"field-of-view"
     );
@@ -325,7 +352,7 @@ pub fn parseScene(
     var world = World(T).new(allocator);
 
     for (parsed.value.objects) |object| {
-        try world.objects.append((try parseObject(T, allocator, object, null)).*);
+        try world.objects.append((try parseObject(T, allocator, object, null, definitions)).*);
     }
 
     for (parsed.value.lights) |light| {
