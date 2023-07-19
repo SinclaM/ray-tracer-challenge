@@ -21,7 +21,7 @@ const Shape = shape.Shape;
 pub fn Cylinder(comptime T: type) type {
     return struct {
         const Self = @This();
-        const tolerance: T = 1e-4;
+        const tolerance: T = 1e-5;
 
         min: T = -inf(T),
         max: T = inf(T),
@@ -167,7 +167,7 @@ test "A ray strikes a cylinder" {
     );
 
     try testRayIntersectsCylinder(
-        f32, allocator, Tuple(f32).point(0.5, 0.0, -5.0), Tuple(f32).vec3(0.1, 1.0, 1.0), 6.80798, 7.08872
+        f32, allocator, Tuple(f32).point(0.5, 0.0, -5.0), Tuple(f32).vec3(0.1, 1.0, 1.0), 6.80800, 7.08869
     );
 }
 
