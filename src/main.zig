@@ -9,7 +9,7 @@ const simple_superflat = @import("examples/simple_superflat.zig");
 const fresnel = @import("examples/fresnel.zig");
 const hexagon = @import("examples/hexagon.zig");
 
-const parseScene = @import("parser/parser.zig").parseScene;
+const parseScene = @import("parsing/scene.zig").parseScene;
 
 pub fn main() !void {
     try projectile.simulate();

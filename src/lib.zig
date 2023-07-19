@@ -3,8 +3,8 @@ const Allocator = std.mem.Allocator;
 const ArenaAllocator = std.heap.ArenaAllocator;
 
 const Canvas = @import("raytracer/canvas.zig").Canvas;
-const parseScene = @import("parser/parser.zig").parseScene;
-const SceneInfo = @import("parser/parser.zig").SceneInfo;
+const parseScene = @import("parsing/scene.zig").parseScene;
+const SceneInfo = @import("parsing/scene.zig").SceneInfo;
 
 const clamp = @import("raytracer/color.zig").clamp;
 
