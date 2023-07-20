@@ -28,30 +28,54 @@ pub fn renderTeapot() !void {
 
     var parser = try ObjParser(f64).new(list_allocator, shape_allocator);
     defer parser.destroy();
-    parser.loadObj(obj);
+    var material = Material(f64).new();
+    material.pattern = Pattern(f64).solid(Color(f64).new(0.8, 0.33, 0.0));
+    material.specular = 0.4;
+    material.shininess = 100.0;
+    parser.loadObj(obj, material);
     var teapot = parser.toGroup();
 
     try teapot.setTransform(
         Matrix(f64, 4)
             .identity()
-            .translate(-1.0, -1.0, 0.0)
-            .scale(1.3, 1.3, 1.3)
-            .rotateY(0.4)
+            .translate(0.0, 1.0, 0.0)
+            .scale(0.7, 0.7, 0.7)
+            .rotateY(-0.4)
+    );
+
+    var box = Shape(f64).cube();
+    try box.setTransform(
+        Matrix(f64, 4)
+            .identity()
+            .translate(0.0, 1.0, 0.0)
+            .scale(10.0, 10.0, 10.0)
+    );
+
+    const solid_white = Pattern(f64).solid(Color(f64).new(0.55, 0.55, 0.55));
+    const solid_black = Pattern(f64).solid(Color(f64).new(0.45, 0.45, 0.45));
+    box.material.specular = 0.0;
+    box.material.ambient = 0.5;
+    box.material.pattern = Pattern(f64).checkers(&solid_white, &solid_black);
+    try box.material.pattern.setTransform(
+        Matrix(f64, 4)
+            .identity()
+            .scale(0.025, 0.025, 0.025)
     );
 
     var world = World(f64).new(allocator);
     defer world.destroy();
 
     try world.objects.append(teapot.*);
+    try world.objects.append(box);
 
     try world.lights.append(Light(f64).pointLight(
-        Tuple(f64).point(2.0, 10.0, -5.0), Color(f64).new(0.9, 0.9, 0.9)
+        Tuple(f64).point(2.0, 6.0, -6.0), Color(f64).new(1.0, 1.0, 1.0)
     ));
 
-    var camera = Camera(f64).new(500, 500, 1.5);
+    var camera = Camera(f64).new(1000, 600, 1.0);
     try camera.setTransform(
         Matrix(f64, 4).viewTransform(
-            Tuple(f64).point(0.0, 3.0, -5.0), Tuple(f64).point(0.0, 0.0, 0.0), Tuple(f64).vec3(0.0, 1.0, 0.0)
+            Tuple(f64).point(0.0, 4.0, -4.5), Tuple(f64).point(0.0, 2.0, 0.0), Tuple(f64).vec3(0.0, 1.0, 0.0)
         )
     );
 

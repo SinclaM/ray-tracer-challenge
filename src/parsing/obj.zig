@@ -6,6 +6,7 @@ const StringHashMap = std.StringHashMap;
 
 const Tuple = @import("../raytracer/tuple.zig").Tuple;
 const Shape = @import("../raytracer/shapes/shape.zig").Shape;
+const Material = @import("../raytracer/material.zig").Material;
 
 pub fn ObjParser(comptime T: type) type {
     return struct {
@@ -59,7 +60,9 @@ pub fn ObjParser(comptime T: type) type {
             try self.vertices.append(Tuple(T).point(x, y, z));
         }
 
-        fn handleFace(self: *Self, tokens: *std.mem.TokenIterator(u8, .scalar)) !void {
+        fn handleFace(
+            self: *Self, tokens: *std.mem.TokenIterator(u8, .scalar), material: ?Material(T)
+        ) !void {
             const first = try std.fmt.parseInt(
                 usize, tokens.next() orelse { return Self.Error.IncompleteFace; }, 10
             );
@@ -81,6 +84,7 @@ pub fn ObjParser(comptime T: type) type {
 
                 var triangle = try self.shape_allocator.create(Shape(T));
                 triangle.* = Shape(T).triangle(p1, p2, p3);
+                triangle.material = material orelse Material(T).new();
 
                 try self.active_group.addChild(triangle);
 
@@ -105,13 +109,13 @@ pub fn ObjParser(comptime T: type) type {
             self.active_group = new_group;
         }
 
-        fn handleLine(self: *Self, line: []const u8) !void {
+        fn handleLine(self: *Self, line: []const u8, material: ?Material(T)) !void {
             var tokens = std.mem.tokenizeScalar(u8, line, ' ');
             if (tokens.next()) |first| {
                 if (std.mem.eql(u8, first, "v")) {
                     try self.handleVertex(&tokens);
                 } else if (std.mem.eql(u8, first, "f")) {
-                    try self.handleFace(&tokens);
+                    try self.handleFace(&tokens, material);
                 } else if (std.mem.eql(u8, first, "g")) {
                     try self.handleNamedGroup(&tokens);
                 } else {
@@ -122,12 +126,12 @@ pub fn ObjParser(comptime T: type) type {
             }
         }
 
-        pub fn loadObj(self: *Self, obj: []const u8) void {
+        pub fn loadObj(self: *Self, obj: []const u8, material: ?Material(T)) void {
             var lines = std.mem.tokenizeScalar(u8, obj, '\n');
             var l = lines.next();
 
             while (l) |line| : (l = lines.next()) {
-                self.handleLine(line) catch { self.lines_ignored += 1; };
+                self.handleLine(line, material) catch { self.lines_ignored += 1; };
             }
         }
 
@@ -155,7 +159,7 @@ test "Ignoring unrecognized lines" {
     var parser = try ObjParser(f32).new(list_allocator, shape_allocator);
     defer parser.destroy();
 
-    parser.loadObj(gibberish);
+    parser.loadObj(gibberish, null);
 
     try testing.expectEqual(parser.lines_ignored, 5);
 }
@@ -176,7 +180,7 @@ test "Vertex records" {
     var parser = try ObjParser(f32).new(list_allocator, shape_allocator);
     defer parser.destroy();
 
-    parser.loadObj(obj);
+    parser.loadObj(obj, null);
 
     try testing.expectEqual(parser.lines_ignored, 0);
 
@@ -212,7 +216,7 @@ test "Parsing triangle faces" {
     var parser = try ObjParser(f32).new(list_allocator, shape_allocator);
     defer parser.destroy();
 
-    parser.loadObj(obj);
+    parser.loadObj(obj, null);
 
     try testing.expectEqual(parser.lines_ignored, 0);
 
@@ -247,7 +251,7 @@ test "Triangulating polygons" {
     var parser = try ObjParser(f32).new(list_allocator, shape_allocator);
     defer parser.destroy();
 
-    parser.loadObj(obj);
+    parser.loadObj(obj, null);
 
     try testing.expectEqual(parser.lines_ignored, 0);
     try testing.expectEqual(parser.default_group.variant.group.children.items.len, 3);
@@ -287,7 +291,7 @@ test "Triangles in groups" {
     var parser = try ObjParser(f32).new(list_allocator, shape_allocator);
     defer parser.destroy();
 
-    parser.loadObj(obj);
+    parser.loadObj(obj, null);
 
     try testing.expectEqual(parser.lines_ignored, 0);
 
@@ -325,7 +329,7 @@ test "Converting an OBJ file to a group" {
     var parser = try ObjParser(f32).new(list_allocator, shape_allocator);
     defer parser.destroy();
 
-    parser.loadObj(obj);
+    parser.loadObj(obj, null);
 
     try testing.expectEqual(parser.lines_ignored, 0);
 
