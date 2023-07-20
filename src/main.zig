@@ -8,6 +8,7 @@ const simple_world = @import("examples/simple_world.zig");
 const simple_superflat = @import("examples/simple_superflat.zig");
 const fresnel = @import("examples/fresnel.zig");
 const hexagon = @import("examples/hexagon.zig");
+const teapot = @import("examples/teapot.zig");
 
 const parseScene = @import("parsing/scene.zig").parseScene;
 
@@ -20,6 +21,7 @@ pub fn main() !void {
     try simple_superflat.renderSimpleSuperflat();
     try fresnel.renderFresnel();
     try hexagon.renderHexagon();
+    try teapot.renderTeapot();
 
     const scenes_to_render = [_][]const u8 {
         "ch11_reflection_and_refraction",
