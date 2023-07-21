@@ -23,6 +23,8 @@ pub fn ObjParser(comptime T: type) type {
         default_group: *Shape(T),
         active_group: *Shape(T),
         named_groups: StringHashMap(*Shape(T)),
+        offset: Tuple(T) = Tuple(T).vec3(0.0, 0.0, 0.0),
+        scale: T = 1.0,
         vertices: ArrayList(Tuple(T)),
         lines_ignored: usize,
 
@@ -57,7 +59,7 @@ pub fn ObjParser(comptime T: type) type {
 
             // Ignore any trailing items
 
-            try self.vertices.append(Tuple(T).point(x, y, z));
+            try self.vertices.append(Tuple(T).point(x, y, z).sub(self.offset).div(self.scale));
         }
 
         fn handleFace(
@@ -126,8 +128,85 @@ pub fn ObjParser(comptime T: type) type {
             }
         }
 
-        pub fn loadObj(self: *Self, obj: []const u8, material: ?Material(T)) void {
+        pub fn loadObj(self: *Self, obj: []const u8, material: ?Material(T), normalize: bool) void {
             var lines = std.mem.tokenizeScalar(u8, obj, '\n');
+
+            if (normalize) {
+                var min_x = std.math.inf(T);
+                var min_y = std.math.inf(T);
+                var min_z = std.math.inf(T);
+                var max_x = -std.math.inf(T);
+                var max_y = -std.math.inf(T);
+                var max_z = -std.math.inf(T);
+
+                var l = lines.next();
+                while (l) |line| : (l = lines.next()) {
+                    var tokens = std.mem.tokenizeScalar(u8, line, ' ');
+                    if (tokens.next()) |first| {
+                        if (std.mem.eql(u8, first, "v")) {
+                            const x = blk: {
+                                break :blk
+                                    std.fmt.parseFloat(T, tokens.next() orelse { break :blk null; })
+                                    catch null;
+                            };
+                            const y = blk: {
+                                break :blk
+                                    std.fmt.parseFloat(T, tokens.next() orelse { break :blk null; })
+                                    catch null;
+                            };
+                            const z = blk: {
+                                break :blk
+                                    std.fmt.parseFloat(T, tokens.next() orelse { break :blk null; })
+                                    catch null;
+                            };
+
+                            if (x) |x_| {
+                                if (x_ < min_x) {
+                                    min_x = x_;
+                                }
+                                if (x_ > max_x) {
+                                    max_x = x_;
+                                }
+                            }
+
+                            if (y) |y_| {
+                                if (y_ < min_y) {
+                                    min_y = y_;
+                                }
+                                if (y_ > max_y) {
+                                    max_y = y_;
+                                }
+                            }
+
+                            if (z) |z_| {
+                                if (z_ < min_z) {
+                                    min_z = z_;
+                                }
+                                if (z_ > max_z) {
+                                    max_z = z_;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                const sx = max_x - min_x;
+                const sy = max_y - min_y;
+                const sz = max_z - min_z;
+
+                const x_offset = min_x + 0.5 * sx;
+                const y_offset = min_y + 0.5 * sy;
+                const z_offset = min_z + 0.5 * sz;
+
+                const scale = 0.5 * @max(sx, @max(sy, sz));
+
+                self.offset = Tuple(T).vec3(x_offset, y_offset, z_offset);
+                self.scale = scale;
+
+                lines.reset();
+            }
+
+
             var l = lines.next();
 
             while (l) |line| : (l = lines.next()) {
@@ -159,7 +238,7 @@ test "Ignoring unrecognized lines" {
     var parser = try ObjParser(f32).new(list_allocator, shape_allocator);
     defer parser.destroy();
 
-    parser.loadObj(gibberish, null);
+    parser.loadObj(gibberish, null, false);
 
     try testing.expectEqual(parser.lines_ignored, 5);
 }
@@ -180,7 +259,7 @@ test "Vertex records" {
     var parser = try ObjParser(f32).new(list_allocator, shape_allocator);
     defer parser.destroy();
 
-    parser.loadObj(obj, null);
+    parser.loadObj(obj, null, false);
 
     try testing.expectEqual(parser.lines_ignored, 0);
 
@@ -216,7 +295,7 @@ test "Parsing triangle faces" {
     var parser = try ObjParser(f32).new(list_allocator, shape_allocator);
     defer parser.destroy();
 
-    parser.loadObj(obj, null);
+    parser.loadObj(obj, null, false);
 
     try testing.expectEqual(parser.lines_ignored, 0);
 
@@ -251,7 +330,7 @@ test "Triangulating polygons" {
     var parser = try ObjParser(f32).new(list_allocator, shape_allocator);
     defer parser.destroy();
 
-    parser.loadObj(obj, null);
+    parser.loadObj(obj, null, false);
 
     try testing.expectEqual(parser.lines_ignored, 0);
     try testing.expectEqual(parser.default_group.variant.group.children.items.len, 3);
@@ -291,7 +370,7 @@ test "Triangles in groups" {
     var parser = try ObjParser(f32).new(list_allocator, shape_allocator);
     defer parser.destroy();
 
-    parser.loadObj(obj, null);
+    parser.loadObj(obj, null, false);
 
     try testing.expectEqual(parser.lines_ignored, 0);
 
@@ -329,7 +408,7 @@ test "Converting an OBJ file to a group" {
     var parser = try ObjParser(f32).new(list_allocator, shape_allocator);
     defer parser.destroy();
 
-    parser.loadObj(obj, null);
+    parser.loadObj(obj, null, false);
 
     try testing.expectEqual(parser.lines_ignored, 0);
 

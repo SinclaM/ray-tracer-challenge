@@ -32,14 +32,13 @@ pub fn renderTeapot() !void {
     material.pattern = Pattern(f64).solid(Color(f64).new(0.8, 0.33, 0.0));
     material.specular = 0.4;
     material.shininess = 100.0;
-    parser.loadObj(obj, material);
+    parser.loadObj(obj, material, true);
     var teapot = parser.toGroup();
 
     try teapot.setTransform(
         Matrix(f64, 4)
             .identity()
-            .translate(0.0, 1.0, 0.0)
-            .scale(0.7, 0.7, 0.7)
+            .translate(0.0, 0.5, 0.0)
             .rotateY(-0.4)
     );
 
@@ -72,10 +71,10 @@ pub fn renderTeapot() !void {
         Tuple(f64).point(2.0, 6.0, -6.0), Color(f64).new(1.0, 1.0, 1.0)
     ));
 
-    var camera = Camera(f64).new(250, 150, 1.0);
+    var camera = Camera(f64).new(250, 150, 0.75);
     try camera.setTransform(
         Matrix(f64, 4).viewTransform(
-            Tuple(f64).point(0.0, 4.0, -4.5), Tuple(f64).point(0.0, 2.0, 0.0), Tuple(f64).vec3(0.0, 1.0, 0.0)
+            Tuple(f64).point(0.0, 1.25, -4.5), Tuple(f64).point(0.0, 0.5, 0.0), Tuple(f64).vec3(0.0, 1.0, 0.0)
         )
     );
 
