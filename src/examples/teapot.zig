@@ -72,7 +72,7 @@ pub fn renderTeapot() !void {
         Tuple(f64).point(2.0, 6.0, -6.0), Color(f64).new(1.0, 1.0, 1.0)
     ));
 
-    var camera = Camera(f64).new(1000, 600, 1.0);
+    var camera = Camera(f64).new(250, 150, 1.0);
     try camera.setTransform(
         Matrix(f64, 4).viewTransform(
             Tuple(f64).point(0.0, 4.0, -4.5), Tuple(f64).point(0.0, 2.0, 0.0), Tuple(f64).vec3(0.0, 1.0, 0.0)

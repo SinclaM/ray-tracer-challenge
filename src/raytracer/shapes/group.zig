@@ -26,7 +26,7 @@ pub fn Group(comptime T: type) type {
 
         pub fn localIntersect(
             self: Self, allocator: Allocator, super: *const Shape(T), ray: Ray(T)
-        ) !Intersections(T) {
+        ) anyerror!Intersections(T) {
             _ = super;
 
             var all = Intersections(T).init(allocator);
