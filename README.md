@@ -51,6 +51,10 @@ You can find an interactive demo of this ray tracer online at [sinclam.github.io
 
 <img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/1a76dce9-9c63-41d8-a351-12b5931d5eab width=800> 
 
+<br/><br/>
+
+<img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/a976c816-eec4-4251-b52d-cbc549e172e9 width=800> 
+
 ## Performance profiling
 
 Although the ray tracer is not (yet) multithreaded and the small vector math library it uses does not (yet) leverage Zig's
