@@ -1,3 +1,5 @@
+const target = @import("builtin").target;
+
 const std = @import("std");
 const testing = std.testing;
 const json = std.json;
@@ -13,6 +15,8 @@ const Material = @import("../raytracer/material.zig").Material;
 const Light = @import("../raytracer/light.zig").Light;
 const World = @import("../raytracer/world.zig").World;
 const Camera = @import("../raytracer/camera.zig").Camera;
+
+const ObjParser = @import("obj.zig").ObjParser;
 
 fn ObjectDefinitionConfig(comptime T: type) type {
     return struct {
@@ -76,6 +80,7 @@ fn ObjectConfig(comptime T: type) type {
     return struct {
         @"type": union(enum) {
             @"from-definition": []const u8,
+            @"from-obj": []const u8,
             sphere: void,
             cube: void,
             cylinder: *struct {
@@ -120,7 +125,7 @@ fn SceneConfig(comptime T: type) type {
     };
 }
 
-const SceneParseError = error { UnknownShape, UnknownDefinition };
+const SceneParseError = error { UnknownShape, UnknownDefinition, NotImplemented };
 
 fn parseTransform(comptime T: type, transform: TransformConfig(T)) Matrix(T, 4) {
     var matrix = Matrix(T, 4).identity();
@@ -260,6 +265,28 @@ fn parseObject(
                 break :blk try parseObject(T, allocator, def.value, material, definitions);
             } else {
                 return SceneParseError.UnknownDefinition;
+            }
+        },
+        .@"from-obj" => |file_name| blk: {
+            if (target.cpu.arch == .wasm32) {
+                return SceneParseError.NotImplemented;
+            } else {
+                var obj_dir = try std.fs.cwd().openDir("obj", .{});
+                defer obj_dir.close();
+
+                const obj = try obj_dir.readFileAlloc(
+                    allocator, file_name, std.math.pow(usize, 2, 20)
+                );
+                defer allocator.free(obj);
+
+                var arena = std.heap.ArenaAllocator.init(allocator);
+                defer arena.deinit();
+
+                var parser = try ObjParser(T).new(arena.allocator());
+                defer parser.destroy();
+
+                parser.loadObj(obj, material orelse Material(T).new(), true);
+                break :blk parser.toGroup().*;
             }
         },
         .sphere => Shape(T).sphere(),
