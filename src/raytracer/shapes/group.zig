@@ -18,9 +18,16 @@ pub fn Group(comptime T: type) type {
     return struct {
         const Self = @This();
 
-        children: ArrayList(*Shape(T)),
+        children: ArrayList(Shape(T)),
 
         pub fn destroy(self: Self) void {
+            for (self.children.items) |child| {
+                switch (child.variant) {
+                    .group => |g| g.destroy(),
+                    else => {}
+                }
+            }
+
             self.children.deinit();
         }
 
@@ -31,7 +38,7 @@ pub fn Group(comptime T: type) type {
 
             var all = Intersections(T).init(allocator);
 
-            for (self.children.items) |child| {
+            for (self.children.items) |*child| {
                 const xs: Intersections(T) = try child.intersect(allocator, ray);
                 defer xs.deinit();
 
@@ -73,11 +80,10 @@ test "Adding a child to a group" {
 
     var s = Shape(f32).testShape();
 
-    try g.addChild(&s);
+    try g.addChild(s);
 
     try testing.expectEqual(g.variant.group.children.items.len, 1);
-    try testing.expectEqual(g.variant.group.children.items[0], &s);
-    try testing.expectEqual(s.parent, &g);
+    try testing.expectEqual(g.variant.group.children.items[0], s);
 }
 
 test "Intersecting a ray with an empty group" {
@@ -106,9 +112,9 @@ test "Intersecting a ray with an nonempty group" {
     var s3 = Shape(f32).sphere();
     try s3.setTransform(Matrix(f32, 4).identity().translate(5.0, 0.0, 0.0));
 
-    try g.addChild(&s1);
-    try g.addChild(&s2);
-    try g.addChild(&s3);
+    try g.addChild(s1);
+    try g.addChild(s2);
+    try g.addChild(s3);
 
     const r = Ray(f32).new(Tuple(f32).point(0.0, 0.0, -5.0), Tuple(f32).vec3(0.0, 0.0, 1.0));
 
@@ -117,10 +123,10 @@ test "Intersecting a ray with an nonempty group" {
 
     try testing.expectEqual(xs.items.len, 4);
 
-    try testing.expectEqual(xs.items[0].object, &s2);
-    try testing.expectEqual(xs.items[1].object, &s2);
-    try testing.expectEqual(xs.items[2].object, &s1);
-    try testing.expectEqual(xs.items[3].object, &s1);
+    try testing.expectEqual(xs.items[0].object, &g.variant.group.children.items[1]);
+    try testing.expectEqual(xs.items[1].object, &g.variant.group.children.items[1]);
+    try testing.expectEqual(xs.items[2].object, &g.variant.group.children.items[0]);
+    try testing.expectEqual(xs.items[3].object, &g.variant.group.children.items[0]);
 }
 
 test "Intersecting a transformed group" {
@@ -129,12 +135,11 @@ test "Intersecting a transformed group" {
     var g = Shape(f32).group(allocator);
     defer g.variant.group.destroy();
 
-    try g.setTransform(Matrix(f32, 4).identity().scale(2.0, 2.0, 2.0));
-
     var s = Shape(f32).sphere();
     try s.setTransform(Matrix(f32, 4).identity().translate(5.0, 0.0, 0.0));
 
-    try g.addChild(&s);
+    try g.addChild(s);
+    try g.setTransform(Matrix(f32, 4).identity().scale(2.0, 2.0, 2.0));
 
     const r = Ray(f32).new(Tuple(f32).point(10.0, 0.0, -10.0), Tuple(f32).vec3(0.0, 0.0, 1.0));
 

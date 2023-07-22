@@ -241,62 +241,61 @@ fn parseMaterial(
     return mat;
 }
 
-// `parseObject` must return `!*Shape(T)` instead of `!Shape(T)` so that internal
-// pointers in groups are not invalidated by moving the struct.
 fn parseObject(
     comptime T: type,
     allocator: Allocator,
     object: ObjectConfig(T),
     inherited_material: ?Material(T),
     definitions: StringHashMap(ObjectDefinitionConfig(T))
-) !*Shape(T) {
+) !Shape(T) {
     const material = if (object.material) |mat| blk: {
         break :blk try parseMaterial(T, allocator, mat, inherited_material);
     } else blk: {
         break :blk inherited_material;
     };
 
-    var shape = try allocator.create(Shape(T));
-
-    switch (object.@"type") {
-        .@"from-definition" => |name| {
+    var shape = switch (object.@"type") {
+        .@"from-definition" => |name| blk: {
             if (definitions.get(name)) |def| {
-                shape = try parseObject(T, allocator, def.value, material, definitions);
+                break :blk try parseObject(T, allocator, def.value, material, definitions);
             } else {
                 return SceneParseError.UnknownDefinition;
             }
         },
-        .sphere => shape.* = Shape(T).sphere(),
-        .plane => shape.* = Shape(T).plane(),
-        .cube => shape.* = Shape(T).cube(),
-        .cylinder => |cyl| {
-            shape.* = Shape(T).cylinder();
-            shape.*.variant.cylinder.min = cyl.min;
-            shape.*.variant.cylinder.max = cyl.max;
-            shape.*.variant.cylinder.closed = cyl.closed;
+        .sphere => Shape(T).sphere(),
+        .plane => Shape(T).plane(),
+        .cube => Shape(T).cube(),
+        .cylinder => |cyl| blk: {
+            var c = Shape(T).cylinder();
+            c.variant.cylinder.min = cyl.min;
+            c.variant.cylinder.max = cyl.max;
+            c.variant.cylinder.closed = cyl.closed;
+            break :blk c;
         },
-        .cone => |cyl| {
-            shape.* = Shape(T).cone();
-            shape.*.variant.cone.min = cyl.min;
-            shape.*.variant.cone.max = cyl.max;
-            shape.*.variant.cone.closed = cyl.closed;
+        .cone => |cone| blk: {
+            var c  = Shape(T).cone();
+            c.variant.cone.min = cone.min;
+            c.variant.cone.max = cone.max;
+            c.variant.cone.closed = cone.closed;
+            break :blk c;
         },
-        .triangle => |tri| {
-            shape.* = Shape(T).triangle(
+        .triangle => |tri|
+            Shape(T).triangle(
                 Tuple(T).point(tri.p1[0], tri.p1[1], tri.p1[2]),
                 Tuple(T).point(tri.p2[0], tri.p2[1], tri.p2[2]),
                 Tuple(T).point(tri.p3[0], tri.p3[1], tri.p3[2])
-            );
-        },
-        .group => |children| {
-            shape.* = Shape(T).group(allocator);
+            ),
+        .group => |children| blk: {
+            var g = Shape(T).group(allocator);
 
             for (children) |child| {
                 var s = try parseObject(T, allocator, child, material, definitions);
-                try shape.addChild(s);
+                try g.addChild(s);
             }
+
+            break :blk g;
         }
-    }
+    };
 
     shape.casts_shadow = object.@"casts-shadow";
 
@@ -364,7 +363,7 @@ pub fn parseScene(
     var world = World(T).new(allocator);
 
     for (parsed.value.objects) |object| {
-        try world.objects.append((try parseObject(T, allocator, object, null, definitions)).*);
+        try world.objects.append(try parseObject(T, allocator, object, null, definitions));
     }
 
     for (parsed.value.lights) |light| {

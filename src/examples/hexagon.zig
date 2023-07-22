@@ -41,15 +41,10 @@ fn hexagonEdge(comptime T: type) !Shape(T) {
     return edge;
 }
 
-fn hexagonSide(comptime T: type, allocator: Allocator) !*Shape(T) {
-    var side = try allocator.create(Shape(T));
-    side.* = Shape(T).group(allocator);
-
-    var corner = try allocator.create(Shape(T));
-    corner.* = try hexagonCorner(T);
-
-    var edge = try allocator.create(Shape(T));
-    edge.* = try hexagonEdge(T);
+fn hexagonSide(comptime T: type, allocator: Allocator) !Shape(T) {
+    var side = Shape(T).group(allocator);
+    var corner = try hexagonCorner(T);
+    var edge = try hexagonEdge(T);
 
     try side.addChild(corner);
     try side.addChild(edge);
@@ -57,9 +52,8 @@ fn hexagonSide(comptime T: type, allocator: Allocator) !*Shape(T) {
     return side;
 }
 
-fn hexagon(comptime T: type, allocator: Allocator) !*Shape(T) {
-    var hex = try allocator.create(Shape(T));
-    hex.* = Shape(T).group(allocator);
+fn hexagon(comptime T: type, allocator: Allocator) !Shape(T) {
+    var hex = Shape(T).group(allocator);
 
     for (0..6) |n| {
         var side = try hexagonSide(T, allocator);
@@ -73,18 +67,15 @@ fn hexagon(comptime T: type, allocator: Allocator) !*Shape(T) {
 
 
 pub fn renderHexagon() !void {
-    // Use an arena for the (few) allocations needed to make the hexagon so
-    // that we don't have to track them down one-by-one to free them.
-    var arena = std.heap.ArenaAllocator.init(std.heap.raw_c_allocator);
-    defer arena.deinit();
-    var hex = try hexagon(f64, arena.allocator());
-
     const allocator = std.heap.raw_c_allocator;
+
+    var hex = try hexagon(f64, allocator);
+    defer hex.variant.group.destroy();
 
     var world = World(f64).new(allocator);
     defer world.destroy();
 
-    try world.objects.append(hex.*);
+    try world.objects.append(hex);
 
     try world.lights.append(Light(f64).pointLight(
         Tuple(f64).point(2.0, 10.0, -5.0), Color(f64).new(0.9, 0.9, 0.9)

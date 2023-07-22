@@ -19,7 +19,7 @@ pub fn ObjParser(comptime T: type) type {
             IncompleteNamedGroup
         };
 
-        shape_allocator: Allocator,
+        allocator: Allocator,
         default_group: *Shape(T),
         active_group: *Shape(T),
         named_groups: StringHashMap(*Shape(T)),
@@ -28,17 +28,17 @@ pub fn ObjParser(comptime T: type) type {
         vertices: ArrayList(Tuple(T)),
         lines_ignored: usize,
 
-        pub fn new(list_allocator: Allocator, shape_allocator: Allocator) !Self {
-            var default_group = try shape_allocator.create(Shape(T));
-            default_group.* = Shape(T).group(shape_allocator);
+        pub fn new(allocator: Allocator) !Self {
+            var default_group = try allocator.create(Shape(T));
+            default_group.* = Shape(T).group(allocator);
 
             return .{
-                .shape_allocator = shape_allocator,
+                .allocator = allocator,
                 .default_group = default_group,
                 .active_group = default_group,
-                .named_groups = StringHashMap(*Shape(T)).init(shape_allocator),
+                .named_groups = StringHashMap(*Shape(T)).init(allocator),
                 .lines_ignored = 0,
-                .vertices = ArrayList(Tuple(T)).init(list_allocator),
+                .vertices = ArrayList(Tuple(T)).init(allocator),
             };
         }
 
@@ -84,8 +84,7 @@ pub fn ObjParser(comptime T: type) type {
                 const p2 = self.vertices.items[last - 1];
                 const p3 = self.vertices.items[current - 1];
 
-                var triangle = try self.shape_allocator.create(Shape(T));
-                triangle.* = Shape(T).triangle(p1, p2, p3);
+                var triangle = Shape(T).triangle(p1, p2, p3);
                 triangle.material = material orelse Material(T).new();
 
                 try self.active_group.addChild(triangle);
@@ -100,15 +99,17 @@ pub fn ObjParser(comptime T: type) type {
             // Ignore trailing items.
 
             // Copy the name string so that we own the memory.
-            var name = try self.shape_allocator.alloc(u8, str.len);
+            var name = try self.allocator.alloc(u8, str.len);
             @memcpy(name, str);
 
-            var new_group = try self.shape_allocator.create(Shape(T));
-            new_group.* = Shape(T).group(self.shape_allocator);
+            var new_group = Shape(T).group(self.allocator);
 
             try self.default_group.addChild(new_group);
-            try self.named_groups.put(name, new_group);
-            self.active_group = new_group;
+            const g = &self.default_group.variant.group.children.items[
+                self.default_group.variant.group.children.items.len - 1
+            ];
+            try self.named_groups.put(name, g);
+            self.active_group = g;
         }
 
         fn handleLine(self: *Self, line: []const u8, material: ?Material(T)) !void {
@@ -222,10 +223,9 @@ pub fn ObjParser(comptime T: type) type {
 }
 
 test "Ignoring unrecognized lines" {
-    const list_allocator = testing.allocator;
-    var shape_arena = std.heap.ArenaAllocator.init(testing.allocator);
-    defer shape_arena.deinit();
-    const shape_allocator = shape_arena.allocator();
+    var arena = std.heap.ArenaAllocator.init(testing.allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
 
     const gibberish =
         \\There was a young lady named Bright
@@ -235,7 +235,7 @@ test "Ignoring unrecognized lines" {
         \\and came back the previous night.
     ;
 
-    var parser = try ObjParser(f32).new(list_allocator, shape_allocator);
+    var parser = try ObjParser(f32).new(allocator);
     defer parser.destroy();
 
     parser.loadObj(gibberish, null, false);
@@ -244,10 +244,9 @@ test "Ignoring unrecognized lines" {
 }
 
 test "Vertex records" {
-    const list_allocator = testing.allocator;
-    var shape_arena = std.heap.ArenaAllocator.init(testing.allocator);
-    defer shape_arena.deinit();
-    const shape_allocator = shape_arena.allocator();
+    var arena = std.heap.ArenaAllocator.init(testing.allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
 
     const obj =
         \\v -1 1 0
@@ -256,7 +255,7 @@ test "Vertex records" {
         \\v 1 1 0
     ;
 
-    var parser = try ObjParser(f32).new(list_allocator, shape_allocator);
+    var parser = try ObjParser(f32).new(allocator);
     defer parser.destroy();
 
     parser.loadObj(obj, null, false);
@@ -278,10 +277,9 @@ test "Vertex records" {
 }
 
 test "Parsing triangle faces" {
-    const list_allocator = testing.allocator;
-    var shape_arena = std.heap.ArenaAllocator.init(testing.allocator);
-    defer shape_arena.deinit();
-    const shape_allocator = shape_arena.allocator();
+    var arena = std.heap.ArenaAllocator.init(testing.allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
 
     const obj =
         \\v -1 1 0
@@ -292,7 +290,7 @@ test "Parsing triangle faces" {
         \\f 1 3 4
     ;
 
-    var parser = try ObjParser(f32).new(list_allocator, shape_allocator);
+    var parser = try ObjParser(f32).new(allocator);
     defer parser.destroy();
 
     parser.loadObj(obj, null, false);
@@ -313,10 +311,9 @@ test "Parsing triangle faces" {
 }
 
 test "Triangulating polygons" {
-    const list_allocator = testing.allocator;
-    var shape_arena = std.heap.ArenaAllocator.init(testing.allocator);
-    defer shape_arena.deinit();
-    const shape_allocator = shape_arena.allocator();
+    var arena = std.heap.ArenaAllocator.init(testing.allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
 
     const obj =
         \\v -1 1 0
@@ -327,7 +324,7 @@ test "Triangulating polygons" {
         \\f 1 2 3 4 5
     ;
 
-    var parser = try ObjParser(f32).new(list_allocator, shape_allocator);
+    var parser = try ObjParser(f32).new(allocator);
     defer parser.destroy();
 
     parser.loadObj(obj, null, false);
@@ -351,10 +348,9 @@ test "Triangulating polygons" {
 }
 
 test "Triangles in groups" {
-    const list_allocator = testing.allocator;
-    var shape_arena = std.heap.ArenaAllocator.init(testing.allocator);
-    defer shape_arena.deinit();
-    const shape_allocator = shape_arena.allocator();
+    var arena = std.heap.ArenaAllocator.init(testing.allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
 
     const obj =
         \\v -1 1 0
@@ -367,7 +363,7 @@ test "Triangles in groups" {
         \\f 1 3 4
     ;
 
-    var parser = try ObjParser(f32).new(list_allocator, shape_allocator);
+    var parser = try ObjParser(f32).new(allocator);
     defer parser.destroy();
 
     parser.loadObj(obj, null, false);
@@ -389,10 +385,9 @@ test "Triangles in groups" {
 }
 
 test "Converting an OBJ file to a group" {
-    const list_allocator = testing.allocator;
-    var shape_arena = std.heap.ArenaAllocator.init(testing.allocator);
-    defer shape_arena.deinit();
-    const shape_allocator = shape_arena.allocator();
+    var arena = std.heap.ArenaAllocator.init(testing.allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
 
     const obj =
         \\v -1 1 0
@@ -405,7 +400,7 @@ test "Converting an OBJ file to a group" {
         \\f 1 3 4
     ;
 
-    var parser = try ObjParser(f32).new(list_allocator, shape_allocator);
+    var parser = try ObjParser(f32).new(allocator);
     defer parser.destroy();
 
     parser.loadObj(obj, null, false);
@@ -417,6 +412,6 @@ test "Converting an OBJ file to a group" {
     const g1 = parser.named_groups.get("FirstGroup").?;
     const g2 = parser.named_groups.get("SecondGroup").?;
 
-    try testing.expectEqual(g.variant.group.children.items[0], g1);
-    try testing.expectEqual(g.variant.group.children.items[1], g2);
+    try testing.expectEqual(&g.variant.group.children.items[0], g1);
+    try testing.expectEqual(&g.variant.group.children.items[1], g2);
 }

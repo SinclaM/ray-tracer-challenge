@@ -16,17 +16,15 @@ const ObjParser = @import("../parsing/obj.zig").ObjParser;
 pub fn renderTeapot() !void {
     const allocator = std.heap.raw_c_allocator;
 
-    const list_allocator = allocator;
-    var shape_arena = std.heap.ArenaAllocator.init(allocator);
-    defer shape_arena.deinit();
-    const shape_allocator = shape_arena.allocator();
+    var arena = std.heap.ArenaAllocator.init(allocator);
+    defer arena.deinit();
 
     const obj = try std.fs.cwd().readFileAlloc(
         allocator, "obj/teapot.obj", std.math.pow(usize, 2, 20)
     );
     defer allocator.free(obj);
 
-    var parser = try ObjParser(f64).new(list_allocator, shape_allocator);
+    var parser = try ObjParser(f64).new(arena.allocator());
     defer parser.destroy();
     var material = Material(f64).new();
     material.pattern = Pattern(f64).solid(Color(f64).new(0.8, 0.33, 0.0));
