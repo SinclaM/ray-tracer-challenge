@@ -85,14 +85,28 @@ pub fn Camera(comptime T: type) type {
             defer allocator.free(buffer);
             var fba = std.heap.FixedBufferAllocator.init(buffer);
 
-            for (0..self.hsize) |x| {
-                for (0..self.vsize) |y| {
+            var progress = std.Progress{
+                .dont_print_on_dumb = true,
+            };
+
+            const root_node = progress.start("Rendering", self.vsize * self.hsize);
+
+            for (0..self.vsize) |y| {
+                for (0..self.hsize) |x| {
+                    var pixel_node = root_node.start("", 0);
+                    pixel_node.activate();
+                    progress.refresh();
+
                     const ray = self.rayForPixel(x, y);
                     const color = try world.colorAt(fba.allocator(), ray, 5);
                     image.getPixelPointer(x, y).?.* = color;
                     fba.reset();
+
+                    pixel_node.end();
                 }
             }
+
+            root_node.end();
 
             return image;
         }
