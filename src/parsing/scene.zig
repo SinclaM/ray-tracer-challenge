@@ -103,7 +103,36 @@ fn ObjectConfig(comptime T: type) type {
         },
         transform: ?TransformConfig(T) = null,
         material: ?MaterialConfig(T) = null,
-        @"casts-shadow": bool = true,
+        @"casts-shadow": ?bool = null,
+
+        const Self = @This();
+        const Info = struct {
+            material: ?Material(T),
+            transform: Matrix(T, 4),
+            casts_shadow: ?bool
+        };
+
+        fn inherit(object: Self, allocator: Allocator, inherited: InheritedState(T)) !Info {
+            const material = if (object.material) |mat| blk: {
+                break :blk try parseMaterial(T, allocator, mat, inherited.material);
+            } else blk: {
+                break :blk inherited.material;
+            };
+
+            const transform = if (object.transform) |t| blk: {
+                break :blk parseTransform(T, t).mul(inherited.transform);
+            } else blk: {
+                break :blk inherited.transform;
+            };
+
+            const casts_shadow = if (object.@"casts-shadow") |shadow| blk: {
+                break :blk shadow;
+            } else blk: {
+                break :blk inherited.casts_shadow;
+            };
+
+            return .{ .material = material, .transform = transform, .casts_shadow = casts_shadow };
+        }
     };
 }
 
@@ -246,23 +275,59 @@ fn parseMaterial(
     return mat;
 }
 
+pub fn InheritedState(comptime T: type) type {
+    return struct {
+        material: ?Material(T) = null,
+        transform: Matrix(T, 4) = Matrix(T, 4).identity(),
+        casts_shadow: ?bool = null,
+    };
+}
+
 fn parseObject(
     comptime T: type,
     allocator: Allocator,
     object: ObjectConfig(T),
-    inherited_material: ?Material(T),
+    inherited: InheritedState(T),
     definitions: StringHashMap(ObjectDefinitionConfig(T))
 ) !Shape(T) {
-    const material = if (object.material) |mat| blk: {
-        break :blk try parseMaterial(T, allocator, mat, inherited_material);
-    } else blk: {
-        break :blk inherited_material;
-    };
+    const info = try object.inherit(allocator, inherited);
+    var material = info.material;
+    var transform = info.transform;
+    var casts_shadow = info.casts_shadow;
 
     var shape = switch (object.@"type") {
         .@"from-definition" => |name| blk: {
             if (definitions.get(name)) |def| {
-                break :blk try parseObject(T, allocator, def.value, material, definitions);
+                // We need to parse the given definition in such a way that
+                // transformations provided for this `object` are applied
+                // after both any transformations being currently inherited
+                // (i.e. `inherited.transform`) and those that will be discovered
+                // by parsing the referred-to definition.
+                //
+                // However, we must also pass along material and shadow casting
+                // information differently, because those fields override the
+                // ones we may find in the definition, rather than extending
+                // them.
+                //
+                // TODO: this is horrifying and almost certainly buggy.
+                const parent = try parseObject(
+                    T,
+                    allocator,
+                    def.value,
+                    .{ .material = material, .transform = inherited.transform, .casts_shadow = casts_shadow},
+                    definitions
+                );
+                const parent_state = .{
+                    .material = parent.material,
+                    .transform = parent._transform,
+                    .casts_shadow = parent.casts_shadow
+                };
+
+                const new = try object.inherit(allocator, parent_state);
+                material = new.material;
+                transform = new.transform;
+                casts_shadow = new.casts_shadow;
+                break :blk parent;
             } else {
                 return SceneParseError.UnknownDefinition;
             }
@@ -275,7 +340,7 @@ fn parseObject(
                 defer obj_dir.close();
 
                 const obj = try obj_dir.readFileAlloc(
-                    allocator, file_name, std.math.pow(usize, 2, 20)
+                    allocator, file_name, std.math.pow(usize, 2, 32)
                 );
                 defer allocator.free(obj);
 
@@ -285,7 +350,7 @@ fn parseObject(
                 var parser = try ObjParser(T).new(arena.allocator());
                 defer parser.destroy();
 
-                parser.loadObj(obj, material orelse Material(T).new(), true);
+                parser.loadObj(obj, material, true);
                 break :blk parser.toGroup().*;
             }
         },
@@ -316,7 +381,11 @@ fn parseObject(
             var g = Shape(T).group(allocator);
 
             for (children) |child| {
-                var s = try parseObject(T, allocator, child, material, definitions);
+                // Groups will push their own transforms to their children when `setTransform`
+                // is called. We should not pass it as inherited state here.
+                var s = try parseObject(
+                    T, allocator, child, .{ .material = material, .casts_shadow = casts_shadow}, definitions
+                );
                 try g.addChild(s);
             }
 
@@ -324,14 +393,14 @@ fn parseObject(
         }
     };
 
-    shape.casts_shadow = object.@"casts-shadow";
-
-    if (object.transform) |transform| {
-        try shape.setTransform(parseTransform(T, transform));
-    }
+    try shape.setTransform(transform);
 
     if (material) |mat| {
         shape.material = mat;
+    }
+
+    if (casts_shadow) |shadow| {
+        shape.casts_shadow = shadow;
     }
 
     return shape;
@@ -390,7 +459,7 @@ pub fn parseScene(
     var world = World(T).new(allocator);
 
     for (parsed.value.objects) |object| {
-        try world.objects.append(try parseObject(T, allocator, object, null, definitions));
+        try world.objects.append(try parseObject(T, allocator, object, .{}, definitions));
     }
 
     for (parsed.value.lights) |light| {
