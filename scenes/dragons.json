@@ -1,0 +1,318 @@
+{
+    "shape-definitions": [
+        {
+            "name": "raw-bbox",
+            "value": {
+                "type": { "cube": {} },
+                "transform": [
+                    { "translate": [1, 1, 1] },
+                    { "scale": [3.73335, 2.5845, 1.6283] },
+                    { "translate": [-3.9863, -0.1217, -1.182] }
+                ],
+                "casts-shadow": false
+            }
+        },
+        {
+            "name": "dragon",
+            "value": {
+                "type": { "from-obj": "dragon.obj" },
+                "transform": [
+                    { "translate": [0, 0.1217, 0] },
+                    { "scale": [0.268, 0.268, 0.268] }
+                ]
+            }
+        },
+        {
+            "name": "bbox",
+            "value": {
+                "type": { "from-definition": "raw-bbox" },
+                "transform": [
+                    { "translate": [0, 0.1217, 0] },
+                    { "scale": [0.268, 0.268, 0.268] }
+                ]
+            }
+        },
+        {
+            "name": "pedestal",
+            "value": {
+                "type": {
+                    "cylinder": { "min": -0.15, "max": 0, "closed": true }
+                },
+                "material": {
+                    "pattern": { "type": { "solid": [0.2, 0.2, 0.2] } },
+                    "ambient": 0,
+                    "diffuse": 0.8,
+                    "specular": 0,
+                    "reflective": 0.2
+                }
+            }
+        }
+    ],
+    "camera": {
+        "width": 500,
+        "height": 200,
+        "field-of-view": 1.2,
+        "from": [0, 2.5, -10],
+        "to": [0, 1, 0],
+        "up": [0, 1, 0]
+    },
+    "lights": [
+        {
+            "point-light": {
+                "position": [-10, 100, -100],
+                "intensity": [1, 1, 1]
+            }
+        },
+        {
+            "point-light": {
+                "position": [0, 100, 0],
+                "intensity": [0.1, 0.1, 0.1]
+            }
+        },
+        {
+            "point-light": {
+                "position": [100, 10, -25],
+                "intensity": [0.2, 0.2, 0.2]
+            }
+        },
+        {
+            "point-light": {
+                "position": [-100, 10, -25],
+                "intensity": [0.2, 0.2, 0.2]
+            }
+        }
+    ],
+    "objects": [
+        {
+            "type": {
+                "group": [
+                    {
+                        "type": { "from-definition": "pedestal" }
+                    },
+                    {
+                        "type": {
+                            "group": [
+                                {
+                                    "type": { "from-definition": "dragon" },
+                                    "material": {
+                                        "pattern": {
+                                            "type": { "solid": [1, 0, 0.1] }
+                                        },
+                                        "ambient": 0.1,
+                                        "diffuse": 0.6,
+                                        "specular": 0.3,
+                                        "shininess": 15
+                                    }
+                                },
+                                {
+                                    "type": { "from-definition": "bbox" },
+                                    "material": {
+                                        "ambient": 0,
+                                        "diffuse": 0.4,
+                                        "specular": 0,
+                                        "transparency": 0.6,
+                                        "refractive-index": 1
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            "transform": [{ "translate": [0, 2, 0] }]
+        },
+        {
+            "type": {
+                "group": [
+                    {
+                        "type": { "from-definition": "pedestal" }
+                    },
+                    {
+                        "type": {
+                            "group": [
+                                {
+                                    "type": { "from-definition": "dragon" },
+                                    "material": {
+                                        "pattern": {
+                                            "type": { "solid": [1, 0.5, 0.1] }
+                                        },
+                                        "ambient": 0.1,
+                                        "diffuse": 0.6,
+                                        "specular": 0.3,
+                                        "shininess": 15
+                                    }
+                                },
+                                {
+                                    "type": { "from-definition": "bbox" },
+                                    "material": {
+                                        "ambient": 0,
+                                        "diffuse": 0.2,
+                                        "specular": 0,
+                                        "transparency": 0.8,
+                                        "refractive-index": 1
+                                    }
+                                }
+                            ]
+                        },
+                        "transform": [
+                            { "rotate-y": 4 },
+                            { "scale": [0.75, 0.75, 0.75] }
+                        ]
+                    }
+                ]
+            },
+            "transform": [{ "translate": [2, 1, -1] }]
+        },
+        {
+            "type": {
+                "group": [
+                    {
+                        "type": { "from-definition": "pedestal" }
+                    },
+                    {
+                        "type": {
+                            "group": [
+                                {
+                                    "type": { "from-definition": "dragon" },
+                                    "material": {
+                                        "pattern": {
+                                            "type": { "solid": [0.9, 0.5, 0.1] }
+                                        },
+                                        "ambient": 0.1,
+                                        "diffuse": 0.6,
+                                        "specular": 0.3,
+                                        "shininess": 15
+                                    }
+                                },
+                                {
+                                    "type": { "from-definition": "bbox" },
+                                    "material": {
+                                        "ambient": 0,
+                                        "diffuse": 0.2,
+                                        "specular": 0,
+                                        "transparency": 0.8,
+                                        "refractive-index": 1
+                                    }
+                                }
+                            ]
+                        },
+                        "transform": [
+                            { "rotate-y": -0.4 },
+                            { "scale": [0.75, 0.75, 0.75] }
+                        ]
+                    }
+                ]
+            },
+            "transform": [{ "translate": [-2, 0.75, -1] }]
+        },
+        {
+            "type": {
+                "group": [
+                    {
+                        "type": { "from-definition": "pedestal" }
+                    },
+                    {
+                        "type": {
+                            "group": [
+                                {
+                                    "type": { "from-definition": "dragon" },
+                                    "material": {
+                                        "pattern": {
+                                            "type": { "solid": [1, 0.9, 0.1] }
+                                        },
+                                        "ambient": 0.1,
+                                        "diffuse": 0.6,
+                                        "specular": 0.3,
+                                        "shininess": 15
+                                    }
+                                },
+                                {
+                                    "type": { "from-definition": "bbox" },
+                                    "material": {
+                                        "ambient": 0,
+                                        "diffuse": 0.1,
+                                        "specular": 0,
+                                        "transparency": 0.9,
+                                        "refractive-index": 1
+                                    }
+                                }
+                            ]
+                        },
+                        "transform": [
+                            { "rotate-y": -0.2 },
+                            { "scale": [0.5, 0.5, 0.5] }
+                        ]
+                    }
+                ]
+            },
+            "transform": [{ "translate": [-4, 0, -2] }]
+        },
+        {
+            "type": {
+                "group": [
+                    {
+                        "type": { "from-definition": "pedestal" }
+                    },
+                    {
+                        "type": {
+                            "group": [
+                                {
+                                    "type": { "from-definition": "dragon" },
+                                    "material": {
+                                        "pattern": {
+                                            "type": { "solid": [0.9, 1, 0.1] }
+                                        },
+                                        "ambient": 0.1,
+                                        "diffuse": 0.6,
+                                        "specular": 0.3,
+                                        "shininess": 15
+                                    }
+                                },
+                                {
+                                    "type": { "from-definition": "bbox" },
+                                    "material": {
+                                        "ambient": 0,
+                                        "diffuse": 0.1,
+                                        "specular": 0,
+                                        "transparency": 0.9,
+                                        "refractive-index": 1
+                                    }
+                                }
+                            ]
+                        },
+                        "transform": [
+                            { "rotate-y": 3.3 },
+                            { "scale": [0.5, 0.5, 0.5] }
+                        ]
+                    }
+                ]
+            },
+            "transform": [{ "translate": [4, 0, -2] }]
+        },
+        {
+            "type": {
+                "group": [
+                    {
+                        "type": { "from-definition": "pedestal" }
+                    },
+                    {
+                        "type": { "from-definition": "dragon" },
+                        "transform": [
+                            { "rotate-y": 3.1415 }
+                        ],
+                        "material": {
+                            "pattern": {
+                                "type": { "solid": [1, 1, 1] }
+                            },
+                            "ambient": 0.1,
+                            "diffuse": 0.6,
+                            "specular": 0.3,
+                            "shininess": 15
+                        }
+                    }
+                ]
+            },
+            "transform": [{ "translate": [0, 0.5, -4] }]
+        }
+    ]
+}
