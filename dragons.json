@@ -15,7 +15,9 @@
         {
             "name": "dragon",
             "value": {
-                "type": { "from-obj": "dragon.obj" },
+                "type": {
+                    "from-obj": { "file": "dragon.obj", "normalize": false }
+                },
                 "transform": [
                     { "translate": [0, 0.1217, 0] },
                     { "scale": [0.268, 0.268, 0.268] }
