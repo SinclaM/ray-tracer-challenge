@@ -12,6 +12,7 @@ const Cube = @import("cube.zig").Cube;
 const Cylinder = @import("cylinder.zig").Cylinder;
 const Cone = @import("cone.zig").Cone;
 const Triangle = @import("triangle.zig").Triangle;
+const SmoothTriangle = @import("triangle.zig").SmoothTriangle;
 const Plane = @import("plane.zig").Plane;
 const Group = @import("group.zig").Group;
 const PreComputations = @import("../world.zig").PreComputations;
@@ -21,9 +22,23 @@ pub fn Intersection(comptime T: type) type {
         const Self = @This();
         t: T,
         object: *const Shape(T),
+        // There is no significance in u and v defaulting to 0.0. They could
+        // just as well default to `undefined`, but that would make checking
+        // equality between intersections a little more tedious in tests.
+        u: T = 0.0,
+        v: T = 0.0,
 
         pub fn new(t: T, object: *const Shape(T)) Self {
             return .{ .t = t, .object = object };
+        }
+
+        pub fn uvNew(t: T, object: *const Shape(T), u: T, v: T) Self {
+            return .{
+                .t = t,
+                .object = object,
+                .u = u,
+                .v = v
+            };
         }
     };
 }
@@ -72,7 +87,7 @@ pub fn Shape(comptime T: type) type {
         /// fn localIntersect(
         ///     self: Self, allocator: Allocator, super: *const Shape(T), ray: Ray(T)
         /// ) !Intersections(T);
-        /// fn localNormalAt(self: Self, super: Shape(T), point: Tuple(T)) Tuple(T);
+        /// fn localNormalAt(self: Self, point: Tuple(T), hit: Intersection(T)) Tuple(T);
         ///
         /// `localIntersect` should compute the intersections with the shape for the given `ray`.
         /// `localNormalAt` should return the surface normal vector at the point in object space `point`.
@@ -84,6 +99,7 @@ pub fn Shape(comptime T: type) type {
             cone: Cone(T),
             plane: Plane(T),
             triangle: Triangle(T),
+            smooth_triangle: SmoothTriangle(T),
             group: Group(T),
         };
 
@@ -175,6 +191,29 @@ pub fn Shape(comptime T: type) type {
             );
         }
 
+        /// Creates a new smooth triangle.
+        pub fn smoothTriangle(
+            p1: Tuple(T), p2: Tuple(T), p3: Tuple(T), n1: Tuple(T), n2: Tuple(T), n3: Tuple(T)
+        ) Self {
+            const e1 = p2.sub(p1);
+            const e2 = p3.sub(p1);
+
+            return Self.new(
+                Self.Variant {
+                    .smooth_triangle = SmoothTriangle(T) {
+                        .p1 = p1,
+                        .p2 = p2,
+                        .p3 = p3,
+                        .e1 = e1,
+                        .e2 = e2,
+                        .n1 = n1,
+                        .n2 = n2,
+                        .n3 = n3,
+                    }
+                }
+            );
+        }
+
         /// Creates a new plane.
         pub fn plane() Self {
             return Self.new(Self.Variant { .plane = Plane(T) {} });
@@ -240,13 +279,13 @@ pub fn Shape(comptime T: type) type {
         }
 
         /// Finds the surface normal vector at the `point` in world space.
-        pub fn normalAt(self: Self, point: Tuple(T)) Tuple(T) {
+        pub fn normalAt(self: Self, point: Tuple(T), hit_: Intersection(T)) Tuple(T) {
             const local_point = self.worldToObject(point);
 
             const Tag = @typeInfo(@TypeOf(self.variant)).Union.tag_type.?;
             inline for (@typeInfo(Tag).Enum.fields) |field| {
                 if (field.value == @intFromEnum(self.variant)) {
-                    const local_normal = @field(self.variant, field.name).localNormalAt(self, local_point);
+                    const local_normal = @field(self.variant, field.name).localNormalAt(local_point, hit_);
                     return self.normalToWorld(local_normal);
                 }
             }
@@ -274,10 +313,11 @@ fn TestShape(comptime T: type) type {
             return Intersections(T).init(allocator);
         }
 
-        fn localNormalAt(self: Self, super: Shape(T), point: Tuple(T)) Tuple(T) {
+        fn localNormalAt(self: Self, point: Tuple(T), hit_: Intersection(T)) Tuple(T) {
             _ = self;
-            _ = super;
             _ = point;
+            _ = hit_;
+
             return Tuple(T).point(0.0, 0.0, 0.0);
         }
     };
@@ -468,7 +508,7 @@ test "Finding the normal on a child object" {
 
     const n = g1.variant.group.children.items[0]
                 .variant.group.children.items[0]
-                .normalAt(Tuple(f32).point(1.7321, 1.1547, -5.5774));
+                .normalAt(Tuple(f32).point(1.7321, 1.1547, -5.5774), undefined);
 
     try testing.expect(n.approxEqual(Tuple(f32).vec3(0.2857, 0.42854, -0.85716)));
 }

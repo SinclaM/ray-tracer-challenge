@@ -97,8 +97,8 @@ pub fn Cylinder(comptime T: type) type {
             return xs;
         }
 
-        pub fn localNormalAt(self: Self, super: Shape(T), point: Tuple(T)) Tuple(T) {
-            _ = super;
+        pub fn localNormalAt(self: Self, point: Tuple(T), hit: Intersection(T)) Tuple(T) {
+            _ = hit;
 
             const dist = point.x * point.x + point.z * point.z;
 
@@ -173,7 +173,7 @@ test "A ray strikes a cylinder" {
 
 fn testNormalOnCylinder(comptime T: type, point: Tuple(f32), normal: Tuple(f32)) !void {
     var cyl = Shape(T).cylinder();
-    try testing.expect(cyl.normalAt(point).approxEqual(normal));
+    try testing.expect(cyl.normalAt(point, undefined).approxEqual(normal));
 }
 
 test "Normal vector on a cylinder" {
@@ -294,7 +294,7 @@ fn testNormalOnClosedCylinder(comptime T: type, point: Tuple(T), normal: Tuple(T
     cyl.variant.cylinder.max = 2.0;
     cyl.variant.cylinder.closed = true;
 
-    try testing.expect(cyl.normalAt(point).approxEqual(normal));
+    try testing.expect(cyl.normalAt(point, undefined).approxEqual(normal));
 }
 
 test "The normal vector on a cylinder's end caps" {

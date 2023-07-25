@@ -212,7 +212,7 @@ pub fn PreComputations(comptime T: type) type {
         pub fn new(allocator: Allocator, hit_: Intersection(T), ray: Ray(T), xs: Intersections(T)) !Self {
             const point = ray.position(hit_.t);
             const eyev = ray.direction.negate();
-            var normal = hit_.object.normalAt(point);
+            var normal = hit_.object.normalAt(point, hit_);
             var inside = false;
 
             if (normal.dot(eyev) < 0) {

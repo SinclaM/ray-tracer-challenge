@@ -48,7 +48,7 @@ pub fn drawSphere() !void {
             sortIntersections(f32, xs.items);
             if (hit(f32, xs.items)) |hit_| {
                 const point = ray.position(xs.items[hit_].t);
-                const normal = s.normalAt(point);
+                const normal = s.normalAt(point, xs.items[hit_]);
                 const eyev = ray.direction.negate();
                 const color = s.material.lighting(light, &s, point, eyev, normal, false);
                 canvas.getPixelPointer(x, y).?.* = color;

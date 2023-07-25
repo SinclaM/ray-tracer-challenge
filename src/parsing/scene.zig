@@ -344,13 +344,11 @@ fn parseObject(
                 );
                 defer allocator.free(obj);
 
-                var arena = std.heap.ArenaAllocator.init(allocator);
-                defer arena.deinit();
-
-                var parser = try ObjParser(T).new(arena.allocator());
+                var parser = try ObjParser(T).new(allocator);
                 defer parser.destroy();
 
-                parser.loadObj(obj, material, true);
+                parser.loadObj(obj, material, false);
+
                 break :blk parser.toGroup().*;
             }
         },

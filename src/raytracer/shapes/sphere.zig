@@ -45,9 +45,9 @@ pub fn Sphere(comptime T: type) type {
             return xs;
         }
 
-        pub fn localNormalAt(self: Self, super: Shape(T), point: Tuple(T)) Tuple(T) {
+        pub fn localNormalAt(self: Self, point: Tuple(T), hit: Intersection(T)) Tuple(T) {
             _ = self;
-            _ = super;
+            _ = hit;
             const ret = point.sub(Tuple(T).point(0.0, 0.0, 0.0));
             return ret;
         }
@@ -162,13 +162,13 @@ test "Intersections" {
 test "Surface normals" {
     var s = Shape(f32).sphere();
     try s.setTransform(Matrix(f32, 4).identity().translate(0.0, 1.0, 0.0));
-    var n = s.normalAt(Tuple(f32).point(0, 1.70711, -0.70711));
+    var n = s.normalAt(Tuple(f32).point(0, 1.70711, -0.70711), undefined);
 
     try testing.expect(n.approxEqual(Tuple(f32).vec3(0, 0.70711, -0.70711)));
 
     s = Shape(f32).sphere();
     try s.setTransform(Matrix(f32, 4).identity().rotateZ(std.math.pi / 5.0).scale(1.0, 0.5, 1.0));
-    n = s.normalAt(Tuple(f32).point(0.0, 1.0 / @sqrt(2.0), -1.0 / @sqrt(2.0)));
+    n = s.normalAt(Tuple(f32).point(0.0, 1.0 / @sqrt(2.0), -1.0 / @sqrt(2.0)), undefined);
 
     try testing.expect(n.approxEqual(Tuple(f32).vec3(0, 0.97014, -0.24254)));
 }

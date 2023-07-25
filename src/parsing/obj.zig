@@ -26,6 +26,7 @@ pub fn ObjParser(comptime T: type) type {
         offset: Tuple(T) = Tuple(T).vec3(0.0, 0.0, 0.0),
         scale: T = 1.0,
         vertices: ArrayList(Tuple(T)),
+        normals: ArrayList(Tuple(T)),
         lines_ignored: usize,
 
         pub fn new(allocator: Allocator) !Self {
@@ -39,11 +40,13 @@ pub fn ObjParser(comptime T: type) type {
                 .named_groups = StringHashMap(*Shape(T)).init(allocator),
                 .lines_ignored = 0,
                 .vertices = ArrayList(Tuple(T)).init(allocator),
+                .normals = ArrayList(Tuple(T)).init(allocator),
             };
         }
 
         pub fn destroy(self: Self) void {
             self.vertices.deinit();
+            self.normals.deinit();
         }
 
         fn handleVertex(self: *Self, tokens: *std.mem.TokenIterator(u8, .scalar)) !void {
@@ -62,29 +65,80 @@ pub fn ObjParser(comptime T: type) type {
             try self.vertices.append(Tuple(T).point(x, y, z).sub(self.offset).div(self.scale));
         }
 
+        fn handleVertexNormal(self: *Self, tokens: *std.mem.TokenIterator(u8, .scalar)) !void {
+            const x = try std.fmt.parseFloat(
+                T, tokens.next() orelse { return Self.Error.IncompleteVertex; }
+            );
+            const y = try std.fmt.parseFloat(
+                T, tokens.next() orelse { return Self.Error.IncompleteVertex; }
+            );
+            const z = try std.fmt.parseFloat(
+                T, tokens.next() orelse { return Self.Error.IncompleteVertex; }
+            );
+
+            // Ignore any trailing items
+
+            try self.normals.append(Tuple(T).vec3(x, y, z));
+        }
+
+        fn handleFaceHelper(token: []const u8) !struct { vertex_index: usize, normal_index: ?usize = null } {
+            var split = std.mem.splitScalar(u8, token, '/');
+
+            const vertex_index = try std.fmt.parseInt(
+                usize, split.next() orelse { return Self.Error.IncompleteFace; }, 10
+            );
+
+            _ = split.next() orelse { return .{ .vertex_index = vertex_index }; };
+
+            const normal_index = try std.fmt.parseInt(
+                usize, split.next() orelse { return .{ .vertex_index = vertex_index }; }, 10
+            );
+
+            return .{ .vertex_index = vertex_index, .normal_index = normal_index };
+        }
+
         fn handleFace(
             self: *Self, tokens: *std.mem.TokenIterator(u8, .scalar), material: ?Material(T)
         ) !void {
-            const first = try std.fmt.parseInt(
-                usize, tokens.next() orelse { return Self.Error.IncompleteFace; }, 10
-            );
+            const first = try Self.handleFaceHelper(tokens.next() orelse { return Self.Error.IncompleteFace; });
 
-            var last = try std.fmt.parseInt(
-                usize, tokens.next() orelse { return Self.Error.IncompleteFace; }, 10
-            );
+            var last = try Self.handleFaceHelper(tokens.next() orelse { return Self.Error.IncompleteFace; });
 
             _ = tokens.peek() orelse { return Self.Error.IncompleteFace; };
 
             var str = tokens.next();
             while (str) |next| : (str = tokens.next()) {
-                var current = try std.fmt.parseInt(usize, next, 10);
+                var current = try Self.handleFaceHelper(next);
             
                 // Vertices are 1-indexed
-                const p1 = self.vertices.items[first - 1];
-                const p2 = self.vertices.items[last - 1];
-                const p3 = self.vertices.items[current - 1];
+                const p1 = self.vertices.items[first.vertex_index - 1];
+                const p2 = self.vertices.items[last.vertex_index - 1];
+                const p3 = self.vertices.items[current.vertex_index - 1];
 
-                var triangle = Shape(T).triangle(p1, p2, p3);
+                const n1 = if (first.normal_index) |n| blk: {
+                    break :blk self.normals.items[n - 1];
+                } else blk: {
+                    break :blk null;
+                };
+
+                const n2 = if (last.normal_index) |n| blk: {
+                    break :blk self.normals.items[n - 1];
+                } else blk: {
+                    break :blk null;
+                };
+
+                const n3 = if (current.normal_index) |n| blk: {
+                    break :blk self.normals.items[n - 1];
+                } else blk: {
+                    break :blk null;
+                };
+
+                var triangle = if (n1 != null and n2 != null and n3 != null) blk: {
+                    break :blk Shape(T).smoothTriangle(p1, p2, p3, n1.?, n2.?, n3.?);
+                } else blk: {
+                    break :blk Shape(T).triangle(p1, p2, p3);
+                };
+
                 triangle.material = material orelse Material(T).new();
 
                 try self.active_group.addChild(triangle);
@@ -117,6 +171,8 @@ pub fn ObjParser(comptime T: type) type {
             if (tokens.next()) |first| {
                 if (std.mem.eql(u8, first, "v")) {
                     try self.handleVertex(&tokens);
+                } else if (std.mem.eql(u8, first, "vn")) {
+                    try self.handleVertexNormal(&tokens);
                 } else if (std.mem.eql(u8, first, "f")) {
                     try self.handleFace(&tokens, material);
                 } else if (std.mem.eql(u8, first, "g")) {
@@ -414,4 +470,68 @@ test "Converting an OBJ file to a group" {
 
     try testing.expectEqual(&g.variant.group.children.items[0], g1);
     try testing.expectEqual(&g.variant.group.children.items[1], g2);
+}
+
+test "Vertex normal records" {
+    var arena = std.heap.ArenaAllocator.init(testing.allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
+
+    const obj =
+        \\vn 0 0 1
+        \\vn 0.707 0 -0.707
+        \\vn 1 2 3
+    ;
+
+    var parser = try ObjParser(f32).new(allocator);
+    defer parser.destroy();
+
+    parser.loadObj(obj, null, false);
+
+    try testing.expectEqual(parser.lines_ignored, 0);
+
+    try testing.expectEqual(
+        parser.normals.items[0], Tuple(f32).vec3(0.0, 0.0, 1.0)
+    );
+    try testing.expectEqual(
+        parser.normals.items[1], Tuple(f32).vec3(0.707, 0.0, -0.707)
+    );
+    try testing.expectEqual(
+        parser.normals.items[2], Tuple(f32).vec3(1.0, 2.0, 3.0)
+    );
+}
+
+test "Faces with normals" {
+    var arena = std.heap.ArenaAllocator.init(testing.allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
+
+    const obj =
+        \\v 0 1 0
+        \\v -1 0 0
+        \\v 1 0 0
+        \\vn -1 0 0
+        \\vn 1 0 0
+        \\vn 0 1 0
+        \\f 1//3 2//1 3//2
+        \\f 1/0/3 2/102/1 3/14/2
+    ;
+
+    var parser = try ObjParser(f32).new(allocator);
+    defer parser.destroy();
+
+    parser.loadObj(obj, null, false);
+
+    try testing.expectEqual(parser.lines_ignored, 0);
+
+    const t1 = &parser.default_group.variant.group.children.items[0].variant.smooth_triangle;
+    const t2 = &parser.default_group.variant.group.children.items[1].variant.smooth_triangle;
+
+    try testing.expectEqual(t1.p1, parser.vertices.items[0]);
+    try testing.expectEqual(t1.p2, parser.vertices.items[1]);
+    try testing.expectEqual(t1.p3, parser.vertices.items[2]);
+    try testing.expectEqual(t1.n1, parser.normals.items[2]);
+    try testing.expectEqual(t1.n2, parser.normals.items[0]);
+    try testing.expectEqual(t1.n3, parser.normals.items[1]);
+    try testing.expectEqual(t1.*, t2.*);
 }

@@ -50,10 +50,10 @@ pub fn Group(comptime T: type) type {
             return all;
         }
 
-        pub fn localNormalAt(self: Self, super: Shape(T), point: Tuple(T)) Tuple(T) {
+        pub fn localNormalAt(self: Self, point: Tuple(T), hit: Intersection(T)) Tuple(T) {
             _ = self;
-            _ = super;
             _ = point;
+            _ = hit;
 
             // TODO: can this be a compile error with duck typing?
 

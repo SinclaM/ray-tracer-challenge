@@ -34,10 +34,10 @@ pub fn Plane(comptime T: type) type {
             return xs;
         }
 
-        pub fn localNormalAt(self: Self, super: Shape(T), point: Tuple(T)) Tuple(T) {
+        pub fn localNormalAt(self: Self, point: Tuple(T), hit: Intersection(T)) Tuple(T) {
             _ = self;
-            _ = super;
             _ = point;
+            _ = hit;
             return Tuple(T).vec3(0.0, 1.0, 0.0);
         }
 
@@ -87,9 +87,9 @@ test "Intersections" {
 
 test "Normals" {
     const p = Shape(f32).plane();
-    const n1 = p.normalAt(Tuple(f32).point(0.0, 0.0, 0.0));
-    const n2 = p.normalAt(Tuple(f32).point(10.0, 0.0, -10.0));
-    const n3 = p.normalAt(Tuple(f32).point(-5.0, 0.0, 150.0));
+    const n1 = p.normalAt(Tuple(f32).point(0.0, 0.0, 0.0), undefined);
+    const n2 = p.normalAt(Tuple(f32).point(10.0, 0.0, -10.0), undefined);
+    const n3 = p.normalAt(Tuple(f32).point(-5.0, 0.0, 150.0), undefined);
 
     try testing.expect(n1.approxEqual(Tuple(f32).vec3(0.0, 1.0, 0.0)));
     try testing.expect(n2.approxEqual(Tuple(f32).vec3(0.0, 1.0, 0.0)));

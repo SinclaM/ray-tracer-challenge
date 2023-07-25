@@ -78,9 +78,9 @@ pub fn Cube(comptime T: type) type {
             return xs;
         }
 
-        pub fn localNormalAt(self: Self, super: Shape(T), point: Tuple(T)) Tuple(T) {
+        pub fn localNormalAt(self: Self, point: Tuple(T), hit: Intersection(T)) Tuple(T) {
             _ = self;
-            _ = super;
+            _ = hit;
 
             const abs_x = @fabs(point.x);
             const abs_y = @fabs(point.y);
@@ -184,7 +184,7 @@ test "A ray misses a cube" {
 fn testNormalOnCube(comptime T: type, point: Tuple(f32), normal: Tuple(f32)) !void {
     const c = Shape(T).cube();
 
-    try testing.expect(c.normalAt(point).approxEqual(normal));
+    try testing.expect(c.normalAt(point, undefined).approxEqual(normal));
 }
 
 test "The normal on a cube" {

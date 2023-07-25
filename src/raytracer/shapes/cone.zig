@@ -112,9 +112,8 @@ pub fn Cone(comptime T: type) type {
             return xs;
         }
 
-        pub fn localNormalAt(self: Self, super: Shape(T), point: Tuple(T)) Tuple(T) {
-            _ = super;
-
+        pub fn localNormalAt(self: Self, point: Tuple(T), hit: Intersection(T)) Tuple(T) {
+            _ = hit;
             const dist = point.x * point.x + point.z * point.z;
 
             if (dist < self.max * self.max and point.y >= self.max - Self.tolerance) {
@@ -212,7 +211,7 @@ test "Intersecting a cone's end caps" {
 fn testNormalOnCone(comptime T: type, point: Tuple(T), normal: Tuple(T)) !void {
     var cone = Shape(T).cone();
 
-    try testing.expect(cone.normalAt(point).approxEqual(normal));
+    try testing.expect(cone.normalAt(point, undefined).approxEqual(normal));
 }
 
 test "Computing the normal vector on a cone" {
