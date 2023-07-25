@@ -80,7 +80,10 @@ fn ObjectConfig(comptime T: type) type {
     return struct {
         @"type": union(enum) {
             @"from-definition": []const u8,
-            @"from-obj": []const u8,
+            @"from-obj": *struct {
+                file: []const u8,
+                normalize: bool = true
+            },
             sphere: void,
             cube: void,
             cylinder: *struct {
@@ -332,7 +335,7 @@ fn parseObject(
                 return SceneParseError.UnknownDefinition;
             }
         },
-        .@"from-obj" => |file_name| blk: {
+        .@"from-obj" => |from| blk: {
             if (target.cpu.arch == .wasm32) {
                 return SceneParseError.NotImplemented;
             } else {
@@ -340,14 +343,14 @@ fn parseObject(
                 defer obj_dir.close();
 
                 const obj = try obj_dir.readFileAlloc(
-                    allocator, file_name, std.math.pow(usize, 2, 32)
+                    allocator, from.file, std.math.pow(usize, 2, 32)
                 );
                 defer allocator.free(obj);
 
                 var parser = try ObjParser(T).new(allocator);
                 defer parser.destroy();
 
-                parser.loadObj(obj, material, false);
+                parser.loadObj(obj, .{ .material = material, .casts_shadow = casts_shadow }, from.normalize);
 
                 break :blk parser.toGroup().*;
             }

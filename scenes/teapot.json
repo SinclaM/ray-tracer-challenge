@@ -37,7 +37,9 @@
             }
         },
         {
-            "type": { "from-obj": "teapot.obj" },
+            "type": {
+                "from-obj": { "file": "teapot.obj" }
+            },
             "transform": [
                 { "translate": [0, 0.5, 0] },
                 { "rotate-y": -0.4 }

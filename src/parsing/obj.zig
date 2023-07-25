@@ -98,7 +98,7 @@ pub fn ObjParser(comptime T: type) type {
         }
 
         fn handleFace(
-            self: *Self, tokens: *std.mem.TokenIterator(u8, .scalar), material: ?Material(T)
+            self: *Self, tokens: *std.mem.TokenIterator(u8, .scalar), state: InheritedState
         ) !void {
             const first = try Self.handleFaceHelper(tokens.next() orelse { return Self.Error.IncompleteFace; });
 
@@ -139,7 +139,8 @@ pub fn ObjParser(comptime T: type) type {
                     break :blk Shape(T).triangle(p1, p2, p3);
                 };
 
-                triangle.material = material orelse Material(T).new();
+                triangle.material = state.material orelse Material(T).new();
+                triangle.casts_shadow = state.casts_shadow orelse true;
 
                 try self.active_group.addChild(triangle);
 
@@ -166,7 +167,7 @@ pub fn ObjParser(comptime T: type) type {
             self.active_group = g;
         }
 
-        fn handleLine(self: *Self, line: []const u8, material: ?Material(T)) !void {
+        fn handleLine(self: *Self, line: []const u8, state: InheritedState) !void {
             var tokens = std.mem.tokenizeScalar(u8, line, ' ');
             if (tokens.next()) |first| {
                 if (std.mem.eql(u8, first, "v")) {
@@ -174,7 +175,7 @@ pub fn ObjParser(comptime T: type) type {
                 } else if (std.mem.eql(u8, first, "vn")) {
                     try self.handleVertexNormal(&tokens);
                 } else if (std.mem.eql(u8, first, "f")) {
-                    try self.handleFace(&tokens, material);
+                    try self.handleFace(&tokens, state);
                 } else if (std.mem.eql(u8, first, "g")) {
                     try self.handleNamedGroup(&tokens);
                 } else {
@@ -185,7 +186,12 @@ pub fn ObjParser(comptime T: type) type {
             }
         }
 
-        pub fn loadObj(self: *Self, obj: []const u8, material: ?Material(T), normalize: bool) void {
+        const InheritedState = struct {
+            material: ?Material(T) = null,
+            casts_shadow: ?bool = null,
+        };
+
+        pub fn loadObj(self: *Self, obj: []const u8, state: InheritedState, normalize: bool) void {
             var lines = std.mem.tokenizeScalar(u8, obj, '\n');
 
             if (normalize) {
@@ -267,7 +273,7 @@ pub fn ObjParser(comptime T: type) type {
             var l = lines.next();
 
             while (l) |line| : (l = lines.next()) {
-                self.handleLine(line, material) catch { self.lines_ignored += 1; };
+                self.handleLine(line, state) catch { self.lines_ignored += 1; };
             }
         }
 
@@ -294,7 +300,7 @@ test "Ignoring unrecognized lines" {
     var parser = try ObjParser(f32).new(allocator);
     defer parser.destroy();
 
-    parser.loadObj(gibberish, null, false);
+    parser.loadObj(gibberish, .{}, false);
 
     try testing.expectEqual(parser.lines_ignored, 5);
 }
@@ -314,7 +320,7 @@ test "Vertex records" {
     var parser = try ObjParser(f32).new(allocator);
     defer parser.destroy();
 
-    parser.loadObj(obj, null, false);
+    parser.loadObj(obj, .{}, false);
 
     try testing.expectEqual(parser.lines_ignored, 0);
 
@@ -349,7 +355,7 @@ test "Parsing triangle faces" {
     var parser = try ObjParser(f32).new(allocator);
     defer parser.destroy();
 
-    parser.loadObj(obj, null, false);
+    parser.loadObj(obj, .{}, false);
 
     try testing.expectEqual(parser.lines_ignored, 0);
 
@@ -383,7 +389,7 @@ test "Triangulating polygons" {
     var parser = try ObjParser(f32).new(allocator);
     defer parser.destroy();
 
-    parser.loadObj(obj, null, false);
+    parser.loadObj(obj, .{}, false);
 
     try testing.expectEqual(parser.lines_ignored, 0);
     try testing.expectEqual(parser.default_group.variant.group.children.items.len, 3);
@@ -422,7 +428,7 @@ test "Triangles in groups" {
     var parser = try ObjParser(f32).new(allocator);
     defer parser.destroy();
 
-    parser.loadObj(obj, null, false);
+    parser.loadObj(obj, .{}, false);
 
     try testing.expectEqual(parser.lines_ignored, 0);
 
@@ -459,7 +465,7 @@ test "Converting an OBJ file to a group" {
     var parser = try ObjParser(f32).new(allocator);
     defer parser.destroy();
 
-    parser.loadObj(obj, null, false);
+    parser.loadObj(obj, .{}, false);
 
     try testing.expectEqual(parser.lines_ignored, 0);
 
@@ -486,7 +492,7 @@ test "Vertex normal records" {
     var parser = try ObjParser(f32).new(allocator);
     defer parser.destroy();
 
-    parser.loadObj(obj, null, false);
+    parser.loadObj(obj, .{}, false);
 
     try testing.expectEqual(parser.lines_ignored, 0);
 
@@ -520,7 +526,7 @@ test "Faces with normals" {
     var parser = try ObjParser(f32).new(allocator);
     defer parser.destroy();
 
-    parser.loadObj(obj, null, false);
+    parser.loadObj(obj, .{}, false);
 
     try testing.expectEqual(parser.lines_ignored, 0);
 
