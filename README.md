@@ -23,7 +23,7 @@ You can find an interactive demo of this ray tracer online at [sinclam.github.io
 - [x] Chapter 12 - Cubes
 - [x] Chapter 13 - Cylinders
 - [x] Chapter 14 - Groups
-- [ ] Chapter 15 - Triangles
+- [x] Chapter 15 - Triangles
 - [ ] Chapter 16 - Constructive Solid Geometry (CSG)
 - [ ] Chapter 17 - Next Steps
 - [x] A1 - Rendering the Cover Image
@@ -55,13 +55,15 @@ You can find an interactive demo of this ray tracer online at [sinclam.github.io
 
 <img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/410f6d29-8b66-463c-a8f4-99ec79700a25 width=800> 
 
+<br/><br/>
+
+<img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/99e74bd8-5caa-466c-beb9-7281bc60a397 width=800> 
+
 ## Performance profiling
 
-Although the ray tracer is not (yet) multithreaded and the small vector math library it uses does not (yet) leverage Zig's
-SIMD builtins, it is still very fast. Running on a single thread, this ray tracer has outperformed every other Ray Tracer
-Challenge implementation (even the multithreaded ones!) I've compared it with—except
-[https://iliathoughts.com/posts/raytracer2/](https://iliathoughts.com/posts/raytracer2/) (for now). And there is still
-significant room for optimization.
+Although the ray tracer is not (yet) heavily optimized (e.g. is does not yet leverage Zig's SIMD builtins),
+it is still very fast—faster in fact on a single thread than almost every other Ray Tracer Challenge implementation
+on multiple threads I've compared with. And there is still significant room for optimization.
 
 The optimizations I do make are largely informed by profilers. When built for native, the binary can be profiled with
 `valgrind --tool=callgrind` and the results inspected with `qcachegrind`, which works well enough. Unfortunately,
