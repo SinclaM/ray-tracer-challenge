@@ -2,6 +2,7 @@ const std = @import("std");
 const testing = std.testing;
 const pi = std.math.pi;
 const Allocator = std.mem.Allocator;
+const Thread = std.Thread;
 
 const Tuple = @import("tuple.zig").Tuple;
 const Matrix = @import("matrix.zig").Matrix;
@@ -78,37 +79,48 @@ pub fn Camera(comptime T: type) type {
         pub fn render(self: Self, allocator: Allocator, world: World(T)) !Canvas(T) {
             var image = try Canvas(T).new(allocator, self.hsize, self.vsize);
 
-            // TODO: An fba is every so slightly faster than an arena here, but is
-            // more susceptible to OOM. I should probably just use the arena for
-            // generality.
-            var buffer = try allocator.alloc(u8, 1024 * 128);
-            defer allocator.free(buffer);
-            var fba = std.heap.FixedBufferAllocator.init(buffer);
+            var progress = std.Progress{ .dont_print_on_dumb = true };
 
-            var progress = std.Progress{
-                .dont_print_on_dumb = true,
-            };
+            const root_node = progress.start("Rendering", self.vsize);
+            progress.refresh();
 
-            const root_node = progress.start("Rendering", self.vsize * self.hsize);
+            var pool: Thread.Pool = undefined;
+            try pool.init(.{ .allocator = allocator });
 
             for (0..self.vsize) |y| {
-                for (0..self.hsize) |x| {
-                    var pixel_node = root_node.start("", 0);
-                    pixel_node.activate();
-                    progress.refresh();
-
-                    const ray = self.rayForPixel(x, y);
-                    const color = try world.colorAt(fba.allocator(), ray, 5);
-                    image.getPixelPointer(x, y).?.* = color;
-                    fba.reset();
-
-                    pixel_node.end();
-                }
+                try pool.spawn(
+                    Self.renderWorker, .{ allocator, &progress, root_node, self, world, &image, y }
+                );
             }
+
+            pool.deinit();
 
             root_node.end();
 
             return image;
+        }
+
+        fn renderWorker(
+            allocator: Allocator,
+            progress: *std.Progress,
+            root_node: *std.Progress.Node,
+            camera: Camera(T),
+            world: World(T),
+            image: *Canvas(T),
+            y: usize)
+        void {
+            var arena = std.heap.ArenaAllocator.init(allocator);
+            defer arena.deinit();
+
+            for (0..camera.hsize) |x| {
+                const ray = camera.rayForPixel(x, y);
+                const color = world.colorAt(arena.allocator(), ray, 5) catch |err| @panic(@errorName(err));
+                image.getPixelPointer(x, y).?.* = color;
+                _ = arena.reset(.retain_capacity);
+            }
+
+            root_node.completeOne();
+            progress.refresh();
         }
     };
 }
