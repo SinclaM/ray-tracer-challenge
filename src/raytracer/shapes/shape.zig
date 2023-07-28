@@ -251,7 +251,8 @@ pub fn Shape(comptime T: type) type {
         /// Assumes `self.variant` is a group.
         pub fn addChild(self: *Self, child: Self) !void {
             try self.variant.group.children.append(child);
-            self.variant.group._bbox.variant.bounding_box.merge(child.parent_space_bounds(self._inverse_transform).variant.bounding_box);
+            self.variant.group._bbox.variant.bounding_box
+                .merge(child.parent_space_bounds(self._inverse_transform).variant.bounding_box);
         }
 
         /// Sets the shape's transformation matrix to `matrix`.
@@ -330,11 +331,38 @@ pub fn Shape(comptime T: type) type {
         }
 
         pub fn parent_space_bounds(self: Self, parent_inverse_transform: Matrix(T, 4)) Self {
+            // TODO: This actually isn't necessary since groups never even save their
+            // transforms and always operate in world space.
             return self
                 .bounds()
                 .variant
                 .bounding_box
                 .transform(parent_inverse_transform.mul(self._transform));
+        }
+
+        pub fn divide(self: *Self, allocator: Allocator, threshold: usize) !void {
+            switch (self.variant) {
+                .group => |*g| {
+                    if (g.children.items.len >= threshold) {
+                        const partition = try g.partition_children(allocator, self);
+                        const left = partition[0];
+                        const right = partition[1];
+
+                        if (left.items.len > 0) {
+                            try g.make_subgroup(allocator, self, left);
+                        }
+
+                        if (right.items.len > 0) {
+                            try g.make_subgroup(allocator, self, right);
+                        }
+                    }
+
+                    for (g.children.items) |*child| {
+                        try child.divide(allocator, threshold);
+                    }
+                },
+                else => {}
+            }
         }
     };
 }

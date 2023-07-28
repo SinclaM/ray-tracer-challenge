@@ -404,6 +404,8 @@ fn parseObject(
         shape.casts_shadow = shadow;
     }
 
+    try shape.divide(allocator, 8);
+
     return shape;
 }
 

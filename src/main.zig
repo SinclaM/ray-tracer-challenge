@@ -28,7 +28,7 @@ pub fn main() !void {
         "xyz",
         "groups",
         "teapot",
-        //"dragons"
+        "dragons"
     };
 
     // `raw_c_allocator` seems to play more nicely with Valgrind.

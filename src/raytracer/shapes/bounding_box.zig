@@ -69,6 +69,46 @@ pub fn BoundingBox(comptime T: type) type {
             return new;
         }
 
+        pub fn split(self: Self) [2]Shape(T) {
+            const dx = self.max.x - self.min.x;
+            const dy = self.max.y - self.min.y;
+            const dz = self.max.z - self.min.z;
+
+            const greatest = @max(dx, @max(dy, dz));
+
+            var x0 = self.min.x;
+            var y0 = self.min.y;
+            var z0 = self.min.z;
+
+            var x1 = self.max.x;
+            var y1 = self.max.y;
+            var z1 = self.max.z;
+
+            if (greatest == dx) {
+                x0 = x0 + dx / 2.0;
+                x1 = x0;
+            } else if (greatest == dy) {
+                y0 = y0 + dy / 2.0;
+                y1 = y0;
+            } else {
+                z0 = z0 + dz / 2.0;
+                z1 = z0;
+            }
+
+            const mid_min = Tuple(T).point(x0, y0, z0);
+            const mid_max = Tuple(T).point(x1, y1, z1);
+
+            var left = Shape(T).boundingBox();
+            left.variant.bounding_box.min = self.min;
+            left.variant.bounding_box.max = mid_max;
+
+            var right = Shape(T).boundingBox();
+            right.variant.bounding_box.min = mid_min;
+            right.variant.bounding_box.max = self.max;
+
+            return [_]Shape(T) { left, right };
+        }
+
         fn checkAxis(origin: T, direction: T, min: T, max: T) [2]T {
             const epsilon = 1e-5;
 
@@ -321,4 +361,64 @@ test "Intersecting a ray with a non-cubic bounding box" {
     try testIntersectNonCubicAABB(f32, allocator, Tuple(f32).point(4, 0, 9), Tuple(f32).vec3(0, 0, -1), false);
     try testIntersectNonCubicAABB(f32, allocator, Tuple(f32).point(8, 6, -1), Tuple(f32).vec3(0, -1, 0), false);
     try testIntersectNonCubicAABB(f32, allocator, Tuple(f32).point(12, 5, 4), Tuple(f32).vec3(-1, 0, 0), false);
+}
+
+test "Splitting a perfect cube" {
+    var box = Shape(f32).boundingBox();
+    box.variant.bounding_box.min = Tuple(f32).point(-1.0, -4.0, -5.0);
+    box.variant.bounding_box.max = Tuple(f32).point(9.0, 6.0, 5.0);
+
+    const split = box.variant.bounding_box.split();
+    const left = &split[0].variant.bounding_box;
+    const right = &split[1].variant.bounding_box;
+
+    try testing.expectEqual(left.min, Tuple(f32).point(-1.0, -4.0, -5.0));
+    try testing.expect(left.max.approxEqual(Tuple(f32).point(4.0, 6.0, 5.0)));
+    try testing.expect(right.min.approxEqual(Tuple(f32).point(4.0, -4.0, -5.0)));
+    try testing.expectEqual(right.max, Tuple(f32).point(9.0, 6.0, 5.0));
+}
+
+test "Splitting an x-wide box" {
+    var box = Shape(f32).boundingBox();
+    box.variant.bounding_box.min = Tuple(f32).point(-1.0, -2.0, -3.0);
+    box.variant.bounding_box.max = Tuple(f32).point(9.0, 5.5, 3.0);
+
+    const split = box.variant.bounding_box.split();
+    const left = &split[0].variant.bounding_box;
+    const right = &split[1].variant.bounding_box;
+
+    try testing.expectEqual(left.min, Tuple(f32).point(-1.0, -2.0, -3.0));
+    try testing.expect(left.max.approxEqual(Tuple(f32).point(4.0, 5.5, 3.0)));
+    try testing.expect(right.min.approxEqual(Tuple(f32).point(4.0, -2.0, -3.0)));
+    try testing.expectEqual(right.max, Tuple(f32).point(9.0, 5.5, 3.0));
+}
+
+test "Splitting a y-wide box" {
+    var box = Shape(f32).boundingBox();
+    box.variant.bounding_box.min = Tuple(f32).point(-1.0, -2.0, -3.0);
+    box.variant.bounding_box.max = Tuple(f32).point(5.0, 8.0, 3.0);
+
+    const split = box.variant.bounding_box.split();
+    const left = &split[0].variant.bounding_box;
+    const right = &split[1].variant.bounding_box;
+
+    try testing.expectEqual(left.min, Tuple(f32).point(-1.0, -2.0, -3.0));
+    try testing.expect(left.max.approxEqual(Tuple(f32).point(5.0, 3.0, 3.0)));
+    try testing.expect(right.min.approxEqual(Tuple(f32).point(-1.0, 3.0, -3.0)));
+    try testing.expectEqual(right.max, Tuple(f32).point(5.0, 8.0, 3.0));
+}
+
+test "Splitting a z-wide box" {
+    var box = Shape(f32).boundingBox();
+    box.variant.bounding_box.min = Tuple(f32).point(-1.0, -2.0, -3.0);
+    box.variant.bounding_box.max = Tuple(f32).point(5.0, 3.0, 7.0);
+
+    const split = box.variant.bounding_box.split();
+    const left = &split[0].variant.bounding_box;
+    const right = &split[1].variant.bounding_box;
+
+    try testing.expectEqual(left.min, Tuple(f32).point(-1.0, -2.0, -3.0));
+    try testing.expect(left.max.approxEqual(Tuple(f32).point(5.0, 3.0, 2.0)));
+    try testing.expect(right.min.approxEqual(Tuple(f32).point(-1.0, -2.0, 2.0)));
+    try testing.expectEqual(right.max, Tuple(f32).point(5.0, 3.0, 7.0));
 }
