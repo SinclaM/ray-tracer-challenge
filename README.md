@@ -58,7 +58,7 @@ You can find an interactive demo of this ray tracer online at [sinclam.github.io
 
 <br/><br/>
 
-<img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/99e74bd8-5caa-466c-beb9-7281bc60a397 width=800> 
+<img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/010d2169-6d18-460a-b630-ea21f41ec3db width=800> 
 
 ## Performance profiling
 
