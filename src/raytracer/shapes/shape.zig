@@ -9,6 +9,7 @@ const Material = @import("../material.zig").Material;
 const Ray = @import("../ray.zig").Ray;
 const Sphere = @import("sphere.zig").Sphere;
 const Cube = @import("cube.zig").Cube;
+const BoundingBox = @import("bounding_box.zig").BoundingBox;
 const Cylinder = @import("cylinder.zig").Cylinder;
 const Cone = @import("cone.zig").Cone;
 const Triangle = @import("triangle.zig").Triangle;
@@ -88,13 +89,16 @@ pub fn Shape(comptime T: type) type {
         ///     self: Self, allocator: Allocator, super: *const Shape(T), ray: Ray(T)
         /// ) !Intersections(T);
         /// fn localNormalAt(self: Self, point: Tuple(T), hit: Intersection(T)) Tuple(T);
+        /// fn bounds(self: Self, super: *const Shape(T)) Shape(T);
         ///
         /// `localIntersect` should compute the intersections with the shape for the given `ray`.
         /// `localNormalAt` should return the surface normal vector at the point in object space `point`.
+        /// `bounds` should return a bounding box for `self` in object space.
         const Variant = union(enum) {
             test_shape: TestShape(T),
             sphere: Sphere(T),
             cube: Cube(T),
+            bounding_box: BoundingBox(T),
             cylinder: Cylinder(T),
             cone: Cone(T),
             plane: Plane(T),
@@ -144,7 +148,7 @@ pub fn Shape(comptime T: type) type {
 
         /// Creates a new sphere.
         pub fn sphere() Self {
-            return Self.new(Self.Variant { .sphere = Sphere(T) {} });
+            return Self.new(Self.Variant { .sphere = .{} });
         }
 
         /// Creates a glass sphere.
@@ -157,17 +161,22 @@ pub fn Shape(comptime T: type) type {
 
         /// Creates a new cube.
         pub fn cube() Self {
-            return Self.new(Self.Variant { .cube = Cube(T) {} });
+            return Self.new(Self.Variant { .cube = .{} });
+        }
+
+        /// Creates a new bounding box.
+        pub fn boundingBox() Self {
+            return Self.new(Self.Variant { .bounding_box = .{} });
         }
 
         /// Creates a new cylinder.
         pub fn cylinder() Self {
-            return Self.new(Self.Variant { .cylinder = Cylinder(T) {} });
+            return Self.new(Self.Variant { .cylinder = .{} });
         }
 
         /// Creates a new cone.
         pub fn cone() Self {
-            return Self.new(Self.Variant { .cone = Cone(T) {} });
+            return Self.new(Self.Variant { .cone = .{} });
         }
 
         /// Creates a new triangle.
@@ -179,7 +188,7 @@ pub fn Shape(comptime T: type) type {
 
             return Self.new(
                 Self.Variant {
-                    .triangle = Triangle(T) {
+                    .triangle = .{
                         .p1 = p1,
                         .p2 = p2,
                         .p3 = p3,
@@ -200,7 +209,7 @@ pub fn Shape(comptime T: type) type {
 
             return Self.new(
                 Self.Variant {
-                    .smooth_triangle = SmoothTriangle(T) {
+                    .smooth_triangle = .{
                         .p1 = p1,
                         .p2 = p2,
                         .p3 = p3,
@@ -216,14 +225,24 @@ pub fn Shape(comptime T: type) type {
 
         /// Creates a new plane.
         pub fn plane() Self {
-            return Self.new(Self.Variant { .plane = Plane(T) {} });
+            return Self.new(Self.Variant { .plane = .{} });
         }
 
         /// Creates a new group.
-        pub fn group(allocator: Allocator) Self {
+        pub fn group(allocator: Allocator) !Self {
             const children = ArrayList(Shape(T)).init(allocator);
+
+            var bbox = try allocator.create(Shape(T));
+            bbox.* = Shape(T).boundingBox();
+
             return Self.new(
-                Self.Variant { .group = Group(T) { .children = children } }
+                Self.Variant {
+                    .group = .{
+                        .allocator = allocator, 
+                        ._bbox = bbox,
+                        .children = children
+                    }
+                }
             );
         }
 
@@ -232,6 +251,7 @@ pub fn Shape(comptime T: type) type {
         /// Assumes `self.variant` is a group.
         pub fn addChild(self: *Self, child: Self) !void {
             try self.variant.group.children.append(child);
+            self.variant.group._bbox.variant.bounding_box.merge(child.parent_space_bounds(self._inverse_transform).variant.bounding_box);
         }
 
         /// Sets the shape's transformation matrix to `matrix`.
@@ -239,11 +259,15 @@ pub fn Shape(comptime T: type) type {
         /// Fails if `matrix` is not invertible.
         pub fn setTransform(self: *Self, matrix: Matrix(T, 4)) !void {
             switch (self.variant) {
-                .group => |g| {
-                    // Groups only pass on the transformation to their children.
+                .group => |*g| {
+                    // Groups pass on the transformation to their children.
                     for (g.children.items) |*child| {
                         try child.setTransform(matrix.mul(child._transform));
                     }
+
+                    // And they update their bounding boxes too.
+                    g._bbox.* = g._bbox.variant.bounding_box.transform(matrix);
+                    
                 },
                 else => {
                     // Everyone else updates their own state.
@@ -292,6 +316,26 @@ pub fn Shape(comptime T: type) type {
 
             unreachable;
         }
+
+        /// Finds the bounds of this shape in object space.
+        pub fn bounds(self: Self) Self {
+            const Tag = @typeInfo(@TypeOf(self.variant)).Union.tag_type.?;
+            inline for (@typeInfo(Tag).Enum.fields) |field| {
+                if (field.value == @intFromEnum(self.variant)) {
+                    return @field(self.variant, field.name).bounds(&self);
+                }
+            }
+
+            unreachable;
+        }
+
+        pub fn parent_space_bounds(self: Self, parent_inverse_transform: Matrix(T, 4)) Self {
+            return self
+                .bounds()
+                .variant
+                .bounding_box
+                .transform(parent_inverse_transform.mul(self._transform));
+        }
     };
 }
 
@@ -319,6 +363,17 @@ fn TestShape(comptime T: type) type {
             _ = hit_;
 
             return Tuple(T).point(0.0, 0.0, 0.0);
+        }
+
+        pub fn bounds(self: Self, super: *const Shape(T)) Shape(T) {
+            _ = self;
+            _ = super;
+
+            var box = Shape(T).boundingBox();
+            box.variant.bounding_box.min = Tuple(T).point(-1.0, -1.0, -1.0);
+            box.variant.bounding_box.max = Tuple(T).point(1.0, 1.0, 1.0);
+
+            return box;
         }
     };
 }
@@ -445,10 +500,10 @@ test "Refraction" {
 test "Converting a point from world to object space" {
     const allocator = testing.allocator;
 
-    var g1 = Shape(f32).group(allocator);
+    var g1 = try Shape(f32).group(allocator);
     defer g1.variant.group.destroy();
 
-    var g2 = Shape(f32).group(allocator);
+    var g2 = try Shape(f32).group(allocator);
 
     var s = Shape(f32).sphere();
     try s.setTransform(Matrix(f32, 4).identity().translate(5.0, 0.0, 0.0));
@@ -468,10 +523,10 @@ test "Converting a point from world to object space" {
 test "Converting a normal from object to world space" {
     const allocator = testing.allocator;
 
-    var g1 = Shape(f32).group(allocator);
+    var g1 = try Shape(f32).group(allocator);
     defer g1.variant.group.destroy();
 
-    var g2 = Shape(f32).group(allocator);
+    var g2 = try Shape(f32).group(allocator);
 
     var s = Shape(f32).sphere();
     try s.setTransform(Matrix(f32, 4).identity().translate(5.0, 0.0, 0.0));
@@ -492,10 +547,10 @@ test "Converting a normal from object to world space" {
 test "Finding the normal on a child object" {
     const allocator = testing.allocator;
 
-    var g1 = Shape(f32).group(allocator);
+    var g1 = try Shape(f32).group(allocator);
     defer g1.variant.group.destroy();
 
-    var g2 = Shape(f32).group(allocator);
+    var g2 = try Shape(f32).group(allocator);
 
     var s = Shape(f32).sphere();
     try s.setTransform(Matrix(f32, 4).identity().translate(5.0, 0.0, 0.0));
@@ -511,4 +566,29 @@ test "Finding the normal on a child object" {
                 .normalAt(Tuple(f32).point(1.7321, 1.1547, -5.5774), undefined);
 
     try testing.expect(n.approxEqual(Tuple(f32).vec3(0.2857, 0.42854, -0.85716)));
+}
+
+test "A test shape has (arbitrary) bounds" {
+    const s = Shape(f32).testShape();
+    const box = s.bounds();
+
+    try testing.expectEqual(box.variant.bounding_box.min, Tuple(f32).point(-1.0, -1.0, -1.0));
+    try testing.expectEqual(box.variant.bounding_box.max, Tuple(f32).point(1.0, 1.0, 1.0));
+}
+
+test "Querying a shape's bounding box in its parent's space" {
+    const allocator = testing.allocator;
+
+    var s = Shape(f32).sphere();
+    try s.setTransform(Matrix(f32, 4).identity().scale(0.5, 2.0, 4.0).translate(1.0, -3.0, 5.0));
+
+    var g = try Shape(f32).group(allocator);
+    defer g.variant.group.destroy();
+    try g.addChild(s);
+    try g.setTransform(Matrix(f32, 4).identity().shear(.{ .xz = 3.0, .zy = -2.2 }));
+
+    const box = s.parent_space_bounds(g._inverse_transform);
+
+    try testing.expect(box.variant.bounding_box.min.approxEqual(Tuple(f32).point(0.5, -5.0, 1.0)));
+    try testing.expect(box.variant.bounding_box.max.approxEqual(Tuple(f32).point(1.5, -1.0, 9.0)));
 }

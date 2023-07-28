@@ -1,6 +1,7 @@
 const std = @import("std");
 const testing = std.testing;
 const Allocator = std.mem.Allocator;
+const inf = std.math.inf;
 
 const Tuple = @import("../tuple.zig").Tuple;
 const Matrix = @import("../matrix.zig").Matrix;
@@ -41,6 +42,16 @@ pub fn Plane(comptime T: type) type {
             return Tuple(T).vec3(0.0, 1.0, 0.0);
         }
 
+        pub fn bounds(self: Self, super: *const Shape(T)) Shape(T) {
+            _ = self;
+            _ = super;
+
+            var box = Shape(T).boundingBox();
+            box.variant.bounding_box.min = Tuple(T).point(-inf(T), 0.0, -inf(T));
+            box.variant.bounding_box.max = Tuple(T).point(inf(T), 0.0, inf(T));
+
+            return box;
+        }
 
     };
 }
@@ -94,4 +105,12 @@ test "Normals" {
     try testing.expect(n1.approxEqual(Tuple(f32).vec3(0.0, 1.0, 0.0)));
     try testing.expect(n2.approxEqual(Tuple(f32).vec3(0.0, 1.0, 0.0)));
     try testing.expect(n3.approxEqual(Tuple(f32).vec3(0.0, 1.0, 0.0)));
+}
+
+test "A plane has a bounding box" {
+    const s = Shape(f32).plane();
+    const box = s.bounds();
+
+    try testing.expectEqual(box.variant.bounding_box.min, Tuple(f32).point(-inf(f32), 0.0, -inf(f32)));
+    try testing.expectEqual(box.variant.bounding_box.max, Tuple(f32).point(inf(f32), 0.0, inf(f32)));
 }

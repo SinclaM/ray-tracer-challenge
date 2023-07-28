@@ -125,6 +125,18 @@ pub fn Cone(comptime T: type) type {
                 return Tuple(T).vec3(point.x, y, point.z);
             }
         }
+
+        pub fn bounds(self: Self, super: *const Shape(T)) Shape(T) {
+            _ = super;
+
+            const limit = @max(@fabs(self.min), @fabs(self.max));
+
+            var box = Shape(T).boundingBox();
+            box.variant.bounding_box.min = Tuple(T).point(-limit, self.min, -limit);
+            box.variant.bounding_box.max = Tuple(T).point(limit, self.max, limit);
+
+            return box;
+        }
     };
 }
 
@@ -226,4 +238,23 @@ test "Computing the normal vector on a cone" {
     try testNormalOnCone(
         f32, Tuple(f32).point(-1.0, -1.0, 0.0), Tuple(f32).vec3(-1.0, 1.0, 0.0).normalized()
     );
+}
+
+test "An unbounded cone has a bounding box" {
+    const s = Shape(f32).cone();
+    const box = s.bounds();
+
+    try testing.expectEqual(box.variant.bounding_box.min, Tuple(f32).point(-inf(f32), -inf(f32), -inf(f32)));
+    try testing.expectEqual(box.variant.bounding_box.max, Tuple(f32).point(inf(f32), inf(f32), inf(f32)));
+}
+
+test "A bounded cylinder has a bounding box" {
+    var s = Shape(f32).cone();
+    s.variant.cone.min = -5.0;
+    s.variant.cone.max = 3.0;
+    
+    const box = s.bounds();
+
+    try testing.expectEqual(box.variant.bounding_box.min, Tuple(f32).point(-5.0, -5.0, -5.0));
+    try testing.expectEqual(box.variant.bounding_box.max, Tuple(f32).point(5.0, 3.0, 5.0));
 }

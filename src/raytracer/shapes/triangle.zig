@@ -68,6 +68,17 @@ pub fn Triangle(comptime T: type) type {
 
             return self.normal;
         }
+
+        pub fn bounds(self: Self, super: *const Shape(T)) Shape(T) {
+            _ = super;
+
+            var box = Shape(T).boundingBox();
+            box.variant.bounding_box.add(self.p1);
+            box.variant.bounding_box.add(self.p2);
+            box.variant.bounding_box.add(self.p3);
+
+            return box;
+        }
     };
 }
 
@@ -186,6 +197,18 @@ test "A ray strikes a triangle" {
     try testing.expectEqual(xs.items[0].t, 2.0);
 }
 
+test "A triangle has a bounding box" {
+    const s = Shape(f32).triangle(
+        Tuple(f32).point(-3.0, 7.0, 2.0),
+        Tuple(f32).point(6.0, 2.0, -4.0),
+        Tuple(f32).point(2.0, -1.0, -1.0)
+    );
+    const box = s.bounds();
+
+    try testing.expectEqual(box.variant.bounding_box.min, Tuple(f32).point(-3.0, -1.0, -4.0));
+    try testing.expectEqual(box.variant.bounding_box.max, Tuple(f32).point(6.0, 7.0, 2.0));
+}
+
 /// A triangle object using normal interpolation, backed by floats of type `T`.
 pub fn SmoothTriangle(comptime T: type) type {
     return struct {
@@ -241,6 +264,17 @@ pub fn SmoothTriangle(comptime T: type) type {
             _ = point;
 
             return self.n2.mul(hit.u).add(self.n3.mul(hit.v)).add(self.n1.mul(1.0 - hit.u - hit.v));
+        }
+
+        pub fn bounds(self: Self, super: *const Shape(T)) Shape(T) {
+            _ = super;
+
+            var box = Shape(T).boundingBox();
+            box.variant.bounding_box.add(self.p1);
+            box.variant.bounding_box.add(self.p2);
+            box.variant.bounding_box.add(self.p3);
+
+            return box;
         }
     };
 }
@@ -310,3 +344,19 @@ test "Preparing the normal on a smooth triangle" {
     const comps = try PreComputations(f32).new(allocator, i, r, xs);
     try testing.expect(comps.normal.approxEqual(Tuple(f32).vec3(-0.5547, 0.83205, 0)));
 }
+
+test "A smooth triangle has a bounding box" {
+    const s = Shape(f32).smoothTriangle(
+        Tuple(f32).point(-3.0, 7.0, 2.0),
+        Tuple(f32).point(6.0, 2.0, -4.0),
+        Tuple(f32).point(2.0, -1.0, -1.0),
+        undefined, // irrelevant
+        undefined,
+        undefined
+    );
+    const box = s.bounds();
+
+    try testing.expectEqual(box.variant.bounding_box.min, Tuple(f32).point(-3.0, -1.0, -4.0));
+    try testing.expectEqual(box.variant.bounding_box.max, Tuple(f32).point(6.0, 7.0, 2.0));
+}
+

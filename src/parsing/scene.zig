@@ -379,7 +379,7 @@ fn parseObject(
                 Tuple(T).point(tri.p3[0], tri.p3[1], tri.p3[2])
             ),
         .group => |children| blk: {
-            var g = Shape(T).group(allocator);
+            var g = try Shape(T).group(allocator);
 
             for (children) |child| {
                 // Groups will push their own transforms to their children when `setTransform`

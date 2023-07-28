@@ -31,7 +31,7 @@ pub fn ObjParser(comptime T: type) type {
 
         pub fn new(allocator: Allocator) !Self {
             var default_group = try allocator.create(Shape(T));
-            default_group.* = Shape(T).group(allocator);
+            default_group.* = try Shape(T).group(allocator);
 
             return .{
                 .allocator = allocator,
@@ -157,7 +157,7 @@ pub fn ObjParser(comptime T: type) type {
             var name = try self.allocator.alloc(u8, str.len);
             @memcpy(name, str);
 
-            var new_group = Shape(T).group(self.allocator);
+            var new_group = try Shape(T).group(self.allocator);
 
             try self.default_group.addChild(new_group);
             const g = &self.default_group.variant.group.children.items[

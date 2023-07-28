@@ -95,6 +95,17 @@ pub fn Cube(comptime T: type) type {
                 return Tuple(T).vec3(0.0, 0.0, point.z);
             }
         }
+
+        pub fn bounds(self: Self, super: *const Shape(T)) Shape(T) {
+            _ = self;
+            _ = super;
+
+            var box = Shape(T).boundingBox();
+            box.variant.bounding_box.min = Tuple(T).point(-1.0, -1.0, -1.0);
+            box.variant.bounding_box.max = Tuple(T).point(1.0, 1.0, 1.0);
+
+            return box;
+        }
     };
 }
 
@@ -196,4 +207,12 @@ test "The normal on a cube" {
     try testNormalOnCube(f32, Tuple(f32).point(0.4, 0.4, -1), Tuple(f32).vec3(0.0, 0.0, -1.0));
     try testNormalOnCube(f32, Tuple(f32).point(1.0, 1.0, 1.0), Tuple(f32).vec3(1.0, 0.0, 0.0));
     try testNormalOnCube(f32, Tuple(f32).point(-1.0, -1.0, -1.0), Tuple(f32).vec3(-1.0, 0.0, 0.0));
+}
+
+test "A cube has a bounding box" {
+    const s = Shape(f32).cube();
+    const box = s.bounds();
+
+    try testing.expectEqual(box.variant.bounding_box.min, Tuple(f32).point(-1.0, -1.0, -1.0));
+    try testing.expectEqual(box.variant.bounding_box.max, Tuple(f32).point(1.0, 1.0, 1.0));
 }

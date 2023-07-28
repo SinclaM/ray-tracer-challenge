@@ -110,6 +110,16 @@ pub fn Cylinder(comptime T: type) type {
                 return Tuple(T).vec3(point.x, 0.0, point.z);
             }
         }
+
+        pub fn bounds(self: Self, super: *const Shape(T)) Shape(T) {
+            _ = super;
+
+            var box = Shape(T).boundingBox();
+            box.variant.bounding_box.min = Tuple(T).point(-1.0, self.min, -1.0);
+            box.variant.bounding_box.max = Tuple(T).point(1.0, self.max, 1.0);
+
+            return box;
+        }
     };
 }
 
@@ -321,4 +331,23 @@ test "The normal vector on a cylinder's end caps" {
     try testNormalOnClosedCylinder(
         f32, Tuple(f32).point(0.0, 2.0, 0.5), Tuple(f32).vec3(0.0, 1.0, 0.0)
     );
+}
+
+test "An unbounded cylinder has a bounding box" {
+    const s = Shape(f32).cylinder();
+    const box = s.bounds();
+
+    try testing.expectEqual(box.variant.bounding_box.min, Tuple(f32).point(-1.0, -inf(f32), -1.0));
+    try testing.expectEqual(box.variant.bounding_box.max, Tuple(f32).point(1.0, inf(f32), 1.0));
+}
+
+test "A bounded cylinder has a bounding box" {
+    var s = Shape(f32).cylinder();
+    s.variant.cylinder.min = -5.0;
+    s.variant.cylinder.max = 3.0;
+    
+    const box = s.bounds();
+
+    try testing.expectEqual(box.variant.bounding_box.min, Tuple(f32).point(-1.0, -5.0, -1.0));
+    try testing.expectEqual(box.variant.bounding_box.max, Tuple(f32).point(1.0, 3.0, 1.0));
 }

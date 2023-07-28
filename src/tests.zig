@@ -11,6 +11,7 @@ comptime {
     _ = @import("raytracer/shapes/shape.zig");
     _ = @import("raytracer/shapes/sphere.zig");
     _ = @import("raytracer/shapes/cube.zig");
+    _ = @import("raytracer/shapes/bounding_box.zig");
     _ = @import("raytracer/shapes/cylinder.zig");
     _ = @import("raytracer/shapes/cone.zig");
     _ = @import("raytracer/shapes/plane.zig");
