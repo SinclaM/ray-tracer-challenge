@@ -29,6 +29,7 @@ You can find an interactive demo of this ray tracer online at [sinclam.github.io
 - [x] A1 - Rendering the Cover Image
 - [ ] Bonus Chapter - Rendering soft shadows
 - [ ] Bonus Chapter - Bounding boxes and hierarchies
+- [ ] Bonus Chapter - Texture mapping
 
 
 ## Examples
