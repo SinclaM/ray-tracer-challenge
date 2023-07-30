@@ -126,9 +126,7 @@ pub fn Cone(comptime T: type) type {
             }
         }
 
-        pub fn bounds(self: Self, super: *const Shape(T)) Shape(T) {
-            _ = super;
-
+        pub fn bounds(self: Self) Shape(T) {
             const limit = @max(@fabs(self.min), @fabs(self.max));
 
             var box = Shape(T).boundingBox();

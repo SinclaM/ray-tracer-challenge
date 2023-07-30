@@ -89,7 +89,7 @@ pub fn Shape(comptime T: type) type {
         ///     self: Self, allocator: Allocator, super: *const Shape(T), ray: Ray(T)
         /// ) !Intersections(T);
         /// fn localNormalAt(self: Self, point: Tuple(T), hit: Intersection(T)) Tuple(T);
-        /// fn bounds(self: Self, super: *const Shape(T)) Shape(T);
+        /// fn bounds(self: Self) Shape(T);
         ///
         /// `localIntersect` should compute the intersections with the shape for the given `ray`.
         /// `localNormalAt` should return the surface normal vector at the point in object space `point`.
@@ -252,7 +252,7 @@ pub fn Shape(comptime T: type) type {
         pub fn addChild(self: *Self, child: Self) !void {
             try self.variant.group.children.append(child);
             self.variant.group._bbox.variant.bounding_box
-                .merge(child.parent_space_bounds(self._inverse_transform).variant.bounding_box);
+                .merge(child.parent_space_bounds().variant.bounding_box);
         }
 
         /// Sets the shape's transformation matrix to `matrix`.
@@ -323,28 +323,26 @@ pub fn Shape(comptime T: type) type {
             const Tag = @typeInfo(@TypeOf(self.variant)).Union.tag_type.?;
             inline for (@typeInfo(Tag).Enum.fields) |field| {
                 if (field.value == @intFromEnum(self.variant)) {
-                    return @field(self.variant, field.name).bounds(&self);
+                    return @field(self.variant, field.name).bounds();
                 }
             }
 
             unreachable;
         }
 
-        pub fn parent_space_bounds(self: Self, parent_inverse_transform: Matrix(T, 4)) Self {
-            // TODO: This actually isn't necessary since groups never even save their
-            // transforms and always operate in world space.
+        pub fn parent_space_bounds(self: Self) Self {
             return self
                 .bounds()
                 .variant
                 .bounding_box
-                .transform(parent_inverse_transform.mul(self._transform));
+                .transform(self._transform);
         }
 
         pub fn divide(self: *Self, allocator: Allocator, threshold: usize) !void {
             switch (self.variant) {
                 .group => |*g| {
                     if (g.children.items.len >= threshold) {
-                        const partition = try g.partition_children(allocator, self);
+                        const partition = try g.partition_children(allocator);
                         const left = partition[0];
                         const right = partition[1];
 
@@ -393,9 +391,8 @@ fn TestShape(comptime T: type) type {
             return Tuple(T).point(0.0, 0.0, 0.0);
         }
 
-        pub fn bounds(self: Self, super: *const Shape(T)) Shape(T) {
+        pub fn bounds(self: Self) Shape(T) {
             _ = self;
-            _ = super;
 
             var box = Shape(T).boundingBox();
             box.variant.bounding_box.min = Tuple(T).point(-1.0, -1.0, -1.0);
@@ -615,7 +612,7 @@ test "Querying a shape's bounding box in its parent's space" {
     try g.addChild(s);
     try g.setTransform(Matrix(f32, 4).identity().shear(.{ .xz = 3.0, .zy = -2.2 }));
 
-    const box = s.parent_space_bounds(g._inverse_transform);
+    const box = s.parent_space_bounds();
 
     try testing.expect(box.variant.bounding_box.min.approxEqual(Tuple(f32).point(0.5, -5.0, 1.0)));
     try testing.expect(box.variant.bounding_box.max.approxEqual(Tuple(f32).point(1.5, -1.0, 9.0)));

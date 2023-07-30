@@ -172,9 +172,8 @@ pub fn BoundingBox(comptime T: type) type {
             @panic("Unimplemented.");
         }
 
-        pub fn bounds(self: Self, super: *const Shape(T)) Shape(T) {
+        pub fn bounds(self: Self) Shape(T) {
             _ = self;
-            _ = super;
 
             @panic("Unimplemented.");
         }

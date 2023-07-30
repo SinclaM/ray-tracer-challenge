@@ -96,9 +96,8 @@ pub fn Cube(comptime T: type) type {
             }
         }
 
-        pub fn bounds(self: Self, super: *const Shape(T)) Shape(T) {
+        pub fn bounds(self: Self) Shape(T) {
             _ = self;
-            _ = super;
 
             var box = Shape(T).boundingBox();
             box.variant.bounding_box.min = Tuple(T).point(-1.0, -1.0, -1.0);

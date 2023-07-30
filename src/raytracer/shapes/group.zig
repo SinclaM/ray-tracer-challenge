@@ -70,19 +70,19 @@ pub fn Group(comptime T: type) type {
             @panic("`localNormalAt` not implemented for groups");
         }
 
-        pub fn bounds(self: Self, super: *const Shape(T)) Shape(T) {
+        pub fn bounds(self: Self) Shape(T) {
             var box = Shape(T).boundingBox();
 
             for (self.children.items) |child| {
                 box.variant.bounding_box.merge(
-                    child.parent_space_bounds(super._inverse_transform).variant.bounding_box
+                    child.parent_space_bounds().variant.bounding_box
                 );
             }
 
             return box;
         }
 
-        pub fn partition_children(self: *Self, allocator: Allocator, super: *const Shape(T)) ![2]ArrayList(Shape(T)) {
+        pub fn partition_children(self: *Self, allocator: Allocator) ![2]ArrayList(Shape(T)) {
             var left = ArrayList(Shape(T)).init(allocator);
             var right = ArrayList(Shape(T)).init(allocator);
             var new_children = ArrayList(Shape(T)).init(allocator);
@@ -93,13 +93,13 @@ pub fn Group(comptime T: type) type {
 
             for (self.children.items) |child| {
                 if (left_box.contains_box(
-                        child.parent_space_bounds(super._inverse_transform).variant.bounding_box
+                        child.parent_space_bounds().variant.bounding_box
                     )
                 ) {
                     try left.append(child);
                 } else if (
                     right_box.contains_box(
-                        child.parent_space_bounds(super._inverse_transform).variant.bounding_box
+                        child.parent_space_bounds().variant.bounding_box
                     )
                 ) {
                     try right.append(child);
@@ -263,7 +263,7 @@ test "Partitioning a group's children" {
     try g.addChild(s2);
     try g.addChild(s3);
 
-    const partition = try g.variant.group.partition_children(allocator, &g);
+    const partition = try g.variant.group.partition_children(allocator);
     defer {
         partition[0].deinit();
         partition[1].deinit();

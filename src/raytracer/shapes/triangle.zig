@@ -69,9 +69,7 @@ pub fn Triangle(comptime T: type) type {
             return self.normal;
         }
 
-        pub fn bounds(self: Self, super: *const Shape(T)) Shape(T) {
-            _ = super;
-
+        pub fn bounds(self: Self) Shape(T) {
             var box = Shape(T).boundingBox();
             box.variant.bounding_box.add(self.p1);
             box.variant.bounding_box.add(self.p2);
@@ -266,9 +264,7 @@ pub fn SmoothTriangle(comptime T: type) type {
             return self.n2.mul(hit.u).add(self.n3.mul(hit.v)).add(self.n1.mul(1.0 - hit.u - hit.v));
         }
 
-        pub fn bounds(self: Self, super: *const Shape(T)) Shape(T) {
-            _ = super;
-
+        pub fn bounds(self: Self) Shape(T) {
             var box = Shape(T).boundingBox();
             box.variant.bounding_box.add(self.p1);
             box.variant.bounding_box.add(self.p2);

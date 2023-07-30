@@ -111,9 +111,7 @@ pub fn Cylinder(comptime T: type) type {
             }
         }
 
-        pub fn bounds(self: Self, super: *const Shape(T)) Shape(T) {
-            _ = super;
-
+        pub fn bounds(self: Self) Shape(T) {
             var box = Shape(T).boundingBox();
             box.variant.bounding_box.min = Tuple(T).point(-1.0, self.min, -1.0);
             box.variant.bounding_box.max = Tuple(T).point(1.0, self.max, 1.0);
