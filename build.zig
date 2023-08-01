@@ -24,13 +24,14 @@ pub fn build(b: *std.Build) void {
                 .optimize = optimize,
             });
             lib.rdynamic = true;
-            lib.override_dest_dir = .{ .custom = "../www/" };
 
-            b.installArtifact(lib);
+            const install_lib = b.addInstallArtifact(
+                lib, .{ .dest_dir = .{ .override = .{ .custom = "../www/" } } }
+            );
+            b.getInstallStep().dependOn(&install_lib.step);
 
             var www = std.fs.cwd().openDir("www", .{}) catch @panic("Can't access www!");
             defer www.close();
-
 
             {
                 // Copy all the scene descriptions into www
