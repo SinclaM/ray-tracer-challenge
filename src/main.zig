@@ -11,6 +11,15 @@ const hexagon = @import("examples/hexagon.zig");
 
 const parseScene = @import("parsing/scene.zig").parseScene;
 
+fn loadObjData(allocator: std.mem.Allocator, file_name: []const u8) ![]const u8 {
+    var obj_dir = try std.fs.cwd().openDir("obj", .{});
+    defer obj_dir.close();
+
+    return try obj_dir.readFileAlloc(
+        allocator, file_name, std.math.pow(usize, 2, 32)
+    );
+}
+
 pub fn main() !void {
     try projectile.simulate();
     try clock.drawHours();
@@ -53,7 +62,7 @@ pub fn main() !void {
                 allocator, "scenes/" ++ scene ++ ".json", 65536
             );
             defer allocator.free(scene_data);
-            break :blk try parseScene(f64, arena_allocator, scene_data);
+            break :blk try parseScene(f64, arena_allocator, allocator, scene_data, &loadObjData);
         };
 
         const camera = &scene_info.camera;

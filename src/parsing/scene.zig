@@ -288,12 +288,14 @@ pub fn InheritedState(comptime T: type) type {
 
 fn parseObject(
     comptime T: type,
+    arena_allocator: Allocator,
     allocator: Allocator,
     object: ObjectConfig(T),
     inherited: InheritedState(T),
-    definitions: StringHashMap(ObjectDefinitionConfig(T))
+    definitions: StringHashMap(ObjectDefinitionConfig(T)),
+    load_obj_data: *const fn (allocator: Allocator, file_name: []const u8) anyerror![]const u8
 ) !Shape(T) {
-    const info = try object.inherit(allocator, inherited);
+    const info = try object.inherit(arena_allocator, inherited);
     var material = info.material;
     var transform = info.transform;
     var casts_shadow = info.casts_shadow;
@@ -315,10 +317,12 @@ fn parseObject(
                 // TODO: this is horrifying and almost certainly buggy.
                 const parent = try parseObject(
                     T,
+                    arena_allocator,
                     allocator,
                     def.value,
                     .{ .material = material, .transform = inherited.transform, .casts_shadow = casts_shadow},
-                    definitions
+                    definitions,
+                    load_obj_data
                 );
                 const parent_state = .{
                     .material = parent.material,
@@ -326,7 +330,7 @@ fn parseObject(
                     .casts_shadow = parent.casts_shadow
                 };
 
-                const new = try object.inherit(allocator, parent_state);
+                const new = try object.inherit(arena_allocator, parent_state);
                 material = new.material;
                 transform = new.transform;
                 casts_shadow = new.casts_shadow;
@@ -336,24 +340,15 @@ fn parseObject(
             }
         },
         .@"from-obj" => |from| blk: {
-            if (target.cpu.arch == .wasm32) {
-                return SceneParseError.NotImplemented;
-            } else {
-                var obj_dir = try std.fs.cwd().openDir("obj", .{});
-                defer obj_dir.close();
+            const obj = try load_obj_data(arena_allocator, from.file);
+            defer arena_allocator.free(obj);
 
-                const obj = try obj_dir.readFileAlloc(
-                    allocator, from.file, std.math.pow(usize, 2, 32)
-                );
-                defer allocator.free(obj);
+            var parser = try ObjParser(T).new(arena_allocator);
+            defer parser.destroy();
 
-                var parser = try ObjParser(T).new(allocator);
-                defer parser.destroy();
+            parser.loadObj(obj, .{ .material = material, .casts_shadow = casts_shadow }, from.normalize);
 
-                parser.loadObj(obj, .{ .material = material, .casts_shadow = casts_shadow }, from.normalize);
-
-                break :blk parser.toGroup().*;
-            }
+            break :blk parser.toGroup().*;
         },
         .sphere => Shape(T).sphere(),
         .plane => Shape(T).plane(),
@@ -379,13 +374,19 @@ fn parseObject(
                 Tuple(T).point(tri.p3[0], tri.p3[1], tri.p3[2])
             ),
         .group => |children| blk: {
-            var g = try Shape(T).group(allocator);
+            var g = try Shape(T).group(arena_allocator);
 
             for (children) |child| {
                 // Groups will push their own transforms to their children when `setTransform`
                 // is called. We should not pass it as inherited state here.
                 var s = try parseObject(
-                    T, allocator, child, .{ .material = material, .casts_shadow = casts_shadow}, definitions
+                    T,
+                    arena_allocator,
+                    allocator,
+                    child,
+                    .{ .material = material, .casts_shadow = casts_shadow},
+                    definitions,
+                    load_obj_data
                 );
                 try g.addChild(s);
             }
@@ -404,6 +405,7 @@ fn parseObject(
         shape.casts_shadow = shadow;
     }
 
+    // TODO: Pretty sure there's a memory leak in `divide`.
     try shape.divide(allocator, 8);
 
     return shape;
@@ -429,12 +431,16 @@ pub fn SceneInfo(comptime T: type) type {
 }
 
 pub fn parseScene(
-    comptime T: type, allocator: Allocator, scene_json: []const u8
+    comptime T: type,
+    arena_allocator: Allocator,
+    allocator: Allocator,
+    scene_json: []const u8,
+    load_obj_data: *const fn (allocator: Allocator, file_name: []const u8) anyerror![]const u8
 ) !SceneInfo(T) {
-    const parsed = try std.json.parseFromSlice(SceneConfig(T), allocator, scene_json, .{});
+    const parsed = try std.json.parseFromSlice(SceneConfig(T), arena_allocator, scene_json, .{});
     defer parsed.deinit();
 
-    var definitions = StringHashMap(ObjectDefinitionConfig(T)).init(allocator);
+    var definitions = StringHashMap(ObjectDefinitionConfig(T)).init(arena_allocator);
     defer definitions.deinit();
 
     for (parsed.value.@"shape-definitions") |definition| {
@@ -459,10 +465,12 @@ pub fn parseScene(
 
     try camera.setTransform(Matrix(T, 4).viewTransform(from, to, up));
 
-    var world = World(T).new(allocator);
+    var world = World(T).new(arena_allocator);
 
     for (parsed.value.objects) |object| {
-        try world.objects.append(try parseObject(T, allocator, object, .{}, definitions));
+        try world.objects.append(
+            try parseObject(T, arena_allocator, allocator, object, .{}, definitions, load_obj_data)
+        );
     }
 
     for (parsed.value.lights) |light| {
@@ -523,7 +531,7 @@ test "Simple" {
         \\ 
     ;
 
-    const scene_info = try parseScene(f32, allocator, scene);
+    const scene_info = try parseScene(f32, allocator, scene, undefined);
     const camera = &scene_info.camera;
     const world = &scene_info.world;
     defer world.destroy();

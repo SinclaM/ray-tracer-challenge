@@ -28,29 +28,57 @@ pub fn build(b: *std.Build) void {
 
             b.installArtifact(lib);
 
-            // Copy all the scene descriptions into www
-            var scenes = std.fs.cwd().openDir("scenes", .{}) catch @panic("Can't access scenes!");
-            defer scenes.close();
-
-            var iter_scenes = std.fs.cwd().openIterableDir("scenes", .{})
-                catch @panic("Can't access scenes for iteration!");
-            defer iter_scenes.close();
-
             var www = std.fs.cwd().openDir("www", .{}) catch @panic("Can't access www!");
             defer www.close();
 
-            var iter = iter_scenes.iterate();
-            while (true) {
-                const entry = iter.next() catch @panic("Can't iterate through scenes!");
-                if (entry == null) {
-                    break;
-                } else {
-                    switch (entry.?.kind) {
-                        .file => scenes.copyFile(entry.?.name, www, entry.?.name, .{})
-                            catch @panic("Can't copy scene!"),
-                        else => {},
+
+            {
+                // Copy all the scene descriptions into www
+                var scenes = std.fs.cwd().openDir("scenes", .{}) catch @panic("Can't access scenes!");
+                defer scenes.close();
+
+                var iter_scenes = std.fs.cwd().openIterableDir("scenes", .{})
+                    catch @panic("Can't access scenes for iteration!");
+                defer iter_scenes.close();
+
+                var iter = iter_scenes.iterate();
+                while (true) {
+                    const entry = iter.next() catch @panic("Can't iterate through scenes!");
+                    if (entry == null) {
+                        break;
+                    } else {
+                        switch (entry.?.kind) {
+                            .file => scenes.copyFile(entry.?.name, www, entry.?.name, .{})
+                                catch @panic("Can't copy scene!"),
+                            else => {},
+                        }
                     }
                 }
+            }
+
+            {
+                // Copy all the obj files into www
+                var obj = std.fs.cwd().openDir("obj", .{}) catch @panic("Can't access obj!");
+                defer obj.close();
+
+                var iter_obj = std.fs.cwd().openIterableDir("obj", .{})
+                    catch @panic("Can't access obj for iteration!");
+                defer iter_obj.close();
+
+                var iter = iter_obj.iterate();
+                while (true) {
+                    const entry = iter.next() catch @panic("Can't iterate through obj!");
+                    if (entry == null) {
+                        break;
+                    } else {
+                        switch (entry.?.kind) {
+                            .file => obj.copyFile(entry.?.name, www, entry.?.name, .{})
+                                catch @panic("Can't copy obj!"),
+                            else => {},
+                        }
+                    }
+                }
+
             }
         }
     } else {

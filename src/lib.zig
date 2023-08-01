@@ -11,6 +11,7 @@ const clamp = @import("raytracer/color.zig").clamp;
 const Imports = struct {
     extern fn jsConsoleLogWrite(ptr: [*]const u8, len: usize) void;
     extern fn jsConsoleLogFlush() void;
+    extern fn loadObjData(name_ptr: [*]const u8, name_len: u64) [*:0]const u8;
 };
 
 pub const Console = struct {
@@ -46,11 +47,14 @@ pub fn Renderer(comptime T: type) type {
             errdefer scene_arena.deinit();
 
             // Parse the scene description.
-            const scene_info = try parseScene(T, scene_arena.allocator(), scene);
+            const scene_info = try parseScene(
+                T, scene_arena.allocator(), allocator, scene, &Self.loadObjData
+            );
 
             const pixels = try scene_arena.allocator().alloc(
                 u8, 4 * scene_info.camera.hsize * scene_info.camera.vsize
             );
+
             for (0..scene_info.camera.hsize) |x| {
                 for (0..scene_info.camera.vsize) |y| {
                     pixels[(y * scene_info.camera.hsize + x) * 4] = 0;
@@ -72,6 +76,14 @@ pub fn Renderer(comptime T: type) type {
             self.scene_arena.deinit();
         }
 
+        fn loadObjData(allocator: Allocator, file_name: []const u8) ![]const u8 {
+            _ = allocator;
+
+            const ptr = Imports.loadObjData(file_name.ptr, file_name.len);
+            const obj = std.mem.span(ptr);
+            return obj;
+        }
+
         fn getCanvasInfo(self: Self) CanvasInfo {
             return .{
                 .pixels = @ptrCast(self.pixels.ptr),
@@ -84,24 +96,20 @@ pub fn Renderer(comptime T: type) type {
             const camera = &self.scene_info.camera;
             const world = &self.scene_info.world;
 
-            // TODO: An fba is every so slightly faster than an arena here, but is
-            // more susceptible to OOM. I should probably just use the arena for
-            // generality.
-            var buffer = try self.rendering_allocator.alloc(u8, 1024 * 128);
-            defer self.rendering_allocator.free(buffer);
-            var fba = std.heap.FixedBufferAllocator.init(buffer);
+            var arena = std.heap.ArenaAllocator.init(self.rendering_allocator);
+            defer arena.deinit();
 
             for (0..camera.hsize) |x| {
                 for (self.current_y..@min(self.current_y + num_rows, camera.vsize)) |y| {
                     const ray = camera.rayForPixel(x, y);
-                    const color = try world.colorAt(fba.allocator(), ray, 5);
+                    const color = try world.colorAt(arena.allocator(), ray, 5);
 
                     self.pixels[(y * self.scene_info.camera.hsize + x) * 4] = clamp(T, color.r);
                     self.pixels[(y * self.scene_info.camera.hsize + x) * 4 + 1] = clamp(T, color.g);
                     self.pixels[(y * self.scene_info.camera.hsize + x) * 4 + 2] = clamp(T, color.b);
                     self.pixels[(y * self.scene_info.camera.hsize + x) * 4 + 3] = 255;
 
-                    fba.reset();
+                    _ = arena.reset(.retain_capacity);
                 }
             }
 
