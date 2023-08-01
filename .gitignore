@@ -3,5 +3,5 @@
 /images
 .DS_Store
 /www/*.wasm
-/www/*.json
-/www/*.obj
+/www/scenes
+/www/obj

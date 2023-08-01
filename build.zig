@@ -33,10 +33,23 @@ pub fn build(b: *std.Build) void {
             var www = std.fs.cwd().openDir("www", .{}) catch @panic("Can't access www!");
             defer www.close();
 
+            www.makeDir("scenes") catch |err| switch (err) {
+                error.PathAlreadyExists => {},
+                else => @panic("Unable to create www/scenes!")
+            };
+
+            www.makeDir("obj") catch |err| switch (err) {
+                error.PathAlreadyExists => {},
+                else => @panic("Unable to create www/scenes!")
+            };
+
             {
                 // Copy all the scene descriptions into www
-                var scenes = std.fs.cwd().openDir("scenes", .{}) catch @panic("Can't access scenes!");
-                defer scenes.close();
+                var scenes_src = std.fs.cwd().openDir("scenes", .{}) catch @panic("Can't access scenes!");
+                defer scenes_src.close();
+
+                var scenes_dest = www.openDir("scenes", .{}) catch @panic("Can't access www/scenes!");
+                defer scenes_dest.close();
 
                 var iter_scenes = std.fs.cwd().openIterableDir("scenes", .{})
                     catch @panic("Can't access scenes for iteration!");
@@ -49,7 +62,7 @@ pub fn build(b: *std.Build) void {
                         break;
                     } else {
                         switch (entry.?.kind) {
-                            .file => scenes.copyFile(entry.?.name, www, entry.?.name, .{})
+                            .file => scenes_src.copyFile(entry.?.name, scenes_dest, entry.?.name, .{})
                                 catch @panic("Can't copy scene!"),
                             else => {},
                         }
@@ -59,8 +72,11 @@ pub fn build(b: *std.Build) void {
 
             {
                 // Copy all the obj files into www
-                var obj = std.fs.cwd().openDir("obj", .{}) catch @panic("Can't access obj!");
-                defer obj.close();
+                var obj_src = std.fs.cwd().openDir("obj", .{}) catch @panic("Can't access obj!");
+                defer obj_src.close();
+
+                var obj_dest = www.openDir("obj", .{}) catch @panic("Can't access www/obj!");
+                defer obj_dest.close();
 
                 var iter_obj = std.fs.cwd().openIterableDir("obj", .{})
                     catch @panic("Can't access obj for iteration!");
@@ -73,7 +89,7 @@ pub fn build(b: *std.Build) void {
                         break;
                     } else {
                         switch (entry.?.kind) {
-                            .file => obj.copyFile(entry.?.name, www, entry.?.name, .{})
+                            .file => obj_src.copyFile(entry.?.name, obj_dest, entry.?.name, .{})
                                 catch @panic("Can't copy obj!"),
                             else => {},
                         }

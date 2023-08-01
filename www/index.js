@@ -54,7 +54,7 @@ editor.setTheme("ace/theme/dawn");
 editor.session.setMode("ace/mode/json");
 
 sceneChoices.addEventListener("change", async (event) => {
-    editor.setValue(await fetch(event.target.value).then((r) => r.text()));
+    editor.setValue(await fetch(`scenes/${event.target.value}`).then((r) => r.text()));
     editor.clearSelection();
 });
 // =============================================================================
@@ -239,8 +239,8 @@ const render = () => {
 // ======================= WASM/REMAINING UI INITIALIZATION ====================
 const obj_names_to_data = new Map();
 (async () => {
-    obj_names_to_data.set("teapot.obj", await fetch("teapot.obj").then((r) => r.text()));
-    obj_names_to_data.set("dragon.obj", await fetch("dragon.obj").then((r) => r.text()));
+    obj_names_to_data.set("teapot.obj", await fetch("obj/teapot.obj").then((r) => r.text()));
+    obj_names_to_data.set("dragon.obj", await fetch("obj/dragon.obj").then((r) => r.text()));
 
     const start = window.performance.now();
 
@@ -254,7 +254,7 @@ const obj_names_to_data = new Map();
     console.log(`WASM initialized in ${wasm_initialized - start}ms.`);
 
     const default_scene = await fetch(
-        sceneChoices.children[0].children[0].getAttribute("value")
+        `scenes/${sceneChoices.children[0].children[0].getAttribute("value")}`
     ).then(
         (r) => r.text()
     );
