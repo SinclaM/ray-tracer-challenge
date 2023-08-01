@@ -74,6 +74,14 @@ pub fn Renderer(comptime T: type) type {
 
         fn destroy(self: *Self) void {
             self.scene_arena.deinit();
+            for (self.scene_info.world.objects.items) |*object| {
+                switch (object.variant) {
+                    .group => |*g| {
+                        g.destroy();
+                    },
+                    else => {}
+                }
+            }
         }
 
         fn loadObjData(allocator: Allocator, file_name: []const u8) ![]const u8 {

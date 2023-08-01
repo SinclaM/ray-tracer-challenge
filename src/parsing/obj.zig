@@ -45,6 +45,7 @@ pub fn ObjParser(comptime T: type) type {
         }
 
         pub fn destroy(self: Self) void {
+            self.allocator.destroy(self.default_group);
             self.vertices.deinit();
             self.normals.deinit();
         }
@@ -277,8 +278,8 @@ pub fn ObjParser(comptime T: type) type {
             }
         }
 
-        pub fn toGroup(self: Self) *Shape(T) {
-            return self.default_group;
+        pub fn toGroup(self: Self) Shape(T) {
+            return self.default_group.*;
         }
 
     };

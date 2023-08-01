@@ -288,14 +288,13 @@ pub fn InheritedState(comptime T: type) type {
 
 fn parseObject(
     comptime T: type,
-    arena_allocator: Allocator,
     allocator: Allocator,
     object: ObjectConfig(T),
     inherited: InheritedState(T),
     definitions: StringHashMap(ObjectDefinitionConfig(T)),
     load_obj_data: *const fn (allocator: Allocator, file_name: []const u8) anyerror![]const u8
 ) !Shape(T) {
-    const info = try object.inherit(arena_allocator, inherited);
+    const info = try object.inherit(allocator, inherited);
     var material = info.material;
     var transform = info.transform;
     var casts_shadow = info.casts_shadow;
@@ -317,7 +316,6 @@ fn parseObject(
                 // TODO: this is horrifying and almost certainly buggy.
                 const parent = try parseObject(
                     T,
-                    arena_allocator,
                     allocator,
                     def.value,
                     .{ .material = material, .transform = inherited.transform, .casts_shadow = casts_shadow},
@@ -330,7 +328,7 @@ fn parseObject(
                     .casts_shadow = parent.casts_shadow
                 };
 
-                const new = try object.inherit(arena_allocator, parent_state);
+                const new = try object.inherit(allocator, parent_state);
                 material = new.material;
                 transform = new.transform;
                 casts_shadow = new.casts_shadow;
@@ -340,15 +338,15 @@ fn parseObject(
             }
         },
         .@"from-obj" => |from| blk: {
-            const obj = try load_obj_data(arena_allocator, from.file);
-            defer arena_allocator.free(obj);
+            const obj = try load_obj_data(allocator, from.file);
+            defer allocator.free(obj);
 
-            var parser = try ObjParser(T).new(arena_allocator);
+            var parser = try ObjParser(T).new(allocator);
             defer parser.destroy();
 
             parser.loadObj(obj, .{ .material = material, .casts_shadow = casts_shadow }, from.normalize);
 
-            break :blk parser.toGroup().*;
+            break :blk parser.toGroup();
         },
         .sphere => Shape(T).sphere(),
         .plane => Shape(T).plane(),
@@ -374,14 +372,13 @@ fn parseObject(
                 Tuple(T).point(tri.p3[0], tri.p3[1], tri.p3[2])
             ),
         .group => |children| blk: {
-            var g = try Shape(T).group(arena_allocator);
+            var g = try Shape(T).group(allocator);
 
             for (children) |child| {
                 // Groups will push their own transforms to their children when `setTransform`
                 // is called. We should not pass it as inherited state here.
                 var s = try parseObject(
                     T,
-                    arena_allocator,
                     allocator,
                     child,
                     .{ .material = material, .casts_shadow = casts_shadow},
@@ -405,7 +402,6 @@ fn parseObject(
         shape.casts_shadow = shadow;
     }
 
-    // TODO: Pretty sure there's a memory leak in `divide`.
     try shape.divide(allocator, 8);
 
     return shape;
@@ -469,7 +465,7 @@ pub fn parseScene(
 
     for (parsed.value.objects) |object| {
         try world.objects.append(
-            try parseObject(T, arena_allocator, allocator, object, .{}, definitions, load_obj_data)
+            try parseObject(T, allocator, object, .{}, definitions, load_obj_data)
         );
     }
 
@@ -531,7 +527,7 @@ test "Simple" {
         \\ 
     ;
 
-    const scene_info = try parseScene(f32, allocator, scene, undefined);
+    const scene_info = try parseScene(f32, allocator, allocator, scene, undefined);
     const camera = &scene_info.camera;
     const world = &scene_info.world;
     defer world.destroy();

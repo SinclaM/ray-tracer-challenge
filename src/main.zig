@@ -68,6 +68,17 @@ pub fn main() !void {
         const camera = &scene_info.camera;
         const world = &scene_info.world;
 
+        defer {
+            for (world.objects.items) |*object| {
+                switch (object.variant) {
+                    .group => |*g| {
+                        g.destroy();
+                    },
+                    else => {}
+                }
+            }
+        }
+
         // Do the ray tracing.
         const canvas = try camera.render(allocator, world.*);
         defer canvas.destroy();
