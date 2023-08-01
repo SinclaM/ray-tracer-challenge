@@ -119,6 +119,10 @@ const importObject = {
             console.log(console_log_buffer);
             console_log_buffer = "";
         },
+        loadObjData: function (name_ptr, name_len) {
+            name_ = wasm.getString(name_ptr, Number(name_len));
+            return wasm.encodeString(obj_names_to_data.get(name_));
+        }
     },
 };
 // =============================================================================
@@ -233,7 +237,11 @@ const render = () => {
 // =============================================================================
 
 // ======================= WASM/REMAINING UI INITIALIZATION ====================
+const obj_names_to_data = new Map();
 (async () => {
+    obj_names_to_data.set("teapot.obj", await fetch("teapot.obj").then((r) => r.text()));
+    obj_names_to_data.set("dragon.obj", await fetch("dragon.obj").then((r) => r.text()));
+
     const start = window.performance.now();
 
     result = await WebAssembly.instantiateStreaming(
@@ -245,7 +253,11 @@ const render = () => {
     const wasm_initialized = window.performance.now();
     console.log(`WASM initialized in ${wasm_initialized - start}ms.`);
 
-    const default_scene = await fetch("groups.json").then((r) => r.text());
+    const default_scene = await fetch(
+        sceneChoices.children[0].children[0].getAttribute("value")
+    ).then(
+        (r) => r.text()
+    );
 
     editor.setValue(default_scene);
     editor.clearSelection();
@@ -263,13 +275,10 @@ const render = () => {
     // Add a hotkey for rendering
     document.addEventListener("keydown", (event) => {
         if ((event.ctrlKey || event.metaKey) && event.key === ".") {
-            // FIXME: probably a TOCTOU race here.
-            if (!rendering) {
-                render();
-            }
+            render_button.click();
         }
     });
 
-    render();
+    render_button.click();
 })();
 // =============================================================================
