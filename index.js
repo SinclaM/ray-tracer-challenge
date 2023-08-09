@@ -71,8 +71,12 @@ let wasm = {
         this.instance = obj.instance;
     },
     getString: function (ptr, len) {
-        const memory = this.instance.exports.memory;
-        return text_decoder.decode(new Uint8Array(memory.buffer, ptr, len));
+        const ab = new ArrayBuffer(len);
+        const arr = new Uint8Array(ab);
+        const sab_view = new Uint8Array(memory.buffer, ptr, len);
+        arr.set(sab_view);
+
+        return text_decoder.decode(arr);
     },
     attachCanvas: function (ptr, width, height) {
         canvas.width = width;
@@ -80,7 +84,7 @@ let wasm = {
 
         this.pixels = () =>
             new Uint8ClampedArray(
-                this.instance.exports.memory.buffer,
+                memory.buffer,
                 ptr,
                 width * height * 4
             );
@@ -100,7 +104,7 @@ let wasm = {
         const buffer = new TextEncoder().encode(string);
         const pointer = this.instance.exports.wasmAlloc(buffer.length + 1); // ask Zig to allocate memory
         const slice = new Uint8Array(
-            this.instance.exports.memory.buffer, // memory exported from Zig
+            memory.buffer, // memory exported from Zig
             pointer,
             buffer.length + 1
         );
@@ -110,8 +114,21 @@ let wasm = {
     },
 };
 
+const memory = new WebAssembly.Memory({
+    initial: 80,
+    maximum: 65536,
+    shared: true
+});
+
 const importObject = {
     env: {
+        memory: memory,
+        memoryBase: 0,
+        _throwError(pointer, length) {
+            const message = wasm.getString(pointer, length);
+            notyf.error(`Panic: ${message}.`);
+            throw new Error(message);
+        },
         jsConsoleLogWrite: function (ptr, len) {
             console_log_buffer += wasm.getString(ptr, len);
         },
@@ -122,16 +139,59 @@ const importObject = {
         loadObjData: function (name_ptr, name_len) {
             name_ = wasm.getString(name_ptr, Number(name_len));
             return wasm.encodeString(obj_names_to_data.get(name_));
+        },
+        updateCanvas: function (_, _) {
+            throw new Error();
         }
     },
 };
 // =============================================================================
+// ================================= WORKERS ===================================
+let render_start = undefined;
+let worker_success = true;
+// We will render in batches of `dy` rows.
+const dy = 10;
 
+const worker = new Worker("worker.js");
+worker.onmessage = ({ data }) => {
+    if ("init_done" in data) {
+        // Get the Canvas information and update the UI.
+        const ptr = wasm.instance.exports.initRendererGetPixels();
+        const width = wasm.instance.exports.initRendererGetWidth();
+        const height = wasm.instance.exports.initRendererGetHeight();
+
+        wasm.attachCanvas(ptr, width, height);
+
+        worker.postMessage({ dy, render: null });
+    }
+    else if ("render_done" in data) {
+        if (worker_success) {
+            const render_finised = window.performance.now();
+            notyf.success(
+                `Render finished in ${(
+                    (render_finised - render_start) /
+                    1000
+                ).toFixed(3)}s.`
+            );
+        }
+        rendering = false;
+    } else if ("y" in data) {
+        const { y } = data;
+        wasm.drawCanvas(y, dy);
+    } else if ("error" in data) {
+        worker_success = false;
+        const { error } = data;
+        notyf.error(`Panic: ${error}.`);
+    }
+}
+// =============================================================================
 // ============================== RENDER LOGIC =================================
 let rendering = false;
 
 const render = () => {
     rendering = true;
+
+    render_start = window.performance.now();
 
     // Log the current mem usage for debugging
     mem = (function formatBytes(bytes, decimals = 2) {
@@ -144,95 +204,11 @@ const render = () => {
         const i = Math.floor(Math.log(bytes) / Math.log(k))
 
         return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`
-    })(wasm.instance.exports.memory.buffer.byteLength, 5);
+    })(memory.buffer.byteLength, 5);
     console.log(`WASM memory size: ${mem}.`);
 
     scene = editor.getValue();
-
-    // Tell the WASM code to initialize the renderer.
-    wasm.instance.exports.initRenderer(wasm.encodeString(scene));
-
-    // If there was an error, bail out.
-    if (!wasm.instance.exports.initRendererIsOk()) {
-        const error_ptr = wasm.instance.exports.initRendererGetErrPtr();
-        const error_len = wasm.instance.exports.initRendererGetErrLen();
-
-        const error_message = wasm.getString(error_ptr, error_len);
-        console.error(`Unable to initialize renderer: ${error_message}.`);
-        notyf.error(`Unable to initialize renderer: ${error_message}.`);
-
-        rendering = false;
-        return;
-    }
-
-    // Get the Canvas information and update the UI.
-    const ptr = wasm.instance.exports.initRendererGetPixels();
-    const width = wasm.instance.exports.initRendererGetWidth();
-    const height = wasm.instance.exports.initRendererGetHeight();
-
-    const renderer_initialized = window.performance.now();
-
-    wasm.attachCanvas(ptr, width, height);
-
-    // We will render in batches of `dy` rows.
-    const dy = 10;
-
-    let current_y = 0;
-    const renderLoop = () => {
-        // Render `dy` more rows of the scene.
-        wasm.instance.exports.render(dy);
-
-        // If there was an error, bail out.
-        if (!wasm.instance.exports.renderIsOk()) {
-            // Make sure to destroy the renderer if exiting on failure.
-            wasm.instance.exports.deinitRenderer();
-
-            const error_ptr = wasm.instance.exports.renderGetErrPtr();
-            const error_len = wasm.instance.exports.renderGetErrLen();
-
-            const error_message = wasm.getString(error_ptr, error_len);
-            console.error(`Unable to render: ${error_message}.`);
-            notyf.error(`Unable to render: ${error_message}.`);
-
-            rendering = false;
-            return;
-        }
-
-        const done = wasm.instance.exports.renderGetStatus();
-
-        // Update the UI.
-        wasm.drawCanvas(current_y, dy);
-        current_y += dy;
-
-        // If there are no more rows left to render, we can clean up and exit.
-        if (done) {
-            // Make sure to destroy the renderer if exiting on success.
-            wasm.instance.exports.deinitRenderer();
-
-            const render_finised = window.performance.now();
-            console.log(
-                `Render completed in ${
-                    render_finised - renderer_initialized
-                }ms.`
-            );
-
-            notyf.success(
-                `Render finished in ${(
-                    (render_finised - renderer_initialized) /
-                    1000
-                ).toFixed(3)}s.`
-            );
-
-            rendering = false;
-
-            return;
-        }
-
-        // Otherwise, continue with the next batch of rows.
-        requestAnimationFrame(renderLoop);
-    };
-
-    requestAnimationFrame(renderLoop);
+    worker.postMessage({ init: null, memory, scene });
 };
 // =============================================================================
 
