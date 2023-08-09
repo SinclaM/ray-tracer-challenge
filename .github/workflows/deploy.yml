@@ -28,7 +28,7 @@ jobs:
         run: zig build test
 
       - name: Build 🏗️
-        run: zig build -Dtarget=wasm32-freestanding -Doptimize=ReleaseFast
+        run: zig build -Dtarget=wasm32-freestanding -Doptimize=ReleaseFast -Dcpu=generic+bulk_memory+atomics+mutable_globals
 
       - name: Deploy to GH Pages 🚀
         uses: peaceiris/actions-gh-pages@v3
