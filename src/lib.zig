@@ -9,9 +9,14 @@ const SceneInfo = @import("parsing/scene.zig").SceneInfo;
 const clamp = @import("raytracer/color.zig").clamp;
 
 const Imports = struct {
+    extern "env" fn _throwError(pointer: [*]const u8, length: u32) noreturn;
+    pub fn throwError(message: []const u8) noreturn {
+        _throwError(message.ptr, message.len);
+    }
     extern fn jsConsoleLogWrite(ptr: [*]const u8, len: usize) void;
     extern fn jsConsoleLogFlush() void;
-    extern fn loadObjData(name_ptr: [*]const u8, name_len: u64) [*:0]const u8;
+    extern fn loadObjData(name_ptr: [*]const u8, name_len: usize) [*:0]const u8;
+    extern fn updateCanvas(y: usize) void;
 };
 
 pub const Console = struct {
@@ -100,38 +105,49 @@ pub fn Renderer(comptime T: type) type {
             };
         }
 
-        fn render(self: *Self, num_rows: usize) !bool {
+        fn render(self: *Self, dy: usize) !void {
             const camera = &self.scene_info.camera;
             const world = &self.scene_info.world;
 
-            var arena = std.heap.ArenaAllocator.init(self.rendering_allocator);
-            defer arena.deinit();
-
-            for (0..camera.hsize) |x| {
-                for (self.current_y..@min(self.current_y + num_rows, camera.vsize)) |y| {
-                    const ray = camera.rayForPixel(x, y);
-                    const color = try world.colorAt(arena.allocator(), ray, 5);
-
-                    self.pixels[(y * self.scene_info.camera.hsize + x) * 4] = clamp(T, color.r);
-                    self.pixels[(y * self.scene_info.camera.hsize + x) * 4 + 1] = clamp(T, color.g);
-                    self.pixels[(y * self.scene_info.camera.hsize + x) * 4 + 2] = clamp(T, color.b);
-                    self.pixels[(y * self.scene_info.camera.hsize + x) * 4 + 3] = 255;
-
-                    _ = arena.reset(.retain_capacity);
+            while (true) {
+                const current_y = @atomicRmw(usize, &self.current_y, .Add, dy, .Monotonic);
+                if (current_y >= camera.vsize) {
+                    break;
                 }
+
+                var arena = std.heap.ArenaAllocator.init(self.rendering_allocator);
+                defer arena.deinit();
+
+                for (0..camera.hsize) |x| {
+                    for (current_y..@min(current_y + dy, camera.vsize)) |y| {
+                        const ray = camera.rayForPixel(x, y);
+                        const color = try world.colorAt(arena.allocator(), ray, 5);
+
+                        self.pixels[(y * self.scene_info.camera.hsize + x) * 4] = clamp(T, color.r);
+                        self.pixels[(y * self.scene_info.camera.hsize + x) * 4 + 1] = clamp(T, color.g);
+                        self.pixels[(y * self.scene_info.camera.hsize + x) * 4 + 2] = clamp(T, color.b);
+                        self.pixels[(y * self.scene_info.camera.hsize + x) * 4 + 3] = 255;
+
+                        _ = arena.reset(.retain_capacity);
+                    }
+                }
+
+                Imports.updateCanvas(current_y);
             }
-
-            self.current_y += num_rows;
-
-            const done = self.current_y >= camera.vsize;
-            return done;
         }
     };
 }
 
+// Calls to @panic are sent here.
+// See https://ziglang.org/documentation/master/#panic
+pub fn panic(message: []const u8, _: ?*std.builtin.StackTrace, _: ?usize) noreturn {
+    Imports.throwError(message);
+}
+
 export fn wasmAlloc(length: usize) [*]const u8 {
-    const slice = std.heap.wasm_allocator.alloc(u8, length) catch
-        @panic("Failed to allocate memory!");
+    // TODO: panic handler
+    // TODO: thread safe allocator
+    const slice = std.heap.wasm_allocator.alloc(u8, length) catch |err| @panic(@errorName(err));
     return slice.ptr;
 }
 
@@ -205,35 +221,11 @@ export fn deinitRenderer() void {
     }
 }
 
-var renderResult: Result(bool, [:0]const u8) = undefined;
-
-export fn renderIsOk() bool {
-    switch (renderResult) {
-        .ok => return true,
-        .err => return false,
-    }
-}
-
-export fn renderGetStatus() bool {
-    return renderResult.ok;
-}
-
-export fn renderGetErrPtr() [*]const u8 {
-    return renderResult.err.ptr;
-}
-
-export fn renderGetErrLen() usize {
-    return renderResult.err.len;
-}
-
 export fn render(num_rows: usize) void {
     if (renderer) |*renderer_| {
-        if (renderer_.render(num_rows)) |status| {
-            renderResult = .{ .ok = status };
-        } else |err| {
-            renderResult = .{ .err = @errorName(err) };
-        }
+        renderer_.render(num_rows) catch |err| @panic(@errorName(err));
     } else {
         @panic("Renderer is uninitialized\n");
     }
 }
+
