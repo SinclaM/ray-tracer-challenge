@@ -54,16 +54,6 @@
             </div>
         </div>
 
-        <script>
-            window.coi = {
-                shouldRegister: () => true,
-                shouldDeregister: () => false,
-                coepCredentialless: () => false,
-                doReload: () => window.location.reload(),
-                quiet: false,
-            };
-        </script>
-        <script src="coi-serviceworker.min.js"></script>
         <script
             src="https://cdnjs.cloudflare.com/ajax/libs/split.js/1.6.2/split.min.js"
             integrity="sha512-to2k78YjoNUq8+hnJS8AwFg/nrLRFLdYYalb18SlcsFRXavCOTfBF3lNyplKkLJeB8YjKVTb1FPHGSy9sXfSdg=="
@@ -77,6 +67,6 @@
             charset="utf-8"
         ></script>
         <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
-        <script src="index.js"></script>
+        <script type="module" src="index.js"></script>
     </body>
 </html>

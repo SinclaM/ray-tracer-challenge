@@ -1,3 +1,4 @@
+import * as Comlink from "./comlink.mjs";
 // ============================== DOM ELEMENTS =================================
 const canvas = document.getElementById("image-canvas");
 const textarea = document.getElementById("scene-description");
@@ -58,177 +59,88 @@ sceneChoices.addEventListener("change", async (event) => {
     editor.clearSelection();
 });
 // =============================================================================
-
-// ============================= WASM INTERACTIONS =============================
-const text_decoder = new TextDecoder();
-let console_log_buffer = "";
-
-let wasm = {
-    instance: undefined,
-    pixels: undefined,
-
-    init: function (obj) {
-        this.instance = obj.instance;
-    },
-    getString: function (ptr, len) {
-        const ab = new ArrayBuffer(len);
-        const arr = new Uint8Array(ab);
-        const sab_view = new Uint8Array(memory.buffer, ptr, len);
-        arr.set(sab_view);
-
-        return text_decoder.decode(arr);
-    },
-    attachCanvas: function (ptr, width, height) {
-        canvas.width = width;
-        canvas.height = height;
-
-        this.pixels = () =>
-            new Uint8ClampedArray(
-                memory.buffer,
-                ptr,
-                width * height * 4
-            );
-    },
-    drawCanvas: function (current_y, dy) {
-        const start = current_y * canvas.width * 4;
-        const end = (current_y + dy) * canvas.width * 4;
-
-        const height = Math.min(dy, canvas.height - current_y);
-        const imageData = new ImageData(this.pixels().slice(start, end), canvas.width, height);
-
-        const ctx = canvas.getContext("2d");
-        ctx.putImageData(imageData, 0, current_y);
-    },
-    // Convert a JavaScript string to a pointer to multi byte character array
-    encodeString: function (string) {
-        const buffer = new TextEncoder().encode(string);
-        const pointer = this.instance.exports.wasmAlloc(buffer.length + 1); // ask Zig to allocate memory
-        const slice = new Uint8Array(
-            memory.buffer, // memory exported from Zig
-            pointer,
-            buffer.length + 1
-        );
-        slice.set(buffer);
-        slice[buffer.length] = 0; // null byte to null-terminate the string
-        return pointer;
-    },
-};
-
-const memory = new WebAssembly.Memory({
-    initial: 80,
-    maximum: 65536,
-    shared: true
-});
-
-const importObject = {
-    env: {
-        memory: memory,
-        memoryBase: 0,
-        _throwError(pointer, length) {
-            const message = wasm.getString(pointer, length);
-            notyf.error(`Panic: ${message}.`);
-            throw new Error(message);
-        },
-        jsConsoleLogWrite: function (ptr, len) {
-            console_log_buffer += wasm.getString(ptr, len);
-        },
-        jsConsoleLogFlush: function () {
-            console.log(console_log_buffer);
-            console_log_buffer = "";
-        },
-        loadObjData: function (name_ptr, name_len) {
-            name_ = wasm.getString(name_ptr, Number(name_len));
-            return wasm.encodeString(obj_names_to_data.get(name_));
-        },
-        updateCanvas: function (_, _) {
-            throw new Error();
-        }
-    },
-};
-// =============================================================================
 // ================================= WORKERS ===================================
-let render_start = undefined;
-let worker_success = true;
-// We will render in batches of `dy` rows.
-const dy = 10;
+const NUM_WORKERS = navigator.hardwareConcurrency;
 
-const worker = new Worker("worker.js");
-worker.onmessage = ({ data }) => {
-    if ("init_done" in data) {
-        // Get the Canvas information and update the UI.
-        const ptr = wasm.instance.exports.initRendererGetPixels();
-        const width = wasm.instance.exports.initRendererGetWidth();
-        const height = wasm.instance.exports.initRendererGetHeight();
-
-        wasm.attachCanvas(ptr, width, height);
-
-        worker.postMessage({ dy, render: null });
-    }
-    else if ("render_done" in data) {
-        if (worker_success) {
-            const render_finised = window.performance.now();
-            notyf.success(
-                `Render finished in ${(
-                    (render_finised - render_start) /
-                    1000
-                ).toFixed(3)}s.`
-            );
-        }
-        rendering = false;
-    } else if ("y" in data) {
-        const { y } = data;
-        wasm.drawCanvas(y, dy);
-    } else if ("error" in data) {
-        worker_success = false;
-        const { error } = data;
-        notyf.error(`Panic: ${error}.`);
-    }
+const workers = [];
+for (let i = 0; i < NUM_WORKERS; i++) {
+    const worker = new Worker("worker.js");
+    const obj = Comlink.wrap(worker);
+    workers.push(obj);
 }
+
 // =============================================================================
 // ============================== RENDER LOGIC =================================
+const drawCanvas = (y0, dy, pixels) => {
+    const height = Math.min(dy, canvas.height - y0);
+    const imageData = new ImageData(pixels, canvas.width, height);
+
+    const ctx = canvas.getContext("2d");
+    ctx.putImageData(imageData, 0, y0);
+}
+
 let rendering = false;
 
-const render = () => {
+const render = async () => {
     rendering = true;
 
-    render_start = window.performance.now();
+    const render_start = window.performance.now();
 
-    // Log the current mem usage for debugging
-    mem = (function formatBytes(bytes, decimals = 2) {
-        if (!+bytes) return '0 Bytes'
+    const scene = editor.getValue();
 
-        const k = 1024
-        const dm = decimals < 0 ? 0 : decimals
-        const sizes = ['Bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB']
+    let width = undefined;
+    let height = undefined;
+    try {
+        const dims = (await Promise.all(workers.map((obj, id) => obj.init(id, scene))))[0];
+        width = dims.width;
+        height = dims.height;
+    } catch (error) {
+        console.error(`Unable to initialize renderer: ${error.message}.`)
+        notyf.error(`Unable to initialize renderer: ${error.message}.`);
+        rendering = false;
+        return;
+    }
 
-        const i = Math.floor(Math.log(bytes) / Math.log(k))
+    canvas.width = width;
+    canvas.height = height;
 
-        return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`
-    })(memory.buffer.byteLength, 5);
-    console.log(`WASM memory size: ${mem}.`);
+    // We will render in batches of `dy` rows.
+    const dy = 10;
 
-    scene = editor.getValue();
-    worker.postMessage({ init: null, memory, scene });
+    let jobs = [];
+    for (let y0 = 0; y0 < height; y0 += dy) {
+        jobs.push({ y0, dy });
+    }
+    jobs = jobs.reverse(); // Render top-down instead of bottom-up
+
+    async function helper(obj) {
+        return new Promise(async (resolve) => {
+            const job = jobs.pop();
+            if (typeof(job) != "undefined") {
+                const pixels = await obj.render(job.y0, job.dy);
+                drawCanvas(job.y0, job.dy, pixels);
+                await helper(obj);
+            }
+            resolve();
+        });
+    }
+    await Promise.all(workers.map((obj) => helper(obj)));
+
+    await Promise.all(workers.map((obj) => obj.deinit()));
+
+    const render_finised = window.performance.now();
+
+    const message = `Render finished in ${((render_finised - render_start) / 1000).toFixed(3)}s.`;
+
+    console.log(message);
+    notyf.success(message);
+
+    rendering = false;
 };
 // =============================================================================
 
 // ======================= WASM/REMAINING UI INITIALIZATION ====================
-const obj_names_to_data = new Map();
 (async () => {
-    obj_names_to_data.set("teapot.obj", await fetch("obj/teapot.obj").then((r) => r.text()));
-    obj_names_to_data.set("dragon.obj", await fetch("obj/dragon.obj").then((r) => r.text()));
-
-    const start = window.performance.now();
-
-    result = await WebAssembly.instantiateStreaming(
-        fetch("ray-tracer-challenge.wasm"),
-        importObject
-    );
-    wasm.init(result);
-
-    const wasm_initialized = window.performance.now();
-    console.log(`WASM initialized in ${wasm_initialized - start}ms.`);
-
     const default_scene = await fetch(
         `scenes/${sceneChoices.children[0].children[0].getAttribute("value")}`
     ).then(
@@ -241,10 +153,10 @@ const obj_names_to_data = new Map();
 
     textarea.value = default_scene;
 
-    render_button.addEventListener("click", (_) => {
+    render_button.addEventListener("click", async (_) => {
         // FIXME: probably a TOCTOU race here.
         if (!rendering) {
-            render();
+            await render();
         }
     });
 
