@@ -24,11 +24,6 @@ pub fn build(b: *std.Build) void {
                 .optimize = optimize,
             });
             lib.rdynamic = true;
-            lib.shared_memory = true;
-            lib.import_memory = true;
-            lib.initial_memory = std.wasm.page_size * 80;
-            lib.max_memory = std.wasm.page_size * 65536;
-            lib.global_base = 0;
 
             const install_lib = b.addInstallArtifact(
                 lib, .{ .dest_dir = .{ .override = .{ .custom = "../www/" } } }

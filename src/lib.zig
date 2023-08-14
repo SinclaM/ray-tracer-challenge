@@ -16,7 +16,6 @@ const Imports = struct {
     extern fn jsConsoleLogWrite(ptr: [*]const u8, len: usize) void;
     extern fn jsConsoleLogFlush() void;
     extern fn loadObjData(name_ptr: [*]const u8, name_len: usize) [*:0]const u8;
-    extern fn updateCanvas(y: usize) void;
 };
 
 pub const Console = struct {
@@ -45,7 +44,6 @@ pub fn Renderer(comptime T: type) type {
         scene_arena: ArenaAllocator,
         scene_info: SceneInfo(T),
         pixels: []u8,
-        current_y: usize = 0,
 
         fn new(allocator: Allocator, scene: []const u8) !Self {
             var scene_arena = ArenaAllocator.init(allocator);
@@ -105,34 +103,25 @@ pub fn Renderer(comptime T: type) type {
             };
         }
 
-        fn render(self: *Self, dy: usize) !void {
+        fn render(self: *Self, y0: usize, dy: usize) !void {
             const camera = &self.scene_info.camera;
             const world = &self.scene_info.world;
 
-            while (true) {
-                const current_y = @atomicRmw(usize, &self.current_y, .Add, dy, .Monotonic);
-                if (current_y >= camera.vsize) {
-                    break;
-                }
+            var arena = std.heap.ArenaAllocator.init(self.rendering_allocator);
+            defer arena.deinit();
 
-                var arena = std.heap.ArenaAllocator.init(self.rendering_allocator);
-                defer arena.deinit();
-
+            for (y0..@min(y0 + dy, camera.vsize)) |y| {
                 for (0..camera.hsize) |x| {
-                    for (current_y..@min(current_y + dy, camera.vsize)) |y| {
-                        const ray = camera.rayForPixel(x, y);
-                        const color = try world.colorAt(arena.allocator(), ray, 5);
+                    const ray = camera.rayForPixel(x, y);
+                    const color = try world.colorAt(arena.allocator(), ray, 5);
 
-                        self.pixels[(y * self.scene_info.camera.hsize + x) * 4] = clamp(T, color.r);
-                        self.pixels[(y * self.scene_info.camera.hsize + x) * 4 + 1] = clamp(T, color.g);
-                        self.pixels[(y * self.scene_info.camera.hsize + x) * 4 + 2] = clamp(T, color.b);
-                        self.pixels[(y * self.scene_info.camera.hsize + x) * 4 + 3] = 255;
+                    self.pixels[(y * self.scene_info.camera.hsize + x) * 4] = clamp(T, color.r);
+                    self.pixels[(y * self.scene_info.camera.hsize + x) * 4 + 1] = clamp(T, color.g);
+                    self.pixels[(y * self.scene_info.camera.hsize + x) * 4 + 2] = clamp(T, color.b);
+                    self.pixels[(y * self.scene_info.camera.hsize + x) * 4 + 3] = 255;
 
-                        _ = arena.reset(.retain_capacity);
-                    }
+                    _ = arena.reset(.retain_capacity);
                 }
-
-                Imports.updateCanvas(current_y);
             }
         }
     };
@@ -145,8 +134,6 @@ pub fn panic(message: []const u8, _: ?*std.builtin.StackTrace, _: ?usize) noretu
 }
 
 export fn wasmAlloc(length: usize) [*]const u8 {
-    // TODO: panic handler
-    // TODO: thread safe allocator
     const slice = std.heap.wasm_allocator.alloc(u8, length) catch |err| @panic(@errorName(err));
     return slice.ptr;
 }
@@ -221,11 +208,10 @@ export fn deinitRenderer() void {
     }
 }
 
-export fn render(num_rows: usize) void {
+export fn render(y0: usize, dy: usize) void {
     if (renderer) |*renderer_| {
-        renderer_.render(num_rows) catch |err| @panic(@errorName(err));
+        renderer_.render(y0, dy) catch |err| @panic(@errorName(err));
     } else {
         @panic("Renderer is uninitialized\n");
     }
 }
-
