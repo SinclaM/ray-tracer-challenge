@@ -6,12 +6,14 @@ let wasm = undefined;
 
 const obj = {
     id: undefined,
+    dy: undefined,
     width: undefined,
     height: undefined,
     pixels: undefined,
 
-    init: async function(id, scene) {
+    init: async function(id, scene, dy) {
         this.id = id;
+        this.dy = dy;
         wasm = {
             instance: undefined,
             pixels: undefined,
@@ -69,7 +71,7 @@ const obj = {
         );
 
         // Tell the WASM code to initialize the renderer.
-        wasm.instance.exports.initRenderer(wasm.encodeString(scene));
+        wasm.instance.exports.initRenderer(wasm.encodeString(scene), this.dy);
 
         // If there was an error, bail out.
         if (!wasm.instance.exports.initRendererIsOk()) {
@@ -86,19 +88,17 @@ const obj = {
             this.pixels = () => new Uint8ClampedArray(
                 wasm.instance.exports.memory.buffer,
                 pixels_ptr,
-                this.width * this.height * 4
+                this.width * this.dy * 4
             );
 
             return { width: this.width, height: this.height };
         }
     },
-    render: function(y0, dy) {
+    render: function(y0) {
         // Render in batches of `dy` rows.
-        wasm.instance.exports.render(y0, dy);
+        wasm.instance.exports.render(y0, this.dy);
 
-        const start = y0 * this.width * 4;
-        const end = start + dy * this.width * 4;
-        const copy = this.pixels().slice(start, end);
+        const copy = this.pixels().slice();
         return Comlink.transfer(copy, [copy.buffer]);
     },
     deinit: function() {

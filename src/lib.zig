@@ -45,7 +45,7 @@ pub fn Renderer(comptime T: type) type {
         scene_info: SceneInfo(T),
         pixels: []u8,
 
-        fn new(allocator: Allocator, scene: []const u8) !Self {
+        fn new(allocator: Allocator, scene: []const u8, dy: usize) !Self {
             var scene_arena = ArenaAllocator.init(allocator);
             errdefer scene_arena.deinit();
 
@@ -55,11 +55,11 @@ pub fn Renderer(comptime T: type) type {
             );
 
             const pixels = try scene_arena.allocator().alloc(
-                u8, 4 * scene_info.camera.hsize * scene_info.camera.vsize
+                u8, 4 * scene_info.camera.hsize * dy
             );
 
-            for (0..scene_info.camera.hsize) |x| {
-                for (0..scene_info.camera.vsize) |y| {
+            for (0..dy) |y| {
+                for (0..scene_info.camera.hsize) |x| {
                     pixels[(y * scene_info.camera.hsize + x) * 4] = 0;
                     pixels[(y * scene_info.camera.hsize + x) * 4 + 1] = 0;
                     pixels[(y * scene_info.camera.hsize + x) * 4 + 2] = 0;
@@ -115,10 +115,10 @@ pub fn Renderer(comptime T: type) type {
                     const ray = camera.rayForPixel(x, y);
                     const color = try world.colorAt(arena.allocator(), ray, 5);
 
-                    self.pixels[(y * self.scene_info.camera.hsize + x) * 4] = clamp(T, color.r);
-                    self.pixels[(y * self.scene_info.camera.hsize + x) * 4 + 1] = clamp(T, color.g);
-                    self.pixels[(y * self.scene_info.camera.hsize + x) * 4 + 2] = clamp(T, color.b);
-                    self.pixels[(y * self.scene_info.camera.hsize + x) * 4 + 3] = 255;
+                    self.pixels[((y - y0) * self.scene_info.camera.hsize + x) * 4] = clamp(T, color.r);
+                    self.pixels[((y - y0) * self.scene_info.camera.hsize + x) * 4 + 1] = clamp(T, color.g);
+                    self.pixels[((y - y0) * self.scene_info.camera.hsize + x) * 4 + 2] = clamp(T, color.b);
+                    self.pixels[((y - y0) * self.scene_info.camera.hsize + x) * 4 + 3] = 255;
 
                     _ = arena.reset(.retain_capacity);
                 }
@@ -161,13 +161,13 @@ const CanvasInfo = extern struct {
 
 var initRendererResult: Result(CanvasInfo, [:0]const u8) = undefined;
 
-export fn initRenderer(scene_ptr: [*:0]const u8) void {
+export fn initRenderer(scene_ptr: [*:0]const u8, dy: usize) void {
     const allocator = std.heap.wasm_allocator;
 
     const scene = std.mem.span(scene_ptr);
     defer allocator.free(scene);
 
-    if (Renderer(f64).new(allocator, scene)) |r| {
+    if (Renderer(f64).new(allocator, scene, dy)) |r| {
         renderer = r;
         initRendererResult = .{ .ok = renderer.?.getCanvasInfo() };
     } else |err| {
