@@ -86,12 +86,15 @@ const render = async () => {
 
     const render_start = window.performance.now();
 
+    // We will render in batches of `dy` rows.
+    const dy = 10;
+
     const scene = editor.getValue();
 
     let width = undefined;
     let height = undefined;
     try {
-        const dims = (await Promise.all(workers.map((obj, id) => obj.init(id, scene))))[0];
+        const dims = (await Promise.all(workers.map((obj, id) => obj.init(id, scene, dy))))[0];
         width = dims.width;
         height = dims.height;
     } catch (error) {
@@ -104,20 +107,26 @@ const render = async () => {
     canvas.width = width;
     canvas.height = height;
 
-    // We will render in batches of `dy` rows.
-    const dy = 10;
-
     let jobs = [];
     for (let y0 = 0; y0 < height; y0 += dy) {
         jobs.push({ y0, dy });
     }
-    jobs = jobs.reverse(); // Render top-down instead of bottom-up
+
+    // Shuffle the batching order to make the image "fade-in" (kind of)
+    // rather than simply rendering top-down or bottom-up.
+    //
+    // There's not much reason for this particular order, I just think it
+    // looks nice.
+    const m = 6 * dy;
+    const n = 3;
+    jobs.sort((a, b) => (a.y0 % m) - (b.y0 % m) + ((a.y0 + b.y0) % n));
+    jobs = jobs.reverse();
 
     async function helper(obj) {
         return new Promise(async (resolve) => {
             const job = jobs.pop();
             if (typeof(job) != "undefined") {
-                const pixels = await obj.render(job.y0, job.dy);
+                const pixels = await obj.render(job.y0);
                 drawCanvas(job.y0, job.dy, pixels);
                 await helper(obj);
             }
