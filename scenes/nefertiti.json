@@ -1,0 +1,124 @@
+{
+    "shape-definitions": [
+        {
+            "name": "reflective-ball",
+            "value": {
+                "type": { "sphere": {} },
+                "material": {
+                    "pattern": { "type": { "solid": [0.5216, 0.0039, 0.0039] } },
+                    "diffuse": 0.4,
+                    "specular": 0.3,
+                    "shininess": 300,
+                    "reflective": 0.4
+                },
+                "transform": [
+                    { "scale": [0.1, 0.1, 0.1] },
+                    { "translate": [0, 0.25, -0.85] }
+                ]
+            }
+        }
+    ],
+    "camera": {
+        "width": 300,
+        "height": 500,
+        "field-of-view": 0.75,
+        "from": [0, 1.75, -4.5],
+        "to": [0, 1.0, 0],
+        "up": [0, 1.0, 0]
+    },
+    "lights": [
+        {
+            "point-light": {
+                "position": [2, 6, -6],
+                "intensity": [1, 1, 1]
+            }
+        }
+    ],
+    "objects": [
+        {
+            "type": { "cube": {} },
+            "transform": [
+                { "translate": [0, 1, 0] },
+                { "scale": [10, 10, 10] }
+            ],
+            "material": {
+                "pattern": {
+                    "type": {
+                        "checkers": [
+                            { "type": { "solid": [0.55, 0.55, 0.55] } },
+                            { "type": { "solid": [0.45, 0.45, 0.45] } }
+                        ]
+                    },
+                    "transform": [{ "scale": [0.025, 0.025, 0.025] }]
+                },
+                "specular": 0,
+                "ambient": 0.5
+            }
+        },
+        {
+            "type": {
+                "from-obj": { "file": "nefertiti.obj" }
+            },
+            "transform": [
+                { "rotate-x": -1.507 },
+                { "rotate-y": 3.14 },
+                { "translate": [0, 1.15, 0] },
+                { "rotate-y": -0.4 }
+            ],
+            "material": {
+                "pattern": {
+                    "type": {
+                        "perturb": {
+                            "type": {
+                                "gradient": [
+                                    { "type": { "solid": [0.44, 0.33, 0.23] } },
+                                    { "type": { "solid": [0.53, 0.43, 0.33] } }
+                                ]
+                            },
+                            "transform": [{ "scale": [0.1, 0.1, 0.1] }]
+                        }
+                    }
+                },
+                "specular": 0.0,
+                "diffuse": 0.9
+            }
+        },
+        {
+            "type": {
+                "cylinder": { "min": 0, "max": 0.15, "closed": true }
+            },
+            "material": {
+                "pattern": { "type": { "solid": [0.2, 0.2, 0.2] } },
+                "ambient": 0,
+                "diffuse": 0.8,
+                "specular": 0,
+                "reflective": 0.2
+            }
+        },
+        {
+            "type": { "from-definition": "reflective-ball" },
+            "transform": [
+                { "rotate-y": -1 }
+            ]
+        },
+                {
+            "type": { "from-definition": "reflective-ball" },
+            "transform": [
+                { "rotate-y": -2 }
+            ]
+        },
+                {
+            "type": { "from-definition": "reflective-ball" },
+            "transform": [
+                { "rotate-y": 1 }
+            ]
+        },
+                {
+            "type": { "from-definition": "reflective-ball" },
+            "transform": [
+                { "rotate-y": 2 }
+            ]
+        }
+    ]
+}
+
