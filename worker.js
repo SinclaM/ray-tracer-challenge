@@ -3,6 +3,7 @@ importScripts("./comlink.js");
 const text_decoder = new TextDecoder();
 let console_log_buffer = "";
 let wasm = undefined;
+let user_added_objs = undefined;
 
 const obj = {
     id: undefined,
@@ -10,10 +11,12 @@ const obj = {
     width: undefined,
     height: undefined,
     pixels: undefined,
+    user_added_objs: undefined,
 
-    init: async function(id, scene, dy) {
+    init: async function(id, scene, objs, dy) {
         this.id = id;
         this.dy = dy;
+        user_added_objs = objs;
         if (typeof(wasm) == "undefined") {
             wasm = {
                 instance: undefined,
@@ -56,6 +59,11 @@ const obj = {
                     },
                     loadObjData: function (name_ptr, name_len) {
                         name_ = wasm.getString(name_ptr, Number(name_len));
+
+                        const data = user_added_objs.get(name_);
+                        if (typeof(data) != "undefined") {
+                            return wasm.encodeString(data);
+                        }
 
                         const request = new XMLHttpRequest();
                         request.open("GET", `obj/${name_}`, false);
