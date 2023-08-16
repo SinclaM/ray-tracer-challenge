@@ -14,61 +14,62 @@ const obj = {
     init: async function(id, scene, dy) {
         this.id = id;
         this.dy = dy;
-        wasm = {
-            instance: undefined,
-            pixels: undefined,
+        if (typeof(wasm) == "undefined") {
+            wasm = {
+                instance: undefined,
+                pixels: undefined,
 
-            init: function (instance) {
-                this.instance = instance;
-            },
-            getString: function (ptr, len) {
-                const view = new Uint8Array(this.instance.exports.memory.buffer, ptr, len);
-                return text_decoder.decode(view);
-            },
-            // Convert a JavaScript string to a pointer to multi byte character array
-            encodeString: function (string) {
-                const buffer = new TextEncoder().encode(string);
-                const pointer = this.instance.exports.wasmAlloc(buffer.length + 1); // ask Zig to allocate memory
-                const slice = new Uint8Array(
-                    this.instance.exports.memory.buffer, // memory exported from Zig
-                    pointer,
-                    buffer.length + 1
-                );
-                slice.set(buffer);
-                slice[buffer.length] = 0; // null byte to null-terminate the string
-                return pointer;
-            },
-        };
-
-        const importObject = {
-            env: {
-                _throwError(pointer, length) {
-                    const message = wasm.getString(pointer, length);
-                    throw new Error(message);
+                init: function (instance) {
+                    this.instance = instance;
                 },
-                jsConsoleLogWrite: function (ptr, len) {
-                    console_log_buffer += wasm.getString(ptr, len);
+                getString: function (ptr, len) {
+                    const view = new Uint8Array(this.instance.exports.memory.buffer, ptr, len);
+                    return text_decoder.decode(view);
                 },
-                jsConsoleLogFlush: function () {
-                    console.log(`[Worker ${id}] ${console_log_buffer}`);
-                    console_log_buffer = "";
+                // Convert a JavaScript string to a pointer to multi byte character array
+                encodeString: function (string) {
+                    const buffer = new TextEncoder().encode(string);
+                    const pointer = this.instance.exports.wasmAlloc(buffer.length + 1); // ask Zig to allocate memory
+                    const slice = new Uint8Array(
+                        this.instance.exports.memory.buffer, // memory exported from Zig
+                        pointer,
+                        buffer.length + 1
+                    );
+                    slice.set(buffer);
+                    slice[buffer.length] = 0; // null byte to null-terminate the string
+                    return pointer;
                 },
-                loadObjData: function (name_ptr, name_len) {
-                    name_ = wasm.getString(name_ptr, Number(name_len));
+            };
 
-                    const request = new XMLHttpRequest();
-                    request.open("GET", `obj/${name_}`, false);
-                    request.send(null);
+            const importObject = {
+                env: {
+                    _throwError(pointer, length) {
+                        const message = wasm.getString(pointer, length);
+                        throw new Error(message);
+                    },
+                    jsConsoleLogWrite: function (ptr, len) {
+                        console_log_buffer += wasm.getString(ptr, len);
+                    },
+                    jsConsoleLogFlush: function () {
+                        console.log(`[Worker ${id}] ${console_log_buffer}`);
+                        console_log_buffer = "";
+                    },
+                    loadObjData: function (name_ptr, name_len) {
+                        name_ = wasm.getString(name_ptr, Number(name_len));
 
-                    return wasm.encodeString(request.responseText);
-                }
-            },
-        };
+                        const request = new XMLHttpRequest();
+                        request.open("GET", `obj/${name_}`, false);
+                        request.send(null);
 
+                        return wasm.encodeString(request.responseText);
+                    }
+                },
+            };
 
-        await WebAssembly.instantiateStreaming(fetch("ray-tracer-challenge.wasm"), importObject).then(
-            (obj) => wasm.init(obj.instance),
-        );
+            await WebAssembly.instantiateStreaming(fetch("ray-tracer-challenge.wasm"), importObject).then(
+                (obj) => wasm.init(obj.instance),
+            );
+        }
 
         // Tell the WASM code to initialize the renderer.
         wasm.instance.exports.initRenderer(wasm.encodeString(scene), this.dy);
