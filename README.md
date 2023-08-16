@@ -60,6 +60,10 @@ You can find an interactive demo of this ray tracer online at [sinclam.github.io
 
 <img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/010d2169-6d18-460a-b630-ea21f41ec3db width=800> 
 
+<br/><br/>
+
+<img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/f1207f39-abed-4ccf-b7d2-8cc0bd073850 height=800> 
+
 ## Performance profiling
 
 Although the ray tracer is not (yet) heavily optimized (e.g. is does not yet leverage Zig's SIMD builtins),
