@@ -34,6 +34,7 @@ pub fn main() !void {
         "ch11_reflection_and_refraction",
         "cover",
         "cubes",
+        "cylinders",
         "xyz",
         "groups",
         "teapot",
