@@ -88,35 +88,44 @@ const drawCanvas = (y0, dy, pixels) => {
 }
 
 let rendering = false;
+let renderer_is_initialized = false;
 
-const render = async () => {
+const render = async (skip_init_deinit, silent_on_success) => {
     rendering = true;
 
     const render_start = window.performance.now();
 
+    if (renderer_is_initialized && !skip_init_deinit) {
+        await Promise.all(workers.map((obj) => obj.deinit()));
+        renderer_is_initialized = false;
+    }
+
     // We will render in batches of `dy` rows.
     const dy = 10;
 
-    const scene = editor.getValue();
+    if (!skip_init_deinit) {
+        const scene = editor.getValue();
 
-    let width = undefined;
-    let height = undefined;
-    try {
-        const dims = (await Promise.all(workers.map((obj, id) => obj.init(id, scene, user_added_objs, dy))))[0];
-        width = dims.width;
-        height = dims.height;
-    } catch (error) {
-        console.error(`Unable to initialize renderer: ${error.message}.`)
-        notyf.error(`Unable to initialize renderer: ${error.message}.`);
-        rendering = false;
-        return;
+        let width = undefined;
+        let height = undefined;
+        try {
+            const dims = (await Promise.all(workers.map((obj, id) => obj.init(id, scene, user_added_objs, dy))))[0];
+            renderer_is_initialized = true;
+            width = dims.width;
+            height = dims.height;
+        } catch (error) {
+            console.error(`Unable to initialize renderer: ${error.message}.`)
+            notyf.error(`Unable to initialize renderer: ${error.message}.`);
+            rendering = false;
+            return;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
     }
 
-    canvas.width = width;
-    canvas.height = height;
-
     let jobs = [];
-    for (let y0 = 0; y0 < height; y0 += dy) {
+    for (let y0 = 0; y0 < canvas.height; y0 += dy) {
         jobs.push({ y0, dy });
     }
 
@@ -143,19 +152,18 @@ const render = async () => {
     }
     await Promise.all(workers.map((obj) => helper(obj)));
 
-    await Promise.all(workers.map((obj) => obj.deinit()));
-
     const render_finised = window.performance.now();
 
-    const message = `Render finished in ${((render_finised - render_start) / 1000).toFixed(3)}s.`;
+    if (!silent_on_success) {
+        const message = `Render finished in ${((render_finised - render_start) / 1000).toFixed(3)}s.`;
+        console.log(message);
+        notyf.success(message);
+    }
 
-    console.log(message);
-    notyf.success(message);
 
     rendering = false;
 };
 // =============================================================================
-
 // ======================= WASM/REMAINING UI INITIALIZATION ====================
 (async () => {
     const default_scene = await fetch(
@@ -173,7 +181,7 @@ const render = async () => {
     render_button.addEventListener("click", async (_) => {
         // FIXME: probably a TOCTOU race here.
         if (!rendering) {
-            await render();
+            await render(false, false);
         }
     });
 
@@ -186,4 +194,54 @@ const render = async () => {
 
     render_button.click();
 })();
+// =============================================================================
+// ========================== ARROW KEYS INTERACTIVITY =========================
+let handling_move = false
+const rotate_camera = async (angle) => {
+    if (!handling_move) {
+        handling_move = true;
+        await Promise.all(workers.map((obj) => obj.rotate_camera(angle)));
+        await render(true, true);
+        handling_move = false;
+    }
+};
+
+const move_camera = async (distance) => {
+    if (!handling_move) {
+        handling_move = true;
+        await Promise.all(workers.map((obj) => obj.move_camera(distance)));
+        await render(true, true);
+        handling_move = false;
+    }
+};
+
+window.addEventListener(
+    "keydown",
+    (event) => {
+        if (event.defaultPrevented || editor.isFocused()) {
+            return; // Do nothing if the event was already processed
+        }
+
+        switch (event.key) {
+            case "ArrowDown":
+                move_camera(-0.1);
+                break;
+            case "ArrowUp":
+                move_camera(0.1);
+                break;
+            case "ArrowLeft":
+                rotate_camera(Math.PI / 30.0);
+                break;
+            case "ArrowRight":
+                rotate_camera(-Math.PI / 30.0);
+                break;
+            default:
+                return; // Quit when this doesn't handle the key event.
+        }
+
+        // Cancel the default action to avoid it being handled twice
+        event.preventDefault();
+    },
+    true,
+);
 // =============================================================================

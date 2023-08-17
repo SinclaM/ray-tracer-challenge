@@ -78,6 +78,30 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
             return true;
         }
 
+        /// Adds matrices `self` and `other` elementwise.
+        pub fn add(self: Self, other: Self) Self {
+            var result = Self.newUninit();
+            for (0..N) |row| {
+                for (0..N) |col| {
+                    result.data[row][col] = self.data[row][col] + other.data[row][col];
+                }
+            }
+
+            return result;
+        }
+
+        /// Multiplies the matrix `self` elementwise by `val`.
+        pub fn scalarMul(self: Self, val: T) Self {
+            var result = Self.newUninit();
+            for (0..N) |row| {
+                for (0..N) |col| {
+                    result.data[row][col] = self.data[row][col] * val;
+                }
+            }
+
+            return result;
+        }
+
         /// Multiplies the matrices `self` and `other` (not elementwise).
         pub fn mul(self: Self, other: Self) Self {
             var result = Self.newUninit();
@@ -256,6 +280,21 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
                 [_]T{   0.0     ,     0.0     , 0.0, 1.0 },
             });
 
+            return rotation.mul(self);
+        }
+
+        /// Produces a transformation that will rotate vectors by `angle`
+        /// about `axis` after the transformation applied by `self`.
+        pub fn rotate(self: Self, axis: Tuple(T), angle: T) Self {
+            const C = Matrix(T, 4).new([4][4]T{
+                [_]T{  0.0   , -axis.z, axis.y , 0.0 },
+                [_]T{ axis.z ,  0.0   , -axis.x, 0.0 },
+                [_]T{ -axis.y, axis.x ,  0.0   , 0.0 },
+                [_]T{  0.0   ,  0.0   ,  0.0   , 0.0 },
+            });
+
+            var rotation = Self.identity().add(C.scalarMul(@sin(angle))).add(C.mul(C).scalarMul(1.0 - @cos(angle)));
+            rotation.data[3][3] = 1.0;
             return rotation.mul(self);
         }
 
@@ -623,5 +662,23 @@ test "View transformation" {
         );
 
     }
+}
+
+test "Arbitrary rotations" {
+    const xhat = Tuple(f32).vec3(1.0, 0.0, 0.0);
+    const yhat = Tuple(f32).vec3(0.0, 1.0, 0.0);
+    const zhat = Tuple(f32).vec3(0.0, 0.0, 1.0);
+
+    const identity = Matrix(f32, 4).identity();
+    const angle = 1.0;
+
+    const rx = identity.rotateX(angle);
+    try testing.expect(rx.approxEqual(identity.rotate(xhat, angle)));
+
+    const ry = identity.rotateY(angle);
+    try testing.expect(ry.approxEqual(identity.rotate(yhat, angle)));
+
+    const rz = identity.rotateZ(angle);
+    try testing.expect(rz.approxEqual(identity.rotate(zhat, angle)));
 }
 

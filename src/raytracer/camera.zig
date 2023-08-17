@@ -23,6 +23,7 @@ pub fn Camera(comptime T: type) type {
         half_width: T,
         half_height: T,
         pixel_size: T,
+        _saved_from_to_up: [3]Tuple(T) = [_]Tuple(T) { Tuple(T).point(0.0, 0.0, 0.0), Tuple(T).point(0.0, 0.0, 0.0), Tuple(T).point(0.0, 0.0, 0.0) },
         _transform: Matrix(T, 4) = Matrix(T, 4).identity(),
         _inverse_transform: Matrix(T, 4) = Matrix(T, 4).identity(),
 

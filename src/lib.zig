@@ -7,6 +7,8 @@ const parseScene = @import("parsing/scene.zig").parseScene;
 const SceneInfo = @import("parsing/scene.zig").SceneInfo;
 
 const clamp = @import("raytracer/color.zig").clamp;
+const Tuple = @import("raytracer/tuple.zig").Tuple;
+const Matrix = @import("raytracer/matrix.zig").Matrix;
 
 const Imports = struct {
     extern "env" fn _throwError(pointer: [*]const u8, length: u32) noreturn;
@@ -124,6 +126,32 @@ pub fn Renderer(comptime T: type) type {
                 }
             }
         }
+
+        fn rotate_camera(self: *Self, angle: T) !void {
+            var from = self.scene_info.camera._saved_from_to_up[0];
+            const to = self.scene_info.camera._saved_from_to_up[1];
+            const up = self.scene_info.camera._saved_from_to_up[2];
+
+            const delta = Tuple(T).point(0.0, 0.0, 0.0).sub(to);
+            from = from.add(delta);
+            from = Matrix(T, 4).identity().rotate(up, angle).tupleMul(from);
+            from = from.sub(delta);
+
+            try self.scene_info.camera.setTransform(Matrix(T, 4).viewTransform(from, to, up));
+            self.scene_info.camera._saved_from_to_up = [_]Tuple(T) { from, to, up };
+        }
+
+        fn move_camera(self: *Self, distance: T) !void {
+            var from = self.scene_info.camera._saved_from_to_up[0];
+            const to = self.scene_info.camera._saved_from_to_up[1];
+            const up = self.scene_info.camera._saved_from_to_up[2];
+
+            const delta = to.sub(from).mul(distance);
+            from = from.add(delta);
+
+            try self.scene_info.camera.setTransform(Matrix(T, 4).viewTransform(from, to, up));
+            self.scene_info.camera._saved_from_to_up = [_]Tuple(T) { from, to, up };
+        }
     };
 }
 
@@ -211,6 +239,22 @@ export fn deinitRenderer() void {
 export fn render(y0: usize, dy: usize) void {
     if (renderer) |*renderer_| {
         renderer_.render(y0, dy) catch |err| @panic(@errorName(err));
+    } else {
+        @panic("Renderer is uninitialized\n");
+    }
+}
+
+export fn rotate_camera(angle: f64) void {
+    if (renderer) |*renderer_| {
+        renderer_.rotate_camera(angle) catch |err| @panic(@errorName(err));
+    } else {
+        @panic("Renderer is uninitialized\n");
+    }
+}
+
+export fn move_camera(distance: f64) void {
+    if (renderer) |*renderer_| {
+        renderer_.move_camera(distance) catch |err| @panic(@errorName(err));
     } else {
         @panic("Renderer is uninitialized\n");
     }

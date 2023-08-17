@@ -458,6 +458,7 @@ pub fn parseScene(
     const up = Tuple(T).vec3(
         parsed.value.camera.up[0], parsed.value.camera.up[1], parsed.value.camera.up[2]
     );
+    camera._saved_from_to_up = [_]Tuple(T) { from, to, up };
 
     try camera.setTransform(Matrix(T, 4).viewTransform(from, to, up));
 
@@ -533,13 +534,11 @@ test "Simple" {
     defer world.destroy();
 
     var expected_camera = Camera(f32).new(1280, 1000, 0.785);
-    try expected_camera.setTransform(
-        Matrix(f32, 4).viewTransform(
-            Tuple(f32).point(-6.0, 6.0, -10.0),
-            Tuple(f32).point(6.0, 0.0, 6.0),
-            Tuple(f32).vec3(-0.45, 1.0, 0.0)
-        )
-    );
+    const from = Tuple(f32).point(-6.0, 6.0, -10.0);
+    const to = Tuple(f32).point(6.0, 0.0, 6.0);
+    const up = Tuple(f32).vec3(-0.45, 1.0, 0.0);
+    try expected_camera.setTransform( Matrix(f32, 4).viewTransform(from, to, up));
+    expected_camera._saved_from_to_up = [_]Tuple(f32) { from, to, up };
 
     try testing.expectEqual(camera.*, expected_camera);
 
