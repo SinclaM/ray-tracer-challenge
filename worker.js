@@ -110,6 +110,12 @@ const obj = {
         const copy = this.pixels().slice();
         return Comlink.transfer(copy, [copy.buffer]);
     },
+    rotate_camera: function(angle) {
+        wasm.instance.exports.rotate_camera(angle);
+    },
+    move_camera: function(distance) {
+        wasm.instance.exports.move_camera(distance);
+    },
     deinit: function() {
         wasm.instance.exports.deinitRenderer();
     }
