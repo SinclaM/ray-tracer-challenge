@@ -2,13 +2,17 @@ import * as Comlink from "./comlink.mjs";
 // ============================== DOM ELEMENTS =================================
 const canvas = document.getElementById("image-canvas");
 const textarea = document.getElementById("scene-description");
-const render_button = document.getElementById("render");
-const add_obj_input = document.getElementById("add-obj");
+const renderButton = document.getElementById("render");
+const addObjInput = document.getElementById("add-obj");
 const editor = ace.edit("scene-description");
 const sceneChoices = document.getElementById("scene-choices");
 const split = document.querySelector(".split");
 const split0 = document.getElementById("split-0");
 const split1 = document.getElementById("split-1");
+const upArrow = document.querySelector(".arrow-key.up");
+const downArrow = document.querySelector(".arrow-key.down");
+const leftArrow = document.querySelector(".arrow-key.left");
+const rightArrow = document.querySelector(".arrow-key.right");
 // =============================================================================
 
 // ============================ UI INITIALIZATION ==============================
@@ -17,7 +21,7 @@ const initSplit = () => {
 
     if (window.innerWidth > window.innerHeight) {
         // Use a horizontal split on screens more long than wide.
-        Split(["#split-0", "#split-1"]);
+        Split(["#split-0", "#split-1"], { minSize: [100, 300] });
 
         split.style["grid-row"] = "2";
         split.style["height"] = "90vh";
@@ -30,6 +34,7 @@ const initSplit = () => {
         // Otherwise, use a vertical split.
         Split(["#split-0", "#split-1"], {
             direction: "vertical",
+            minSize: [100, 200]
         });
         split.style["grid-row"] = "";
         split.style["height"] = "";
@@ -45,7 +50,7 @@ initSplit();
 window.addEventListener("resize", initSplit);
 
 // Set up Notyf
-let notyf = new Notyf();
+let notyf = new Notyf({ position: { x: "left", y: "bottom" } });
 
 // Set up scene description editor
 editor.setOption("showLineNumbers", false);
@@ -72,10 +77,10 @@ for (let i = 0; i < NUM_WORKERS; i++) {
 
 // =============================================================================
 // ============================== RENDER LOGIC =================================
-const user_added_objs = new Map();
-add_obj_input.addEventListener("change", async () => {
-    const [file] = add_obj_input.files;
-    user_added_objs.set(file.name, await file.text());
+const userAddedObjs = new Map();
+addObjInput.addEventListener("change", async () => {
+    const [file] = addObjInput.files;
+    userAddedObjs.set(file.name, await file.text());
     notyf.success(`Added ${file.name}`);
 });
 
@@ -88,29 +93,29 @@ const drawCanvas = (y0, dy, pixels) => {
 }
 
 let rendering = false;
-let renderer_is_initialized = false;
+let rendererIsInitialized = false;
 
-const render = async (skip_init_deinit, silent_on_success) => {
+const render = async (skipInitDeinit, silentOnSuccess) => {
     rendering = true;
 
-    const render_start = window.performance.now();
+    const renderStart = window.performance.now();
 
-    if (renderer_is_initialized && !skip_init_deinit) {
+    if (rendererIsInitialized && !skipInitDeinit) {
         await Promise.all(workers.map((obj) => obj.deinit()));
-        renderer_is_initialized = false;
+        rendererIsInitialized = false;
     }
 
     // We will render in batches of `dy` rows.
     const dy = 10;
 
-    if (!skip_init_deinit) {
+    if (!skipInitDeinit) {
         const scene = editor.getValue();
 
         let width = undefined;
         let height = undefined;
         try {
-            const dims = (await Promise.all(workers.map((obj, id) => obj.init(id, scene, user_added_objs, dy))))[0];
-            renderer_is_initialized = true;
+            const dims = (await Promise.all(workers.map((obj, id) => obj.init(id, scene, userAddedObjs, dy))))[0];
+            rendererIsInitialized = true;
             width = dims.width;
             height = dims.height;
         } catch (error) {
@@ -152,10 +157,10 @@ const render = async (skip_init_deinit, silent_on_success) => {
     }
     await Promise.all(workers.map((obj) => helper(obj)));
 
-    const render_finised = window.performance.now();
+    const renderFinised = window.performance.now();
 
-    if (!silent_on_success) {
-        const message = `Render finished in ${((render_finised - render_start) / 1000).toFixed(3)}s.`;
+    if (!silentOnSuccess) {
+        const message = `Render finished in ${((renderFinised - renderStart) / 1000).toFixed(3)}s.`;
         console.log(message);
         notyf.success(message);
     }
@@ -166,19 +171,19 @@ const render = async (skip_init_deinit, silent_on_success) => {
 // =============================================================================
 // ======================= WASM/REMAINING UI INITIALIZATION ====================
 (async () => {
-    const default_scene = await fetch(
+    const defaultScene = await fetch(
         `scenes/${sceneChoices.children[0].children[0].getAttribute("value")}`
     ).then(
         (r) => r.text()
     );
 
-    editor.setValue(default_scene);
+    editor.setValue(defaultScene);
     editor.clearSelection();
     editor.session.getUndoManager().reset();
 
-    textarea.value = default_scene;
+    textarea.value = defaultScene;
 
-    render_button.addEventListener("click", async (_) => {
+    renderButton.addEventListener("click", async (_) => {
         // FIXME: probably a TOCTOU race here.
         if (!rendering) {
             await render(false, false);
@@ -188,32 +193,42 @@ const render = async (skip_init_deinit, silent_on_success) => {
     // Add a hotkey for rendering
     document.addEventListener("keydown", (event) => {
         if ((event.ctrlKey || event.metaKey) && event.key === ".") {
-            render_button.click();
+            renderButton.click();
         }
     });
 
-    render_button.click();
+    renderButton.click();
 })();
 // =============================================================================
 // ========================== ARROW KEYS INTERACTIVITY =========================
-let handling_move = false
-const rotate_camera = async (angle) => {
-    if (!handling_move) {
-        handling_move = true;
-        await Promise.all(workers.map((obj) => obj.rotate_camera(angle)));
+let handlingMove = false
+
+const rotateCamera = async (angle, keyElement) => {
+    if (!handlingMove && !rendering) {
+        handlingMove = true;
+        keyElement.classList.add("press");
+        await Promise.all(workers.map((obj) => obj.rotateCamera(angle)));
         await render(true, true);
-        handling_move = false;
+        keyElement.classList.remove("press");
+        handlingMove = false;
     }
 };
 
-const move_camera = async (distance) => {
-    if (!handling_move) {
-        handling_move = true;
-        await Promise.all(workers.map((obj) => obj.move_camera(distance)));
+const moveCamera = async (distance, keyElement) => {
+    if (!handlingMove && !rendering) {
+        handlingMove = true;
+        keyElement.classList.add("press");
+        await Promise.all(workers.map((obj) => obj.moveCamera(distance)));
         await render(true, true);
-        handling_move = false;
+        keyElement.classList.remove("press");
+        handlingMove = false;
     }
 };
+
+upArrow.addEventListener("click", (_) => moveCamera(0.1, upArrow));
+downArrow.addEventListener("click", (_) => moveCamera(-0.1, downArrow));
+leftArrow.addEventListener("click", (_) => rotateCamera(Math.PI / 30.0, leftArrow));
+rightArrow.addEventListener("click", (_) => rotateCamera(-Math.PI / 30.0, rightArrow));
 
 window.addEventListener(
     "keydown",
@@ -224,16 +239,16 @@ window.addEventListener(
 
         switch (event.key) {
             case "ArrowDown":
-                move_camera(-0.1);
+                moveCamera(-0.1, downArrow);
                 break;
             case "ArrowUp":
-                move_camera(0.1);
+                moveCamera(0.1, upArrow);
                 break;
             case "ArrowLeft":
-                rotate_camera(Math.PI / 30.0);
+                rotateCamera(Math.PI / 30.0, leftArrow);
                 break;
             case "ArrowRight":
-                rotate_camera(-Math.PI / 30.0);
+                rotateCamera(-Math.PI / 30.0, rightArrow);
                 break;
             default:
                 return; // Quit when this doesn't handle the key event.

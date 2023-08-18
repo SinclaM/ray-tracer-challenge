@@ -1,9 +1,9 @@
 importScripts("./comlink.js");
 
-const text_decoder = new TextDecoder();
-let console_log_buffer = "";
+const textDecoder = new TextDecoder();
+let consoleLogBuffer = "";
 let wasm = undefined;
-let user_added_objs = undefined;
+let userAddedObjs = undefined;
 
 const obj = {
     id: undefined,
@@ -11,12 +11,12 @@ const obj = {
     width: undefined,
     height: undefined,
     pixels: undefined,
-    user_added_objs: undefined,
+    userAddedObjs: undefined,
 
     init: async function(id, scene, objs, dy) {
         this.id = id;
         this.dy = dy;
-        user_added_objs = objs;
+        userAddedObjs = objs;
         if (typeof(wasm) == "undefined") {
             wasm = {
                 instance: undefined,
@@ -27,7 +27,7 @@ const obj = {
                 },
                 getString: function (ptr, len) {
                     const view = new Uint8Array(this.instance.exports.memory.buffer, ptr, len);
-                    return text_decoder.decode(view);
+                    return textDecoder.decode(view);
                 },
                 // Convert a JavaScript string to a pointer to multi byte character array
                 encodeString: function (string) {
@@ -51,16 +51,16 @@ const obj = {
                         throw new Error(message);
                     },
                     jsConsoleLogWrite: function (ptr, len) {
-                        console_log_buffer += wasm.getString(ptr, len);
+                        consoleLogBuffer += wasm.getString(ptr, len);
                     },
                     jsConsoleLogFlush: function () {
-                        console.log(`[Worker ${id}] ${console_log_buffer}`);
-                        console_log_buffer = "";
+                        console.log(`[Worker ${id}] ${consoleLogBuffer}`);
+                        consoleLogBuffer = "";
                     },
-                    loadObjData: function (name_ptr, name_len) {
-                        name_ = wasm.getString(name_ptr, Number(name_len));
+                    loadObjData: function (namePtr, nameLen) {
+                        name_ = wasm.getString(namePtr, Number(nameLen));
 
-                        const data = user_added_objs.get(name_);
+                        const data = userAddedObjs.get(name_);
                         if (typeof(data) != "undefined") {
                             return wasm.encodeString(data);
                         }
@@ -84,19 +84,19 @@ const obj = {
 
         // If there was an error, bail out.
         if (!wasm.instance.exports.initRendererIsOk()) {
-            const error_ptr = wasm.instance.exports.initRendererGetErrPtr();
-            const error_len = wasm.instance.exports.initRendererGetErrLen();
+            const errorPtr = wasm.instance.exports.initRendererGetErrPtr();
+            const errorLen = wasm.instance.exports.initRendererGetErrLen();
 
-            const error_message = wasm.getString(error_ptr, error_len);
-            throw new Error(error_message);
+            const errorMessage = wasm.getString(errorPtr, errorLen);
+            throw new Error(errorMessage);
         } else {
-            pixels_ptr = wasm.instance.exports.initRendererGetPixels();
+            const pixelsPtr = wasm.instance.exports.initRendererGetPixels();
             this.width = wasm.instance.exports.initRendererGetWidth();
             this.height = wasm.instance.exports.initRendererGetHeight();
 
             this.pixels = () => new Uint8ClampedArray(
                 wasm.instance.exports.memory.buffer,
-                pixels_ptr,
+                pixelsPtr,
                 this.width * this.dy * 4
             );
 
@@ -110,10 +110,10 @@ const obj = {
         const copy = this.pixels().slice();
         return Comlink.transfer(copy, [copy.buffer]);
     },
-    rotate_camera: function(angle) {
+    rotateCamera: function(angle) {
         wasm.instance.exports.rotate_camera(angle);
     },
-    move_camera: function(distance) {
+    moveCamera: function(distance) {
         wasm.instance.exports.move_camera(distance);
     },
     deinit: function() {

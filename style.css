@@ -29,17 +29,20 @@ body {
 #header-title {
     color: white;
     font-family: "JetBrains Mono", monospace;
-    font-size: 3vh;
+    font-size: min(3vh, 3vw);
+    max-width: 40vw;
 }
 
 #scene-choices {
     max-height: 5vh;
+    max-width: 10vw;
     margin-left: auto;
     margin-right: 30px;
 }
 
 #add-obj-label {
     max-height: 5vh;
+    max-width: 25vw;
     margin-right: 30px;
 }
 
@@ -50,7 +53,7 @@ body {
 .plus-sign {
     padding-left: 15px;
     color: #777777;
-    font-size: 3vh;
+    font-size: min(3vh, 3vw);
 }
 
 .footer {
@@ -152,7 +155,7 @@ button {
     touch-action: manipulation;
     white-space: nowrap;
     will-change: box-shadow, transform;
-    font-size: 2vh;
+    font-size: min(2vh, 2vw);
 }
 
 button:focus {
@@ -203,7 +206,7 @@ button:active {
     transition: box-shadow 0.15s, transform 0.15s;
     white-space: nowrap;
     will-change: box-shadow, transform;
-    font-size: 2vh;
+    font-size: min(2vh, 2vw);
 }
 
 select {
@@ -214,7 +217,7 @@ select {
     margin: 0;
     width: 100%;
     font-family: inherit;
-    font-size: 2vh;
+    font-size: min(2vh, 2vw);
     cursor: inherit;
     line-height: inherit;
     z-index: 1;
@@ -236,7 +239,7 @@ select::-ms-expand {
     padding-right: 0.5em;
     padding-top: 0.25em;
     padding-bottom: 0.25em;
-    font-size: 2vh;
+    font-size: min(2vh, 2vw);
     cursor: pointer;
 }
 
@@ -293,7 +296,7 @@ select:focus + .focus {
     touch-action: manipulation;
     white-space: nowrap;
     will-change: box-shadow, transform;
-    font-size: 2vh;
+    font-size: min(2vh, 2vw);
 }
 
 #add-obj-label:focus {
@@ -310,4 +313,50 @@ select:focus + .focus {
 #add-obj-label:active {
     box-shadow: #d6d6e7 0 3px 7px inset;
     transform: translateY(2px);
+}
+
+.arrow-key-container {
+    position: absolute;
+    right: 10px;
+    bottom: calc(3vh + 10px);
+    display: inline-block;
+    text-align: center;
+    transform: translate3d(0, 0, 0);
+}
+.arrow-key {
+    align-items: center;
+    background: #ccc;
+    border-radius: 6px;
+    box-shadow: -1px 1px 0 #999, -2px 2px 0 #999, -3px 3px 0 #999,
+        -4px 4px 0 #999;
+    color: #fff;
+    display: inline-flex;
+    font-size: 30px;
+    font-weight: bold;
+    height: 75px;
+    justify-content: center;
+    margin: 5px;
+    transform: translate3d(0, 0, 0);
+    transition: box-shadow 0.1s linear, transform 0.1s linear;
+    width: 75px;
+}
+.arrow-key:active,
+.arrow-key.press {
+    box-shadow: 0px 0px 0 #999, 0px 0px 0 #999, 0px 0px 0 #999, -1px 1px 0 #999;
+    transform: translate3d(-3px, 3px, 0);
+}
+.arrow-key:hover:not(.press) {
+    transform: translateY(-2px);
+}
+.arrow-key.left:before {
+    content: "\2190";
+}
+.arrow-key.up:before {
+    content: "\2191";
+}
+.arrow-key.down:before {
+    content: "\2193";
+}
+.arrow-key.right:before {
+    content: "\2192";
 }
