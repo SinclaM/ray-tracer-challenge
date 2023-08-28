@@ -10,6 +10,8 @@ const Tuple = @import("../raytracer/tuple.zig").Tuple;
 const Matrix = @import("../raytracer/matrix.zig").Matrix;
 const Color = @import("../raytracer/color.zig").Color;
 const Shape = @import("../raytracer/shapes/shape.zig").Shape;
+const Mapping = @import("../raytracer/patterns/texture_map.zig").Mapping;
+const UvPattern = @import("../raytracer/patterns/texture_map.zig").UvPattern;
 const Pattern = @import("../raytracer/patterns/pattern.zig").Pattern;
 const Material = @import("../raytracer/material.zig").Material;
 const Light = @import("../raytracer/light.zig").Light;
@@ -47,6 +49,16 @@ fn TransformConfig(comptime T: type) type {
     };
 }
 
+fn UvPatternConfig(comptime T: type) type {
+    return union(enum) {
+        checkers: struct {
+            width: T,
+            height: T,
+            patterns: [2]*PatternConfig(T),
+        },
+    };
+}
+
 fn PatternConfig(comptime T: type) type {
     return struct {
         @"type": union(enum) {
@@ -58,6 +70,10 @@ fn PatternConfig(comptime T: type) type {
             checkers: [2]*PatternConfig(T),
             perturb: *PatternConfig(T),
             blend: [2]*PatternConfig(T),
+            @"texture-map": *struct {
+                mapping: []const u8,
+                @"uv-pattern": UvPatternConfig(T),
+            },
         },
         transform: ?TransformConfig(T) = null,
     };
@@ -157,7 +173,7 @@ fn SceneConfig(comptime T: type) type {
     };
 }
 
-const SceneParseError = error { UnknownShape, UnknownDefinition, NotImplemented };
+const SceneParseError = error { UnknownShape, UnknownDefinition, UnknownMapping };
 
 fn parseTransform(comptime T: type, transform: TransformConfig(T)) Matrix(T, 4) {
     var matrix = Matrix(T, 4).identity();
@@ -188,7 +204,24 @@ fn parseTransform(comptime T: type, transform: TransformConfig(T)) Matrix(T, 4) 
     return matrix;
 }
 
-fn parsePattern(comptime T: type, allocator: Allocator, pattern: PatternConfig(T)) !Pattern(T) {
+fn parseUvPattern(comptime T: type, allocator: Allocator, uv_pattern: UvPatternConfig(T)) !UvPattern(T) {
+    const uv_pat = blk: {
+        switch (uv_pattern) {
+            .checkers => |c| {
+                const p1 = try allocator.create(Pattern(T));
+                p1.* = try parsePattern(T, allocator, c.patterns[0].*);
+
+                const p2 = try allocator.create(Pattern(T));
+                p2.* = try parsePattern(T, allocator, c.patterns[1].*);
+                break :blk UvPattern(T).uvCheckers(c.width, c.height, p1, p2);
+            }
+        }
+    };
+
+    return uv_pat;
+}
+
+fn parsePattern(comptime T: type, allocator: Allocator, pattern: PatternConfig(T)) anyerror!Pattern(T) {
     var pat = blk: {
         switch (pattern.@"type") {
             .solid => |buf| {
@@ -247,6 +280,15 @@ fn parsePattern(comptime T: type, allocator: Allocator, pattern: PatternConfig(T
                 const p2 = try allocator.create(Pattern(T));
                 p2.* = try parsePattern(T, allocator, buf[1].*);
                 break :blk Pattern(T).blend(p1, p2);
+            },
+            .@"texture-map" => |texture_map| {
+                const mapping = if (std.mem.eql(u8, texture_map.mapping, "spherical")) mapping: {
+                    break :mapping &Mapping(T).spherical;
+                } else {
+                    return SceneParseError.UnknownMapping;
+                };
+                const uv_pattern = try parseUvPattern(T, allocator, texture_map.@"uv-pattern");
+                break :blk Pattern(T).textureMap(uv_pattern, mapping);
             },
         }
     };
