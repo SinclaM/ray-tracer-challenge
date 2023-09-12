@@ -14,6 +14,7 @@ const RadialGradient = @import("gradient.zig").RadialGradient;
 const Rings = @import("rings.zig").Rings;
 const Checkers = @import("checkers.zig").Checkers;
 const UvPattern = @import("texture_map.zig").UvPattern;
+const Mapping = @import("texture_map.zig").Mapping;
 const TextureMap = @import("texture_map.zig").TextureMap;
 
 /// A pattern to be put on a `Material`, backed by floats of type `T`.
@@ -95,8 +96,8 @@ pub fn Pattern(comptime T: type) type {
             return Self.new(Self.Variant { .checkers = Checkers(T).new(a, b) });
         }
 
-        pub fn textureMap(uv_pattern: UvPattern(T), uv_map: *const fn(Tuple(T)) [2]T) Self {
-            return Self.new(Self.Variant { .texture_map = TextureMap(T).new(uv_pattern, uv_map) });
+        pub fn textureMap(map: TextureMap(T)) Self {
+            return Self.new(Self.Variant { .texture_map = map });
         }
 
         /// Transforms a pattern relative to shape on which it lies.

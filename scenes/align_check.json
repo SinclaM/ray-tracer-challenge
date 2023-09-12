@@ -1,0 +1,179 @@
+{
+    "camera": {
+        "width": 800,
+        "height": 400,
+        "field-of-view": 0.8,
+        "from": [0, 0, -20],
+        "to": [0, 0, 0],
+        "up": [0, 1, 0]
+    },
+
+    "lights": [
+        {
+            "point-light": {
+                "position": [0, 100,-100],
+                "intensity": [0.25, 0.25, 0.25]
+            }
+        },
+        {
+            "point-light": {
+                "position": [0, -100, -100],
+                "intensity": [0.25, 0.25, 0.25]
+            }
+        },
+        {
+            "point-light": {
+                "position": [-100, 0, -100],
+                "intensity": [0.25, 0.25, 0.25]
+            }
+        },
+        {
+            "point-light": {
+                "position": [100, 0, -100],
+                "intensity": [0.25, 0.25, 0.25]
+            }
+        }
+    ],
+    
+    "shape-definitions": [
+        {
+            "name": "mapped-cube",
+            "value": {
+                "type": { "cube": {} },
+                "material": {
+                    "pattern": {
+                        "type": {
+                            "texture-map": {
+                                "cubic": {
+                                    "left": { 
+                                        "align-check": {
+                                            "central":      { "type": { "solid": [1, 1, 0]   } },
+                                            "upper-left":   { "type": { "solid": [0, 1, 1]   } },
+                                            "upper-right":  { "type": { "solid": [1, 0, 0]   } },
+                                            "bottom-left":  { "type": { "solid": [0, 0, 1]   } },
+                                            "bottom-right": { "type": { "solid": [1, 0.5, 0] } }
+                                        }
+                                    },
+                                    "front": { 
+                                        "align-check": {
+                                            "central":      { "type": { "solid": [0, 1, 1]   } },
+                                            "upper-left":   { "type": { "solid": [1, 0, 0]   } },
+                                            "upper-right":  { "type": { "solid": [1, 1, 0]   } },
+                                            "bottom-left":  { "type": { "solid": [1, 0.5, 0] } },
+                                            "bottom-right": { "type": { "solid": [0, 1, 0]   } }
+                                        }
+                                    },
+                                    "right": { 
+                                        "align-check": {
+                                            "central":      { "type": { "solid": [1, 0, 0] } },
+                                            "upper-left":   { "type": { "solid": [1, 1, 0] } },
+                                            "upper-right":  { "type": { "solid": [1, 0, 1] } },
+                                            "bottom-left":  { "type": { "solid": [0, 1, 0] } },
+                                            "bottom-right": { "type": { "solid": [1, 1, 1] } }
+                                        }
+                                    },
+                                    "back": { 
+                                        "align-check": {
+                                            "central":      { "type": { "solid": [0, 1, 0] } },
+                                            "upper-left":   { "type": { "solid": [1, 0, 1] } },
+                                            "upper-right":  { "type": { "solid": [0, 1, 1] } },
+                                            "bottom-left":  { "type": { "solid": [1, 1, 1] } },
+                                            "bottom-right": { "type": { "solid": [0, 0, 1] } }
+                                        }
+                                    },
+                                    "up": { 
+                                        "align-check": {
+                                            "central":      { "type": { "solid": [1, 0.5, 0] } },
+                                            "upper-left":   { "type": { "solid": [0, 1, 1]   } },
+                                            "upper-right":  { "type": { "solid": [1, 0, 1]   } },
+                                            "bottom-left":  { "type": { "solid": [1, 0, 0]   } },
+                                            "bottom-right": { "type": { "solid": [1, 1, 0]   } }
+                                        }
+                                    },
+                                    "down": { 
+                                        "align-check": {
+                                            "central":      { "type": { "solid": [1, 0, 1]   } },
+                                            "upper-left":   { "type": { "solid": [1, 0.5, 0] } },
+                                            "upper-right":  { "type": { "solid": [0, 1, 0]   } },
+                                            "bottom-left":  { "type": { "solid": [0, 0, 1]   } },
+                                            "bottom-right": { "type": { "solid": [1, 1, 1]   } }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "ambient": 0.2,
+                    "specular": 0.0,
+                    "diffuse": 0.8
+                }
+            }
+        }
+    ],
+    "objects": [
+        {
+           "type": { "from-definition" : "mapped-cube" },
+           "transform": [
+               { "rotate-y": 0.7854 },
+               { "rotate-x": 0.7854 },
+               { "translate": [-6, 2, 0] }
+            ]
+        },
+        {
+           "type": { "from-definition" : "mapped-cube" },
+           "transform": [
+               { "rotate-y": 2.3562 },
+               { "rotate-x": 0.7854 },
+               { "translate": [-2, 2, 0] }
+            ]
+        },
+        {
+           "type": { "from-definition" : "mapped-cube" },
+           "transform": [
+               { "rotate-y": 3.927 },
+               { "rotate-x": 0.7854 },
+               { "translate": [2, 2, 0] }
+            ]
+        },
+        {
+           "type": { "from-definition" : "mapped-cube" },
+           "transform": [
+               { "rotate-y": 5.4978 },
+               { "rotate-x": 0.7854 },
+               { "translate": [6, 2, 0] }
+            ]
+        },
+        {
+           "type": { "from-definition" : "mapped-cube" },
+           "transform": [
+               { "rotate-y": 0.7854 },
+               { "rotate-x": -0.7854 },
+               { "translate": [-6, -2, 0] }
+            ]
+        },
+        {
+           "type": { "from-definition" : "mapped-cube" },
+           "transform": [
+               { "rotate-y": 2.3562 },
+               { "rotate-x": -0.7854 },
+               { "translate": [-2, -2, 0] }
+            ]
+        },
+        {
+           "type": { "from-definition" : "mapped-cube" },
+           "transform": [
+               { "rotate-y": 3.927 },
+               { "rotate-x": -0.7854 },
+               { "translate": [2, -2, 0] }
+            ]
+        },
+        {
+           "type": { "from-definition" : "mapped-cube" },
+           "transform": [
+               { "rotate-y": 5.4978 },
+               { "rotate-x": -0.7854 },
+               { "translate": [6, -2, 0] }
+            ]
+        }
+    ]
+}

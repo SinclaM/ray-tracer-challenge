@@ -10,7 +10,7 @@ const Tuple = @import("../raytracer/tuple.zig").Tuple;
 const Matrix = @import("../raytracer/matrix.zig").Matrix;
 const Color = @import("../raytracer/color.zig").Color;
 const Shape = @import("../raytracer/shapes/shape.zig").Shape;
-const Mapping = @import("../raytracer/patterns/texture_map.zig").Mapping;
+const TextureMap = @import("../raytracer/patterns/texture_map.zig").TextureMap;
 const UvPattern = @import("../raytracer/patterns/texture_map.zig").UvPattern;
 const Pattern = @import("../raytracer/patterns/pattern.zig").Pattern;
 const Material = @import("../raytracer/material.zig").Material;
@@ -51,6 +51,13 @@ fn TransformConfig(comptime T: type) type {
 
 fn UvPatternConfig(comptime T: type) type {
     return union(enum) {
+        @"align-check": struct {
+            central: *PatternConfig(T),
+            @"upper-left": *PatternConfig(T),
+            @"upper-right": *PatternConfig(T),
+            @"bottom-left": *PatternConfig(T),
+            @"bottom-right": *PatternConfig(T),
+        },
         checkers: struct {
             width: T,
             height: T,
@@ -70,9 +77,18 @@ fn PatternConfig(comptime T: type) type {
             checkers: [2]*PatternConfig(T),
             perturb: *PatternConfig(T),
             blend: [2]*PatternConfig(T),
-            @"texture-map": *struct {
-                mapping: []const u8,
-                @"uv-pattern": UvPatternConfig(T),
+            @"texture-map": *union(enum) {
+                spherical: struct { @"uv-pattern": UvPatternConfig(T) },
+                planar: struct { @"uv-pattern": UvPatternConfig(T) },
+                cylindrical: struct { @"uv-pattern": UvPatternConfig(T) },
+                cubic: struct {
+                    front: UvPatternConfig(T),
+                    back: UvPatternConfig(T),
+                    left: UvPatternConfig(T),
+                    right: UvPatternConfig(T),
+                    up: UvPatternConfig(T),
+                    down: UvPatternConfig(T),
+                }
             },
         },
         transform: ?TransformConfig(T) = null,
@@ -207,6 +223,24 @@ fn parseTransform(comptime T: type, transform: TransformConfig(T)) Matrix(T, 4) 
 fn parseUvPattern(comptime T: type, allocator: Allocator, uv_pattern: UvPatternConfig(T)) !UvPattern(T) {
     const uv_pat = blk: {
         switch (uv_pattern) {
+            .@"align-check" => |align_check| {
+                const central = try allocator.create(Pattern(T));
+                central.* = try parsePattern(T, allocator, align_check.central.*);
+
+                const ul = try allocator.create(Pattern(T));
+                ul.* = try parsePattern(T, allocator, align_check.@"upper-left".*);
+
+                const ur = try allocator.create(Pattern(T));
+                ur.* = try parsePattern(T, allocator, align_check.@"upper-right".*);
+
+                const bl = try allocator.create(Pattern(T));
+                bl.* = try parsePattern(T, allocator, align_check.@"bottom-left".*);
+
+                const br = try allocator.create(Pattern(T));
+                br.* = try parsePattern(T, allocator, align_check.@"bottom-right".*);
+
+                break :blk UvPattern(T).uvAlignCheck(central, ul, ur, bl, br);
+            },
             .checkers => |c| {
                 const p1 = try allocator.create(Pattern(T));
                 p1.* = try parsePattern(T, allocator, c.patterns[0].*);
@@ -282,13 +316,29 @@ fn parsePattern(comptime T: type, allocator: Allocator, pattern: PatternConfig(T
                 break :blk Pattern(T).blend(p1, p2);
             },
             .@"texture-map" => |texture_map| {
-                const mapping = if (std.mem.eql(u8, texture_map.mapping, "spherical")) mapping: {
-                    break :mapping &Mapping(T).spherical;
-                } else {
-                    return SceneParseError.UnknownMapping;
-                };
-                const uv_pattern = try parseUvPattern(T, allocator, texture_map.@"uv-pattern");
-                break :blk Pattern(T).textureMap(uv_pattern, mapping);
+                switch (texture_map.*) {
+                    .spherical => |spherical| {
+                        const uv_pattern = try parseUvPattern(T, allocator, spherical.@"uv-pattern");
+                        break :blk Pattern(T).textureMap(TextureMap(T).spherical(uv_pattern));
+                    },
+                    .planar => |planar| {
+                        const uv_pattern = try parseUvPattern(T, allocator, planar.@"uv-pattern");
+                        break :blk Pattern(T).textureMap(TextureMap(T).planar(uv_pattern));
+                    },
+                    .cylindrical => |cylindrical| {
+                        const uv_pattern = try parseUvPattern(T, allocator, cylindrical.@"uv-pattern");
+                        break :blk Pattern(T).textureMap(TextureMap(T).cylindrical(uv_pattern));
+                    },
+                    .cubic => |cubic| {
+                        const front = try parseUvPattern(T, allocator, cubic.front);
+                        const back = try parseUvPattern(T, allocator, cubic.back);
+                        const left = try parseUvPattern(T, allocator, cubic.left);
+                        const right = try parseUvPattern(T, allocator, cubic.right);
+                        const up = try parseUvPattern(T, allocator, cubic.up);
+                        const down = try parseUvPattern(T, allocator, cubic.down);
+                        break :blk Pattern(T).textureMap(TextureMap(T).cubic(front, back, left, right, up, down));
+                    },
+                }
             },
         }
     };
