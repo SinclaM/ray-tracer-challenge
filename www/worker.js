@@ -57,7 +57,7 @@ const obj = {
                         console.log(`[Worker ${id}] ${consoleLogBuffer}`);
                         consoleLogBuffer = "";
                     },
-                    loadObjData: function (namePtr, nameLen) {
+                    loadFileData: function (namePtr, nameLen) {
                         name_ = wasm.getString(namePtr, Number(nameLen));
 
                         const data = userAddedObjs.get(name_);
@@ -66,7 +66,7 @@ const obj = {
                         }
 
                         const request = new XMLHttpRequest();
-                        request.open("GET", `obj/${name_}`, false);
+                        request.open("GET", `data/${name_}`, false);
                         request.send(null);
 
                         return wasm.encodeString(request.responseText);

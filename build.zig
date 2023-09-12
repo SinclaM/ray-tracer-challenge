@@ -38,7 +38,7 @@ pub fn build(b: *std.Build) void {
                 else => @panic("Unable to create www/scenes!")
             };
 
-            www.makeDir("obj") catch |err| switch (err) {
+            www.makeDir("data") catch |err| switch (err) {
                 error.PathAlreadyExists => {},
                 else => @panic("Unable to create www/scenes!")
             };
@@ -71,31 +71,30 @@ pub fn build(b: *std.Build) void {
             }
 
             {
-                // Copy all the obj files into www
-                var obj_src = std.fs.cwd().openDir("obj", .{}) catch @panic("Can't access obj!");
-                defer obj_src.close();
+                // Copy all the data files into www
+                var data_src = std.fs.cwd().openDir("data", .{}) catch @panic("Can't access data!");
+                defer data_src.close();
 
-                var obj_dest = www.openDir("obj", .{}) catch @panic("Can't access www/obj!");
-                defer obj_dest.close();
+                var data_dest = www.openDir("data", .{}) catch @panic("Can't access www/data!");
+                defer data_dest.close();
 
-                var iter_obj = std.fs.cwd().openIterableDir("obj", .{})
-                    catch @panic("Can't access obj for iteration!");
-                defer iter_obj.close();
+                var iter_data = std.fs.cwd().openIterableDir("data", .{})
+                    catch @panic("Can't access data for iteration!");
+                defer iter_data.close();
 
-                var iter = iter_obj.iterate();
+                var iter = iter_data.iterate();
                 while (true) {
-                    const entry = iter.next() catch @panic("Can't iterate through obj!");
+                    const entry = iter.next() catch @panic("Can't iterate through data!");
                     if (entry == null) {
                         break;
                     } else {
                         switch (entry.?.kind) {
-                            .file => obj_src.copyFile(entry.?.name, obj_dest, entry.?.name, .{})
-                                catch @panic("Can't copy obj!"),
+                            .file => data_src.copyFile(entry.?.name, data_dest, entry.?.name, .{})
+                                catch @panic("Can't copy data!"),
                             else => {},
                         }
                     }
                 }
-
             }
         }
     } else {

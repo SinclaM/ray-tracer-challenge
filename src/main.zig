@@ -10,11 +10,11 @@ const hexagon = @import("examples/hexagon.zig");
 
 const parseScene = @import("parsing/scene.zig").parseScene;
 
-fn loadObjData(allocator: std.mem.Allocator, file_name: []const u8) ![]const u8 {
-    var obj_dir = try std.fs.cwd().openDir("obj", .{});
-    defer obj_dir.close();
+fn loadFileData(allocator: std.mem.Allocator, file_name: []const u8) ![]const u8 {
+    var data_dir = try std.fs.cwd().openDir("data", .{});
+    defer data_dir.close();
 
-    return try obj_dir.readFileAlloc(
+    return try data_dir.readFileAlloc(
         allocator, file_name, std.math.pow(usize, 2, 32)
     );
 }
@@ -38,7 +38,9 @@ pub fn main() !void {
         "groups",
         "teapot",
         "dragons",
-        "nefertiti"
+        "nefertiti",
+        "align_check",
+        "earth"
     };
 
     // `raw_c_allocator` seems to play more nicely with Valgrind.
@@ -63,7 +65,7 @@ pub fn main() !void {
                 allocator, "scenes/" ++ scene ++ ".json", 65536
             );
             defer allocator.free(scene_data);
-            break :blk try parseScene(f64, arena_allocator, allocator, scene_data, &loadObjData);
+            break :blk try parseScene(f64, arena_allocator, allocator, scene_data, &loadFileData);
         };
 
         const camera = &scene_info.camera;

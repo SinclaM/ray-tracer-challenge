@@ -17,6 +17,7 @@ const Material = @import("../raytracer/material.zig").Material;
 const Light = @import("../raytracer/light.zig").Light;
 const World = @import("../raytracer/world.zig").World;
 const Camera = @import("../raytracer/camera.zig").Camera;
+const Canvas = @import("../raytracer/canvas.zig").Canvas;
 
 const ObjParser = @import("obj.zig").ObjParser;
 
@@ -62,6 +63,9 @@ fn UvPatternConfig(comptime T: type) type {
             width: T,
             height: T,
             patterns: [2]*PatternConfig(T),
+        },
+        image: struct {
+            file: []const u8,
         },
     };
 }
@@ -147,9 +151,14 @@ fn ObjectConfig(comptime T: type) type {
             casts_shadow: ?bool
         };
 
-        fn inherit(object: Self, allocator: Allocator, inherited: InheritedState(T)) !Info {
+        fn inherit(
+            object: Self,
+            allocator: Allocator,
+            inherited: InheritedState(T),
+            load_file_data: *const fn (allocator: Allocator, file_name: []const u8) anyerror![]const u8
+        ) !Info {
             const material = if (object.material) |mat| blk: {
-                break :blk try parseMaterial(T, allocator, mat, inherited.material);
+                break :blk try parseMaterial(T, allocator, mat, inherited.material, load_file_data);
             } else blk: {
                 break :blk inherited.material;
             };
@@ -220,42 +229,59 @@ fn parseTransform(comptime T: type, transform: TransformConfig(T)) Matrix(T, 4) 
     return matrix;
 }
 
-fn parseUvPattern(comptime T: type, allocator: Allocator, uv_pattern: UvPatternConfig(T)) !UvPattern(T) {
+fn parseUvPattern(
+    comptime T: type,
+    allocator: Allocator,
+    uv_pattern: UvPatternConfig(T),
+    load_file_data: *const fn (allocator: Allocator, file_name: []const u8) anyerror![]const u8
+) !UvPattern(T) {
     const uv_pat = blk: {
         switch (uv_pattern) {
             .@"align-check" => |align_check| {
                 const central = try allocator.create(Pattern(T));
-                central.* = try parsePattern(T, allocator, align_check.central.*);
+                central.* = try parsePattern(T, allocator, align_check.central.*, load_file_data);
 
                 const ul = try allocator.create(Pattern(T));
-                ul.* = try parsePattern(T, allocator, align_check.@"upper-left".*);
+                ul.* = try parsePattern(T, allocator, align_check.@"upper-left".*, load_file_data);
 
                 const ur = try allocator.create(Pattern(T));
-                ur.* = try parsePattern(T, allocator, align_check.@"upper-right".*);
+                ur.* = try parsePattern(T, allocator, align_check.@"upper-right".*, load_file_data);
 
                 const bl = try allocator.create(Pattern(T));
-                bl.* = try parsePattern(T, allocator, align_check.@"bottom-left".*);
+                bl.* = try parsePattern(T, allocator, align_check.@"bottom-left".*, load_file_data);
 
                 const br = try allocator.create(Pattern(T));
-                br.* = try parsePattern(T, allocator, align_check.@"bottom-right".*);
+                br.* = try parsePattern(T, allocator, align_check.@"bottom-right".*, load_file_data);
 
                 break :blk UvPattern(T).uvAlignCheck(central, ul, ur, bl, br);
             },
             .checkers => |c| {
                 const p1 = try allocator.create(Pattern(T));
-                p1.* = try parsePattern(T, allocator, c.patterns[0].*);
+                p1.* = try parsePattern(T, allocator, c.patterns[0].*, load_file_data);
 
                 const p2 = try allocator.create(Pattern(T));
-                p2.* = try parsePattern(T, allocator, c.patterns[1].*);
+                p2.* = try parsePattern(T, allocator, c.patterns[1].*, load_file_data);
                 break :blk UvPattern(T).uvCheckers(c.width, c.height, p1, p2);
-            }
+            },
+            .image => |image| {
+                const ppm = try load_file_data(allocator, image.file);
+                defer allocator.free(ppm);
+
+                const canvas = try Canvas(T).from_ppm(allocator, ppm);
+                break :blk UvPattern(T).uvImage(canvas);
+            },
         }
     };
 
     return uv_pat;
 }
 
-fn parsePattern(comptime T: type, allocator: Allocator, pattern: PatternConfig(T)) anyerror!Pattern(T) {
+fn parsePattern(
+    comptime T: type,
+    allocator: Allocator,
+    pattern: PatternConfig(T),
+    load_file_data: *const fn (allocator: Allocator, file_name: []const u8) anyerror![]const u8
+) anyerror!Pattern(T) {
     var pat = blk: {
         switch (pattern.@"type") {
             .solid => |buf| {
@@ -263,79 +289,79 @@ fn parsePattern(comptime T: type, allocator: Allocator, pattern: PatternConfig(T
             },
             .stripes => |buf| {
                 const p1 = try allocator.create(Pattern(T));
-                p1.* = try parsePattern(T, allocator, buf[0].*);
+                p1.* = try parsePattern(T, allocator, buf[0].*, load_file_data);
 
                 const p2 = try allocator.create(Pattern(T));
-                p2.* = try parsePattern(T, allocator, buf[1].*);
+                p2.* = try parsePattern(T, allocator, buf[1].*, load_file_data);
                 break :blk Pattern(T).stripes(p1, p2);
             },
             .rings => |buf| {
                 const p1 = try allocator.create(Pattern(T));
-                p1.* = try parsePattern(T, allocator, buf[0].*);
+                p1.* = try parsePattern(T, allocator, buf[0].*, load_file_data);
 
                 const p2 = try allocator.create(Pattern(T));
-                p2.* = try parsePattern(T, allocator, buf[1].*);
+                p2.* = try parsePattern(T, allocator, buf[1].*, load_file_data);
                 break :blk Pattern(T).rings(p1, p2);
             },
             .gradient => |buf| {
                 const p1 = try allocator.create(Pattern(T));
-                p1.* = try parsePattern(T, allocator, buf[0].*);
+                p1.* = try parsePattern(T, allocator, buf[0].*, load_file_data);
 
                 const p2 = try allocator.create(Pattern(T));
-                p2.* = try parsePattern(T, allocator, buf[1].*);
+                p2.* = try parsePattern(T, allocator, buf[1].*, load_file_data);
                 break :blk Pattern(T).gradient(p1, p2);
             },
             .@"radial-gradient" => |buf| {
                 const p1 = try allocator.create(Pattern(T));
-                p1.* = try parsePattern(T, allocator, buf[0].*);
+                p1.* = try parsePattern(T, allocator, buf[0].*, load_file_data);
 
                 const p2 = try allocator.create(Pattern(T));
-                p2.* = try parsePattern(T, allocator, buf[1].*);
+                p2.* = try parsePattern(T, allocator, buf[1].*, load_file_data);
                 break :blk Pattern(T).radialGradient(p1, p2);
             },
             .checkers => |buf| {
                 const p1 = try allocator.create(Pattern(T));
-                p1.* = try parsePattern(T, allocator, buf[0].*);
+                p1.* = try parsePattern(T, allocator, buf[0].*, load_file_data);
 
                 const p2 = try allocator.create(Pattern(T));
-                p2.* = try parsePattern(T, allocator, buf[1].*);
+                p2.* = try parsePattern(T, allocator, buf[1].*, load_file_data);
                 break :blk Pattern(T).checkers(p1, p2);
             },
             .perturb => |p| {
                 const p1 = try allocator.create(Pattern(T));
-                p1.* = try parsePattern(T, allocator, p.*);
+                p1.* = try parsePattern(T, allocator, p.*, load_file_data);
 
                 break :blk Pattern(T).perturb(p1, .{});
             },
             .blend => |buf| {
                 const p1 = try allocator.create(Pattern(T));
-                p1.* = try parsePattern(T, allocator, buf[0].*);
+                p1.* = try parsePattern(T, allocator, buf[0].*, load_file_data);
 
                 const p2 = try allocator.create(Pattern(T));
-                p2.* = try parsePattern(T, allocator, buf[1].*);
+                p2.* = try parsePattern(T, allocator, buf[1].*, load_file_data);
                 break :blk Pattern(T).blend(p1, p2);
             },
             .@"texture-map" => |texture_map| {
                 switch (texture_map.*) {
                     .spherical => |spherical| {
-                        const uv_pattern = try parseUvPattern(T, allocator, spherical.@"uv-pattern");
+                        const uv_pattern = try parseUvPattern(T, allocator, spherical.@"uv-pattern", load_file_data);
                         break :blk Pattern(T).textureMap(TextureMap(T).spherical(uv_pattern));
                     },
                     .planar => |planar| {
-                        const uv_pattern = try parseUvPattern(T, allocator, planar.@"uv-pattern");
+                        const uv_pattern = try parseUvPattern(T, allocator, planar.@"uv-pattern", load_file_data);
                         break :blk Pattern(T).textureMap(TextureMap(T).planar(uv_pattern));
                     },
                     .cylindrical => |cylindrical| {
-                        const uv_pattern = try parseUvPattern(T, allocator, cylindrical.@"uv-pattern");
+                        const uv_pattern = try parseUvPattern(T, allocator, cylindrical.@"uv-pattern", load_file_data);
                         break :blk Pattern(T).textureMap(TextureMap(T).cylindrical(uv_pattern));
                     },
                     .cubic => |cubic| {
-                        const front = try parseUvPattern(T, allocator, cubic.front);
-                        const back = try parseUvPattern(T, allocator, cubic.back);
-                        const left = try parseUvPattern(T, allocator, cubic.left);
-                        const right = try parseUvPattern(T, allocator, cubic.right);
-                        const up = try parseUvPattern(T, allocator, cubic.up);
-                        const down = try parseUvPattern(T, allocator, cubic.down);
+                        const front = try parseUvPattern(T, allocator, cubic.front, load_file_data);
+                        const back = try parseUvPattern(T, allocator, cubic.back, load_file_data);
+                        const left = try parseUvPattern(T, allocator, cubic.left, load_file_data);
+                        const right = try parseUvPattern(T, allocator, cubic.right, load_file_data);
+                        const up = try parseUvPattern(T, allocator, cubic.up, load_file_data);
+                        const down = try parseUvPattern(T, allocator, cubic.down, load_file_data);
                         break :blk Pattern(T).textureMap(TextureMap(T).cubic(front, back, left, right, up, down));
                     },
                 }
@@ -351,12 +377,16 @@ fn parsePattern(comptime T: type, allocator: Allocator, pattern: PatternConfig(T
 }
 
 fn parseMaterial(
-    comptime T: type, allocator: Allocator, material: MaterialConfig(T), inherited_material: ?Material(T)
+    comptime T: type,
+    allocator: Allocator,
+    material: MaterialConfig(T),
+    inherited_material: ?Material(T),
+    load_file_data: *const fn (allocator: Allocator, file_name: []const u8) anyerror![]const u8
 ) !Material(T) {
     var mat = inherited_material orelse Material(T).new();
 
     if (material.pattern) |pattern| {
-        mat.pattern = try parsePattern(T, allocator, pattern);
+        mat.pattern = try parsePattern(T, allocator, pattern, load_file_data);
     }
 
     mat.ambient = material.ambient orelse mat.ambient;
@@ -384,9 +414,9 @@ fn parseObject(
     object: ObjectConfig(T),
     inherited: InheritedState(T),
     definitions: StringHashMap(ObjectDefinitionConfig(T)),
-    load_obj_data: *const fn (allocator: Allocator, file_name: []const u8) anyerror![]const u8
+    load_file_data: *const fn (allocator: Allocator, file_name: []const u8) anyerror![]const u8
 ) !Shape(T) {
-    const info = try object.inherit(allocator, inherited);
+    const info = try object.inherit(allocator, inherited, load_file_data);
     var material = info.material;
     var transform = info.transform;
     var casts_shadow = info.casts_shadow;
@@ -412,7 +442,7 @@ fn parseObject(
                     def.value,
                     .{ .material = material, .transform = inherited.transform, .casts_shadow = casts_shadow},
                     definitions,
-                    load_obj_data
+                    load_file_data
                 );
                 const parent_state = .{
                     .material = parent.material,
@@ -420,7 +450,7 @@ fn parseObject(
                     .casts_shadow = parent.casts_shadow
                 };
 
-                const new = try object.inherit(allocator, parent_state);
+                const new = try object.inherit(allocator, parent_state, load_file_data);
                 material = new.material;
                 transform = new.transform;
                 casts_shadow = new.casts_shadow;
@@ -430,7 +460,7 @@ fn parseObject(
             }
         },
         .@"from-obj" => |from| blk: {
-            const obj = try load_obj_data(allocator, from.file);
+            const obj = try load_file_data(allocator, from.file);
             defer allocator.free(obj);
 
             var parser = try ObjParser(T).new(allocator);
@@ -475,7 +505,7 @@ fn parseObject(
                     child,
                     .{ .material = material, .casts_shadow = casts_shadow},
                     definitions,
-                    load_obj_data
+                    load_file_data
                 );
                 try g.addChild(s);
             }
@@ -523,7 +553,7 @@ pub fn parseScene(
     arena_allocator: Allocator,
     allocator: Allocator,
     scene_json: []const u8,
-    load_obj_data: *const fn (allocator: Allocator, file_name: []const u8) anyerror![]const u8
+    load_file_data: *const fn (allocator: Allocator, file_name: []const u8) anyerror![]const u8
 ) !SceneInfo(T) {
     const parsed = try std.json.parseFromSlice(SceneConfig(T), arena_allocator, scene_json, .{});
     defer parsed.deinit();
@@ -558,7 +588,7 @@ pub fn parseScene(
 
     for (parsed.value.objects) |object| {
         try world.objects.append(
-            try parseObject(T, allocator, object, .{}, definitions, load_obj_data)
+            try parseObject(T, allocator, object, .{}, definitions, load_file_data)
         );
     }
 

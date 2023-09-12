@@ -17,7 +17,7 @@ const Imports = struct {
     }
     extern fn jsConsoleLogWrite(ptr: [*]const u8, len: usize) void;
     extern fn jsConsoleLogFlush() void;
-    extern fn loadObjData(name_ptr: [*]const u8, name_len: usize) [*:0]const u8;
+    extern fn loadFileData(name_ptr: [*]const u8, name_len: usize) [*:0]const u8;
 };
 
 pub const Console = struct {
@@ -53,7 +53,7 @@ pub fn Renderer(comptime T: type) type {
 
             // Parse the scene description.
             const scene_info = try parseScene(
-                T, scene_arena.allocator(), allocator, scene, &Self.loadObjData
+                T, scene_arena.allocator(), allocator, scene, &Self.loadFileData
             );
 
             const pixels = try scene_arena.allocator().alloc(
@@ -89,10 +89,10 @@ pub fn Renderer(comptime T: type) type {
             }
         }
 
-        fn loadObjData(allocator: Allocator, file_name: []const u8) ![]const u8 {
+        fn loadFileData(allocator: Allocator, file_name: []const u8) ![]const u8 {
             _ = allocator;
 
-            const ptr = Imports.loadObjData(file_name.ptr, file_name.len);
+            const ptr = Imports.loadFileData(file_name.ptr, file_name.len);
             const obj = std.mem.span(ptr);
             return obj;
         }
