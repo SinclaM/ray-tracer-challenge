@@ -11,6 +11,7 @@ const clamp = @import("color.zig").clamp;
 pub fn Canvas(comptime T: type) type {
     return struct {
         const Self = @This();
+        pub const ParseError = error { InvalidMagicNumber, InvalidDimensions, InvalidScale };
 
         width: usize,
         height: usize,
@@ -26,6 +27,81 @@ pub fn Canvas(comptime T: type) type {
             }
 
             return .{ .width = width, .height = height, .pixels = pixels, .allocator = allocator };
+        }
+
+        pub fn from_ppm(allocator: Allocator, ppm_str: []const u8) !Self {
+            var lines = std.mem.tokenizeScalar(u8, ppm_str, '\n');
+
+            const first_line = lines.next();
+            if (first_line == null or !std.mem.eql(u8, first_line.?, "P3")) {
+                return Self.ParseError.InvalidMagicNumber;
+            }
+
+            var dimensions_line = lines.next() orelse { return Self.ParseError.InvalidDimensions; };
+            while (std.mem.startsWith(u8, dimensions_line, "#")) {
+                dimensions_line = lines.next() orelse { return Self.ParseError.InvalidDimensions; };
+            }
+
+            var dims = std.mem.tokenizeScalar(u8, dimensions_line, ' ');
+
+            const width = try std.fmt.parseInt(
+                usize, dims.next() orelse { return Self.ParseError.InvalidDimensions; }, 10
+            );
+
+            const height = try std.fmt.parseInt(
+                usize, dims.next() orelse { return Self.ParseError.InvalidDimensions; }, 10
+            );
+
+            if (dims.next()) |_| {
+                return Self.ParseError.InvalidDimensions;
+            }
+
+            var scale_line = lines.next() orelse { return Self.ParseError.InvalidScale; };
+            while (std.mem.startsWith(u8, scale_line, "#")) {
+                scale_line = lines.next() orelse { return Self.ParseError.InvalidScale; };
+            }
+
+            var scale_it = std.mem.tokenizeScalar(u8, scale_line, ' ');
+            const scale = try std.fmt.parseInt(
+                usize, scale_it.next() orelse { return Self.ParseError.InvalidScale; }, 10
+            );
+
+            if (scale_it.next()) |_| {
+                return Self.ParseError.InvalidScale;
+            }
+
+            var pixels = try std.ArrayList(Color(T)).initCapacity(allocator, width * height);
+            errdefer pixels.deinit();
+
+            var current_pixel = Color(T).new(0.0, 0.0, 0.0);
+            var current_channels_filled: u2 = 0;
+            while (lines.next()) |line| {
+                var tokens = std.mem.tokenizeScalar(u8, line, ' ');
+
+                if (tokens.peek() != null and std.mem.startsWith(u8, tokens.peek().?, "#")) {
+                    continue;
+                }
+
+                while (tokens.next()) |token| {
+                    const val = try std.fmt.parseFloat(T, token) / @as(T, @floatFromInt(scale));
+                    if (current_channels_filled == 0) {
+                        current_pixel.r = val;
+                    } else if (current_channels_filled == 1) {
+                        current_pixel.g = val;
+                    } else if (current_channels_filled == 2) {
+                        current_pixel.b = val;
+                        try pixels.append(current_pixel);
+                    }
+
+                    current_channels_filled = @mod(current_channels_filled + 1, 3);
+                }
+            }
+
+            if (pixels.items.len != width * height) {
+                return Self.ParseError.InvalidDimensions;
+            }
+
+            return .{ .width = width, .height = height, .pixels = try pixels.toOwnedSlice(), .allocator = allocator };
         }
 
         /// Frees the memory associated with the Canvas' pixels.
@@ -169,4 +245,123 @@ test "Canvas" {
     ;
 
     try testing.expectEqualStrings(expected_ppm2, ppm2);
+}
+
+test "Reading a file with the wrong magic number" {
+    const allocator = testing.allocator;
+    const ppm = 
+        \\P32
+        \\1 1
+        \\255
+        \\0 0 0
+    ;
+
+    try testing.expectError(Canvas(f32).ParseError.InvalidMagicNumber, Canvas(f32).from_ppm(allocator, ppm));
+}
+
+test "Reading a PPM returns a canvas of the right size" {
+    const allocator = testing.allocator;
+
+    const ppm = 
+        \\P3
+        \\10 2
+        \\255
+        \\0 0 0  0 0 0  0 0 0  0 0 0  0 0 0
+        \\0 0 0  0 0 0  0 0 0  0 0 0  0 0 0
+        \\0 0 0  0 0 0  0 0 0  0 0 0  0 0 0
+        \\0 0 0  0 0 0  0 0 0  0 0 0  0 0 0
+    ;
+
+    const canvas = try Canvas(f32).from_ppm(allocator, ppm);
+    defer canvas.destroy();
+
+    try testing.expectEqual(canvas.width, 10);
+    try testing.expectEqual(canvas.height, 2);
+}
+
+test "Reading pixel data from a PPM file" {
+    const allocator = testing.allocator;
+
+    const ppm = 
+        \\P3
+        \\4 3
+        \\255
+        \\255 127 0  0 127 255  127 255 0  255 255 255
+        \\0 0 0  255 0 0  0 255 0  0 0 255
+        \\255 255 0  0 255 255  255 0 255  127 127 127
+    ;
+
+    var canvas = try Canvas(f32).from_ppm(allocator, ppm);
+    defer canvas.destroy();
+
+    try testing.expect(canvas.getPixelPointer(0, 0).?.*.approxEqual(Color(f32).new(1, 0.49804, 0)));
+    try testing.expect(canvas.getPixelPointer(1, 0).?.*.approxEqual(Color(f32).new(0, 0.49804, 1)));
+    try testing.expect(canvas.getPixelPointer(2, 0).?.*.approxEqual(Color(f32).new(0.49804, 1, 0)));
+    try testing.expect(canvas.getPixelPointer(3, 0).?.*.approxEqual(Color(f32).new(1, 1, 1)));
+    try testing.expect(canvas.getPixelPointer(0, 1).?.*.approxEqual(Color(f32).new(0, 0, 0)));
+    try testing.expect(canvas.getPixelPointer(1, 1).?.*.approxEqual(Color(f32).new(1, 0, 0)));
+    try testing.expect(canvas.getPixelPointer(2, 1).?.*.approxEqual(Color(f32).new(0, 1, 0)));
+    try testing.expect(canvas.getPixelPointer(3, 1).?.*.approxEqual(Color(f32).new(0, 0, 1)));
+    try testing.expect(canvas.getPixelPointer(0, 2).?.*.approxEqual(Color(f32).new(1, 1, 0)));
+    try testing.expect(canvas.getPixelPointer(1, 2).?.*.approxEqual(Color(f32).new(0, 1, 1)));
+    try testing.expect(canvas.getPixelPointer(2, 2).?.*.approxEqual(Color(f32).new(1, 0, 1)));
+    try testing.expect(canvas.getPixelPointer(3, 2).?.*.approxEqual(Color(f32).new(0.49804, 0.49804, 0.49804)));
+}
+
+test "PPM parsing ignores comment lines" {
+    const allocator = testing.allocator;
+
+    const ppm = 
+        \\P3
+        \\# this is a comment
+        \\2 1
+        \\# this, too
+        \\255
+        \\# another comment
+        \\255 255 255
+        \\# oh, no, comments in the pixel data!
+        \\255 0 255
+    ;
+
+    var canvas = try Canvas(f32).from_ppm(allocator, ppm);
+    defer canvas.destroy();
+
+    try testing.expect(canvas.getPixelPointer(0, 0).?.*.approxEqual(Color(f32).new(1, 1, 1)));
+    try testing.expect(canvas.getPixelPointer(1, 0).?.*.approxEqual(Color(f32).new(1, 0, 1)));
+}
+
+test "PPM parsing allows an RGB triple to span lines" {
+    const allocator = testing.allocator;
+
+    const ppm = 
+        \\P3
+        \\1 1
+        \\255
+        \\51
+        \\153
+
+        \\204
+    ;
+
+    var canvas = try Canvas(f32).from_ppm(allocator, ppm);
+    defer canvas.destroy();
+
+    try testing.expect(canvas.getPixelPointer(0, 0).?.*.approxEqual(Color(f32).new(0.2, 0.6, 0.8)));
+}
+
+test "PPM parsing respects the scale setting" {
+    const allocator = testing.allocator;
+
+    const ppm = 
+        \\P3
+        \\2 2
+        \\100
+        \\100 100 100  50 50 50
+        \\75 50 25  0 0 0
+    ;
+
+    var canvas = try Canvas(f32).from_ppm(allocator, ppm);
+    defer canvas.destroy();
+
+    try testing.expect(canvas.getPixelPointer(0, 1).?.*.approxEqual(Color(f32).new(0.75, 0.5, 0.25)));
 }
