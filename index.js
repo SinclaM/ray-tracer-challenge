@@ -3,7 +3,7 @@ import * as Comlink from "./comlink.mjs";
 const canvas = document.getElementById("image-canvas");
 const textarea = document.getElementById("scene-description");
 const renderButton = document.getElementById("render");
-const addObjInput = document.getElementById("add-obj");
+const addFileInput = document.getElementById("add-file");
 const editor = ace.edit("scene-description");
 const sceneChoices = document.getElementById("scene-choices");
 const split = document.querySelector(".split");
@@ -77,10 +77,10 @@ for (let i = 0; i < NUM_WORKERS; i++) {
 
 // =============================================================================
 // ============================== RENDER LOGIC =================================
-const userAddedObjs = new Map();
-addObjInput.addEventListener("change", async () => {
-    const [file] = addObjInput.files;
-    userAddedObjs.set(file.name, await file.text());
+const userAddedFiles = new Map();
+addFileInput.addEventListener("change", async () => {
+    const [file] = addFileInput.files;
+    userAddedFiles.set(file.name, await file.text());
     notyf.success(`Added ${file.name}`);
 });
 
@@ -114,7 +114,7 @@ const render = async (skipInitDeinit, silentOnSuccess) => {
         let width = undefined;
         let height = undefined;
         try {
-            const dims = (await Promise.all(workers.map((obj, id) => obj.init(id, scene, userAddedObjs, dy))))[0];
+            const dims = (await Promise.all(workers.map((obj, id) => obj.init(id, scene, userAddedFiles, dy))))[0];
             rendererIsInitialized = true;
             width = dims.width;
             height = dims.height;

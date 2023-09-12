@@ -1,0 +1,68 @@
+{
+    "camera": {
+        "width": 800,
+        "height": 400,
+        "field-of-view": 0.8,
+        "from": [1, 2, -10],
+        "to": [0, 1.1, 0],
+        "up": [0, 1, 0]
+    },
+
+    "lights": [
+        {
+            "point-light": {
+                "position": [-100, 100, -100],
+                "intensity": [1, 1, 1]
+            }
+        }
+    ],
+
+    "objects": [
+        {
+           "type": { "plane" : {} },
+           "material": {
+               "pattern": { "type": { "solid": [1, 1, 1] } },
+               "diffuse": 0.1,
+               "ambient": 0,
+               "specular": 0,
+               "reflective": 0.4
+           }
+        },
+        {
+           "type": { "cylinder" : { "min": 0, "max": 0.1, "closed": true } },
+           "material": {
+               "pattern": { "type": { "solid": [1, 1, 1] } },
+               "diffuse": 0.2,
+               "ambient": 0,
+               "specular": 0,
+               "reflective": 0.1
+           }
+        },
+        {
+            "type": { "sphere" : {} },
+            "transform": [
+                { "rotate-y": 1.9 },
+                { "translate": [0, 1.1, 0] }
+            ],
+            "material": {
+                "pattern": {
+                    "type": {
+                        "texture-map": {
+                            "spherical": {
+                                "uv-pattern": {
+                                    "image": {
+                                        "file": "earthmap1k.ppm"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "diffuse": 0.9,
+                "specular": 0.1,
+                "shininess": 10,
+                "ambient": 0.1
+            }
+        }
+    ]
+}

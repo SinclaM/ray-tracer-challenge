@@ -3,7 +3,7 @@ importScripts("./comlink.js");
 const textDecoder = new TextDecoder();
 let consoleLogBuffer = "";
 let wasm = undefined;
-let userAddedObjs = undefined;
+let userAddedFiles = undefined;
 
 const obj = {
     id: undefined,
@@ -13,10 +13,10 @@ const obj = {
     pixels: undefined,
     userAddedObjs: undefined,
 
-    init: async function(id, scene, objs, dy) {
+    init: async function(id, scene, files, dy) {
         this.id = id;
         this.dy = dy;
-        userAddedObjs = objs;
+        userAddedFiles = files;
         if (typeof(wasm) == "undefined") {
             wasm = {
                 instance: undefined,
@@ -30,9 +30,18 @@ const obj = {
                     return textDecoder.decode(view);
                 },
                 // Convert a JavaScript string to a pointer to multi byte character array
-                encodeString: function (string) {
+                encodeString: function (string, optionalAllocatorPtr) {
                     const buffer = new TextEncoder().encode(string);
-                    const pointer = this.instance.exports.wasmAlloc(buffer.length + 1); // ask Zig to allocate memory
+
+                    let pointer = undefined;
+                    if (typeof(optionalAllocatorPtr) == "undefined") {
+                        pointer = this.instance.exports.wasmAlloc(buffer.length + 1);
+                    } else {
+                        pointer = this.instance.exports.wasmAllocWithAllocator(
+                            optionalAllocatorPtr, buffer.length + 1
+                        );
+                    }
+
                     const slice = new Uint8Array(
                         this.instance.exports.memory.buffer, // memory exported from Zig
                         pointer,
@@ -57,19 +66,19 @@ const obj = {
                         console.log(`[Worker ${id}] ${consoleLogBuffer}`);
                         consoleLogBuffer = "";
                     },
-                    loadObjData: function (namePtr, nameLen) {
+                    loadFileData: function (allocatorPtr, namePtr, nameLen) {
                         name_ = wasm.getString(namePtr, Number(nameLen));
 
-                        const data = userAddedObjs.get(name_);
+                        const data = userAddedFiles.get(name_);
                         if (typeof(data) != "undefined") {
-                            return wasm.encodeString(data);
+                            return wasm.encodeString(data, allocatorPtr);
                         }
 
                         const request = new XMLHttpRequest();
-                        request.open("GET", `obj/${name_}`, false);
+                        request.open("GET", `data/${name_}`, false);
                         request.send(null);
 
-                        return wasm.encodeString(request.responseText);
+                        return wasm.encodeString(request.responseText, allocatorPtr);
                     }
                 },
             };

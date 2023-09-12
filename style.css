@@ -40,7 +40,7 @@ body {
     margin-right: 30px;
 }
 
-#add-obj-label {
+#add-file-label {
     max-height: 5vh;
     max-width: 25vw;
     margin-right: 30px;
@@ -267,7 +267,7 @@ select:focus + .focus {
     border-radius: inherit;
 }
 
-#add-obj-label {
+#add-file-label {
     align-items: center;
     appearance: none;
     background-color: #fcfcfd;
@@ -299,18 +299,18 @@ select:focus + .focus {
     font-size: min(2vh, 2vw);
 }
 
-#add-obj-label:focus {
+#add-file-label:focus {
     box-shadow: #d6d6e7 0 0 0 1.5px inset, rgba(45, 35, 66, 0.4) 0 2px 4px,
         rgba(45, 35, 66, 0.3) 0 7px 13px -3px, #d6d6e7 0 -3px 0 inset;
 }
 
-#add-obj-label:hover {
+#add-file-label:hover {
     box-shadow: rgba(45, 35, 66, 0.4) 0 4px 8px,
         rgba(45, 35, 66, 0.3) 0 7px 13px -3px, #d6d6e7 0 -3px 0 inset;
     transform: translateY(-2px);
 }
 
-#add-obj-label:active {
+#add-file-label:active {
     box-shadow: #d6d6e7 0 3px 7px inset;
     transform: translateY(2px);
 }
