@@ -17,7 +17,7 @@ const Imports = struct {
     }
     extern fn jsConsoleLogWrite(ptr: [*]const u8, len: usize) void;
     extern fn jsConsoleLogFlush() void;
-    extern fn loadFileData(name_ptr: [*]const u8, name_len: usize) [*:0]const u8;
+    extern fn loadFileData(allocator: [*]const Allocator, name_ptr: [*]const u8, name_len: usize) [*:0]const u8;
 };
 
 pub const Console = struct {
@@ -90,9 +90,7 @@ pub fn Renderer(comptime T: type) type {
         }
 
         fn loadFileData(allocator: Allocator, file_name: []const u8) ![]const u8 {
-            _ = allocator;
-
-            const ptr = Imports.loadFileData(file_name.ptr, file_name.len);
+            const ptr = Imports.loadFileData(@ptrCast(&allocator), file_name.ptr, file_name.len);
             const obj = std.mem.span(ptr);
             return obj;
         }
@@ -163,6 +161,11 @@ pub fn panic(message: []const u8, _: ?*std.builtin.StackTrace, _: ?usize) noretu
 
 export fn wasmAlloc(length: usize) [*]const u8 {
     const slice = std.heap.wasm_allocator.alloc(u8, length) catch |err| @panic(@errorName(err));
+    return slice.ptr;
+}
+
+export fn wasmAllocWithAllocator(allocator: [*]const Allocator, length: usize) [*]const u8 {
+    const slice = allocator[0].alloc(u8, length) catch |err| @panic(@errorName(err));
     return slice.ptr;
 }
 

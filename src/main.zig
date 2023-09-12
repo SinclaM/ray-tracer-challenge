@@ -40,7 +40,8 @@ pub fn main() !void {
         "dragons",
         "nefertiti",
         "align_check",
-        "earth"
+        "earth",
+        "skybox"
     };
 
     // `raw_c_allocator` seems to play more nicely with Valgrind.

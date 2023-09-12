@@ -1,0 +1,73 @@
+{
+    "camera": {
+        "width": 800,
+        "height": 400,
+        "field-of-view": 1.2,
+        "from": [0, 0, 0],
+        "to": [0, 0, 5],
+        "up": [0, 1, 0]
+    },
+
+    "lights": [
+        {
+            "point-light": {
+                "position": [0, 100, 0],
+                "intensity": [1, 1, 1]
+            }
+        }
+    ],
+
+    "objects": [
+        {
+           "type": { "sphere" : {} },
+           "transform": [
+               { "scale": [0.75, 0.75, 0.75] },
+               { "translate": [0, 0, 5] }
+            ],
+           "material": {
+               "diffuse": 0.4,
+               "specular": 0.6,
+               "shininess": 20,
+               "reflective": 0.6,
+               "ambient": 0
+           }
+        },
+        {
+            "type": { "cube" : {} },
+            "transform": [
+                { "scale": [1000, 1000, 1000] }
+            ],
+            "material": {
+                "pattern": {
+                    "type": {
+                        "texture-map": {
+                            "cubic": {
+                                "left": {
+                                    "image": { "file": "lancelotti-negx.ppm" }
+                                },
+                                "right": {
+                                    "image": { "file": "lancelotti-posx.ppm" }
+                                },
+                                "front": {
+                                    "image": { "file": "lancelotti-posz.ppm" }
+                                },
+                                "back": {
+                                    "image": { "file": "lancelotti-negz.ppm" }
+                                },
+                                "up": {
+                                    "image": { "file": "lancelotti-posy.ppm" }
+                                },
+                                "down": {
+                                    "image": { "file": "lancelotti-negy.ppm" }
+                                }
+                            }
+                        }
+                    }
+                },
+                "diffuse": 0,
+                "specular": 0,
+                "ambient": 1
+            }
+        }
+    ]
+}

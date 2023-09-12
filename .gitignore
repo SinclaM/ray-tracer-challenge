@@ -4,4 +4,4 @@
 .DS_Store
 /www/*.wasm
 /www/scenes
-/www/obj
+/www/data
