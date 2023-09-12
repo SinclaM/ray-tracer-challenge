@@ -116,7 +116,7 @@ pub fn Camera(comptime T: type) type {
             for (0..camera.hsize) |x| {
                 const ray = camera.rayForPixel(x, y);
                 const color = world.colorAt(arena.allocator(), ray, 5) catch |err| @panic(@errorName(err));
-                image.getPixelPointer(x, y).?.* = color;
+                image.getPixelPointerMut(x, y).?.* = color;
                 _ = arena.reset(.retain_capacity);
             }
 

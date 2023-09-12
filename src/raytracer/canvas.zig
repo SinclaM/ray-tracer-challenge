@@ -113,7 +113,18 @@ pub fn Canvas(comptime T: type) type {
         /// `x`, `y` is out-of-bounds.
         ///
         /// Caller borrows the referent pixel mutably.
-        pub fn getPixelPointer(self: *Self, x: usize, y: usize) ?*Color(T) {
+        pub fn getPixelPointerMut(self: *Self, x: usize, y: usize) ?*Color(T) {
+            if (x >= self.width or y >= self.width) {
+                return null;
+            }
+            return &self.pixels[y * self.width + x];
+        }
+
+        /// Get's a pointer to the pixel at `x`, `y`. Returns `null` if
+        /// `x`, `y` is out-of-bounds.
+        ///
+        /// Caller borrows the referent pixel immutably.
+        pub fn getPixelPointer(self: Self, x: usize, y: usize) ?*const Color(T) {
             if (x >= self.width or y >= self.width) {
                 return null;
             }
@@ -204,9 +215,9 @@ test "Canvas" {
     var c = try Canvas(f32).new(testing.allocator, 5, 3);
     defer c.destroy();
 
-    c.getPixelPointer(0, 0).?.*.r = 1.5;
-    c.getPixelPointer(2, 1).?.*.g = 0.5;
-    c.getPixelPointer(4, 2).?.* = Color(f32).new(-0.5, 0.0, 1.0);
+    c.getPixelPointerMut(0, 0).?.*.r = 1.5;
+    c.getPixelPointerMut(2, 1).?.*.g = 0.5;
+    c.getPixelPointerMut(4, 2).?.* = Color(f32).new(-0.5, 0.0, 1.0);
 
     const ppm = try c.ppm(testing.allocator);
     defer testing.allocator.free(ppm);
@@ -291,7 +302,7 @@ test "Reading pixel data from a PPM file" {
         \\255 255 0  0 255 255  255 0 255  127 127 127
     ;
 
-    var canvas = try Canvas(f32).from_ppm(allocator, ppm);
+    const canvas = try Canvas(f32).from_ppm(allocator, ppm);
     defer canvas.destroy();
 
     try testing.expect(canvas.getPixelPointer(0, 0).?.*.approxEqual(Color(f32).new(1, 0.49804, 0)));
@@ -323,7 +334,7 @@ test "PPM parsing ignores comment lines" {
         \\255 0 255
     ;
 
-    var canvas = try Canvas(f32).from_ppm(allocator, ppm);
+    const canvas = try Canvas(f32).from_ppm(allocator, ppm);
     defer canvas.destroy();
 
     try testing.expect(canvas.getPixelPointer(0, 0).?.*.approxEqual(Color(f32).new(1, 1, 1)));
@@ -343,7 +354,7 @@ test "PPM parsing allows an RGB triple to span lines" {
         \\204
     ;
 
-    var canvas = try Canvas(f32).from_ppm(allocator, ppm);
+    const canvas = try Canvas(f32).from_ppm(allocator, ppm);
     defer canvas.destroy();
 
     try testing.expect(canvas.getPixelPointer(0, 0).?.*.approxEqual(Color(f32).new(0.2, 0.6, 0.8)));
@@ -360,7 +371,7 @@ test "PPM parsing respects the scale setting" {
         \\75 50 25  0 0 0
     ;
 
-    var canvas = try Canvas(f32).from_ppm(allocator, ppm);
+    const canvas = try Canvas(f32).from_ppm(allocator, ppm);
     defer canvas.destroy();
 
     try testing.expect(canvas.getPixelPointer(0, 1).?.*.approxEqual(Color(f32).new(0.75, 0.5, 0.25)));

@@ -39,7 +39,7 @@ pub fn simulate() !void {
         const y = @as(i32, @intCast(canvas.height - 1)) - @as(i32, @intFromFloat(proj.position.y));
 
         if (x > 0 and y > 0) {
-            if (canvas.getPixelPointer(@intCast(x), @intCast(y))) |pixel| {
+            if (canvas.getPixelPointerMut(@intCast(x), @intCast(y))) |pixel| {
                 pixel.* = Color(f32).new(1.0, 0.0, 0.0);
             }
         }

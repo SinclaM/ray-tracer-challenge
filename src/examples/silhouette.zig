@@ -40,7 +40,7 @@ pub fn drawSilhouette() !void {
             defer xs.deinit();
             sortIntersections(f32, xs.items);
             if (hit(f32, xs.items)) |_| {
-                canvas.getPixelPointer(x, y).?.* = Color(f32).new(1.0, 0.0, 0.0);
+                canvas.getPixelPointerMut(x, y).?.* = Color(f32).new(1.0, 0.0, 0.0);
             }
 
         }

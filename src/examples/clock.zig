@@ -18,7 +18,7 @@ pub fn drawHours() !void {
     const transform = Matrix(f32, 4).identity().rotateZ(pi / 6.0);
     var p = Tuple(f32).point(0.0, 45.0, 0.0);
     for (0..12) |_| {
-        canvas.getPixelPointer(
+        canvas.getPixelPointerMut(
             @intFromFloat(p.x + @as(f32, @floatFromInt(width / 2))),
             @intFromFloat(p.y + @as(f32, @floatFromInt(height / 2)))
         ).?.* = Color(f32).new(1.0, 1.0, 1.0);

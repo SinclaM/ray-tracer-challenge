@@ -1,8 +1,10 @@
 const std = @import("std");
 const testing = std.testing;
+
 const Tuple = @import("../tuple.zig").Tuple;
 const Color = @import("../color.zig").Color;
 const Pattern = @import("pattern.zig").Pattern;
+const Canvas = @import("../canvas.zig").Canvas;
 
 fn UvTestPattern(comptime T: type) type {
     return struct {
@@ -60,6 +62,25 @@ fn UvCheckers(comptime T: type) type {
     };
 }
 
+fn UvImage(comptime T: type) type {
+    return struct {
+        const Self = @This();
+
+        canvas: Canvas(T),
+
+        fn uvPatternAt(self: Self, u: T, v: T, object_point: Tuple(T)) Color(T) {
+            _ = object_point;
+
+            const v_flip = 1.0 - v;
+
+            const x = u * @as(T, @floatFromInt(self.canvas.width - 1));
+            const y = v_flip * @as(T, @floatFromInt(self.canvas.height - 1));
+
+            return self.canvas.getPixelPointer(@intFromFloat(@round(x)), @intFromFloat(@round(y))).?.*;
+        }
+    };
+}
+
 pub fn UvPattern(comptime T: type) type {
     return struct {
         const Self = @This();
@@ -68,6 +89,7 @@ pub fn UvPattern(comptime T: type) type {
             uv_align_check: UvAlignCheck(T),
             uv_checkers: UvCheckers(T),
             uv_test_pattern: UvTestPattern(T),
+            uv_image: UvImage(T),
         },
 
         pub fn uvTestPattern() Self {
@@ -100,6 +122,10 @@ pub fn UvPattern(comptime T: type) type {
                     .uv_checkers = .{ .width = width, .height = height, .a = a, .b = b }
                 }
             };
+        }
+
+        pub fn uvImage(canvas: Canvas(T)) Self {
+            return .{ .variant = .{ .uv_image = .{ .canvas = canvas } } };
         }
 
         fn uvPatternAt(self: Self, u: T, v: T, object_point: Tuple(T)) Color(T) {
@@ -486,4 +512,34 @@ test "Finding the colors on a mapped cube" {
     try testing.expectEqual(pattern.patternAt(Tuple(f32).point(0.9, -1, 0.9)),   green);
     try testing.expectEqual(pattern.patternAt(Tuple(f32).point(-0.9, -1, -0.9)), blue);
     try testing.expectEqual(pattern.patternAt(Tuple(f32).point(0.9, -1, -0.9)),  white);
+}
+
+test "Canvas-based checker pattern in 2D" {
+    const allocator = testing.allocator;
+
+    const ppm = 
+        \\P3
+        \\10 10
+        \\10
+        \\0 0 0  1 1 1  2 2 2  3 3 3  4 4 4  5 5 5  6 6 6  7 7 7  8 8 8  9 9 9
+        \\1 1 1  2 2 2  3 3 3  4 4 4  5 5 5  6 6 6  7 7 7  8 8 8  9 9 9  0 0 0
+        \\2 2 2  3 3 3  4 4 4  5 5 5  6 6 6  7 7 7  8 8 8  9 9 9  0 0 0  1 1 1
+        \\3 3 3  4 4 4  5 5 5  6 6 6  7 7 7  8 8 8  9 9 9  0 0 0  1 1 1  2 2 2
+        \\4 4 4  5 5 5  6 6 6  7 7 7  8 8 8  9 9 9  0 0 0  1 1 1  2 2 2  3 3 3
+        \\5 5 5  6 6 6  7 7 7  8 8 8  9 9 9  0 0 0  1 1 1  2 2 2  3 3 3  4 4 4
+        \\6 6 6  7 7 7  8 8 8  9 9 9  0 0 0  1 1 1  2 2 2  3 3 3  4 4 4  5 5 5
+        \\7 7 7  8 8 8  9 9 9  0 0 0  1 1 1  2 2 2  3 3 3  4 4 4  5 5 5  6 6 6
+        \\8 8 8  9 9 9  0 0 0  1 1 1  2 2 2  3 3 3  4 4 4  5 5 5  6 6 6  7 7 7
+        \\9 9 9  0 0 0  1 1 1  2 2 2  3 3 3  4 4 4  5 5 5  6 6 6  7 7 7  8 8 8
+    ;
+
+    const canvas = try Canvas(f32).from_ppm(allocator, ppm);
+    defer canvas.destroy();
+
+    const uv_pattern = UvPattern(f32).uvImage(canvas);
+
+    try testing.expect(uv_pattern.uvPatternAt(0.0, 0.0, undefined).approxEqual(Color(f32).new(0.9, 0.9, 0.9)));
+    try testing.expect(uv_pattern.uvPatternAt(0.3, 0.0, undefined).approxEqual(Color(f32).new(0.2, 0.2, 0.2)));
+    try testing.expect(uv_pattern.uvPatternAt(0.6, 0.3, undefined).approxEqual(Color(f32).new(0.1, 0.1, 0.1)));
+    try testing.expect(uv_pattern.uvPatternAt(1.0, 1.0, undefined).approxEqual(Color(f32).new(0.9, 0.9, 0.9)));
 }
