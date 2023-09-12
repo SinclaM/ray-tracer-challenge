@@ -74,7 +74,7 @@ You can find an interactive demo of this ray tracer online at [sinclam.github.io
 
 ## Performance profiling
 
-Although the ray tracer is not (yet) heavily optimized (e.g. is does not yet leverage Zig's SIMD builtins),
+Although the ray tracer is not (yet) heavily optimized (e.g. it does not yet leverage Zig's SIMD builtins),
 it is still very fast—faster in fact on a single thread than almost every other Ray Tracer Challenge implementation
 on multiple threads I've compared with. And there is still significant room for optimization.
 
@@ -83,7 +83,7 @@ The optimizations I do make are largely informed by profilers. When built for na
 [Valgrind's troubled state on macOS](https://www.reddit.com/r/cpp/comments/13n3tjt/i_find_its_not_possible_to_do_serious_cc_coding/),
 combined with [Zig's incomplete Valgrind support](https://github.com/ziglang/zig/issues/1837), means profiling is not
 always simple. For example, I've seen Valgrind erroneously run into `SIGILL` and the like. Using `std.heap.raw_c_allocator`
-seems to fix most of these issues.
+on native seems to fix most of these issues.
 
 The ray tracer currently runs about 2x slower on WebAssembly than on native, which is reasonable. I use Firefox's
 "performance" tab in the developer tools for profiling on the web.
