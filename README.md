@@ -29,7 +29,7 @@ You can find an interactive demo of this ray tracer online at [sinclam.github.io
 - [x] A1 - Rendering the Cover Image
 - [ ] Bonus Chapter - Rendering soft shadows
 - [x] Bonus Chapter - Bounding boxes and hierarchies
-- [ ] Bonus Chapter - Texture mapping
+- [x] Bonus Chapter - Texture mapping
 
 
 ## Examples
@@ -62,7 +62,15 @@ You can find an interactive demo of this ray tracer online at [sinclam.github.io
 
 <br/><br/>
 
-<img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/f1207f39-abed-4ccf-b7d2-8cc0bd073850 height=800> 
+<img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/f1207f39-abed-4ccf-b7d2-8cc0bd073850 height=800>
+
+<br/><br/>
+
+<img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/673121c1-905e-4e6f-b6ca-e7eea75c24db width=800> 
+
+<br/><br/>
+
+<img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/18d9d37d-a2f6-4e9e-a811-a0ecf5f8d69b width=800> 
 
 ## Performance profiling
 
