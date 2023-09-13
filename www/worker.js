@@ -116,7 +116,7 @@ const obj = {
         // Render in batches of `dy` rows.
         wasm.instance.exports.render(y0, this.dy);
 
-        const copy = this.pixels().slice();
+        const copy = this.pixels().slice(0, 4 * this.width * Math.min(this.dy, this.height - y0));
         return Comlink.transfer(copy, [copy.buffer]);
     },
     rotateCamera: function(angle) {

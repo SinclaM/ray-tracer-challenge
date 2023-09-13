@@ -86,6 +86,7 @@ addFileInput.addEventListener("change", async () => {
 
 const drawCanvas = (y0, dy, pixels) => {
     const height = Math.min(dy, canvas.height - y0);
+    console.log(pixels, canvas.width, height);
     const imageData = new ImageData(pixels, canvas.width, height);
 
     const ctx = canvas.getContext("2d");
@@ -239,10 +240,10 @@ window.addEventListener(
 
         switch (event.key) {
             case "ArrowDown":
-                moveCamera(-0.1, downArrow);
+                moveCamera(-1 / 9, downArrow);
                 break;
             case "ArrowUp":
-                moveCamera(0.1, upArrow);
+                moveCamera(1 / 10, upArrow);
                 break;
             case "ArrowLeft":
                 rotateCamera(Math.PI / 30.0, leftArrow);
