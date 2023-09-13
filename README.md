@@ -74,6 +74,17 @@ Earth texture from [https://planetpixelemporium.com/earth.html](https://planetpi
 
 Lancellotti Chapel texture from [http://www.humus.name/index.php?page=Textures](http://www.humus.name/index.php?page=Textures).
 
+## Building from source
+To build for native:
+```bash
+zig build -Doptimize=ReleaseFast
+```
+
+To target the web (populating `www/` with the all the site's files):
+```bash
+zig build -Dtarget=wasm32-freestanding -Doptimize=ReleaseFast -Dcpu=generic+bulk_memory+atomics+mutable_globals
+```
+
 ## Performance profiling
 
 Although the ray tracer is not (yet) heavily optimized (e.g. it does not yet leverage Zig's SIMD builtins),
@@ -94,7 +105,10 @@ I also use [hyperfine](https://github.com/sharkdp/hyperfine) for benchmarking.
 
 Performance on the website for complicated scenes can be seriously inhibited by memory consumption, since each web worker
 maintains its own complete copy of the scene information. It would be easy to simple share memory, using a `SharedArrayBuffer`
-for the WASM memory, but unfortunately Zig currently provides no support (or documentation) for this. 
+for the WASM memory, but unfortunately Zig currently provides no support (or documentation) for this. This problem becomes
+amplified on Chrome, which overestimates the amount of web workers that can run in parallel on my system, leading to
+even more inflated memory use and worse performance. At some point I'd like to add a slider for the number of web workers
+to use instead of just relying on `navigator.hardwareConcurrency`, which would help here.
 
 ## Benchmarks
 
