@@ -43,22 +43,22 @@
                         "texture-map": {
                             "cubic": {
                                 "left": {
-                                    "image": { "file": "lancelotti-negx.ppm" }
+                                    "image": { "file": "lancellotti-negx.ppm" }
                                 },
                                 "right": {
-                                    "image": { "file": "lancelotti-posx.ppm" }
+                                    "image": { "file": "lancellotti-posx.ppm" }
                                 },
                                 "front": {
-                                    "image": { "file": "lancelotti-posz.ppm" }
+                                    "image": { "file": "lancellotti-posz.ppm" }
                                 },
                                 "back": {
-                                    "image": { "file": "lancelotti-negz.ppm" }
+                                    "image": { "file": "lancellotti-negz.ppm" }
                                 },
                                 "up": {
-                                    "image": { "file": "lancelotti-posy.ppm" }
+                                    "image": { "file": "lancellotti-posy.ppm" }
                                 },
                                 "down": {
-                                    "image": { "file": "lancelotti-negy.ppm" }
+                                    "image": { "file": "lancellotti-negy.ppm" }
                                 }
                             }
                         }
