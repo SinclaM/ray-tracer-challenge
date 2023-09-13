@@ -92,6 +92,10 @@ The ray tracer currently runs about 2x slower on WebAssembly than on native, whi
 
 I also use [hyperfine](https://github.com/sharkdp/hyperfine) for benchmarking.
 
+Performance on the website for complicated scenes can be seriously inhibited by memory consumption, since each web worker
+maintains its own complete copy of the scene information. It would be easy to simple share memory, using a `SharedArrayBuffer`
+for the WASM memory, but unfortunately Zig currently provides no support (or documentation) for this. 
+
 ## Benchmarks
 
 Below are some benchmarks for scenes that can be found on the website. These benchmarks are not rigorously controlled
@@ -119,7 +123,7 @@ textures or construct BVHs.
 | Dragons                   | 500x200        | 6.991 s     | 17.011 s   |  4.324 s           |
 | Nefertiti                 | 300x500        | 4.630 s     | 10.578 s   |  7.039 s           |
 | Earth                     | 800x400        | 0.082 s     | 0.359 s    |  0.043 s           |
-| Skybox                    | 800x400        | 1.775 s     | 15.031 s   |  0.055 s           |
+| Skybox[^1]                | 800x400        | 1.775 s     | 15.031 s   |  0.055 s           |
 | Raytracer REPL Default    | 1280x720       | 0.138 s     | 0.142 s    |  0.140 s           |
 
 ## Other implementations
@@ -129,3 +133,5 @@ to verify my implementation, draw inspiration, or compare performance. I recomme
 * [graytracer](https://github.com/JarrodBegnoche/graytracer): fully-implemented, easy to setup, performant.
 * [The Raytracer Challenge REPL](https://raytracer.xyz/): online demo with amazing site design.
 * [RayTracerCPU](https://iliathoughts.com/posts/raytracer2/): very fast, helpful online demo.
+
+[^1]: The skybox for this scene is a hefty 240 MB, so the rendering time on the website is dominated by the time needed to download the skybox texture from the server.
