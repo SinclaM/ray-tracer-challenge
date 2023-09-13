@@ -29,19 +29,19 @@ pub fn main() !void {
     try hexagon.renderHexagon();
 
     const scenes_to_render = [_][]const u8 {
-        "ch11_reflection_and_refraction",
         "cover",
         "cubes",
         "cylinders",
-        "xyz",
+        "reflection_and_refraction",
         "fresnel",
         "groups",
         "teapot",
         "dragons",
         "nefertiti",
-        "align_check",
         "earth",
-        "skybox"
+        "skybox",
+        "xyz",
+        "align_check"
     };
 
     // `raw_c_allocator` seems to play more nicely with Valgrind.
