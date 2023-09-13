@@ -5,7 +5,7 @@ This project is a simple [Zig](https://ziglang.org/) implementation of the ray t
 
 You can find an interactive demo of this ray tracer online at [sinclam.github.io/ray-tracer-challenge](https://sinclam.github.io/ray-tracer-challenge).
 
-<img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/fc5406c2-5929-40a8-b3f1-6bacc19eb55e width=1200>
+<img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/d27b09c6-e915-415a-a640-371e10fb9169 width=1200>
 
 ## Status 
 
@@ -29,7 +29,7 @@ You can find an interactive demo of this ray tracer online at [sinclam.github.io
 - [x] A1 - Rendering the Cover Image
 - [ ] Bonus Chapter - Rendering soft shadows
 - [x] Bonus Chapter - Bounding boxes and hierarchies
-- [ ] Bonus Chapter - Texture mapping
+- [x] Bonus Chapter - Texture mapping
 
 
 ## Examples
@@ -62,11 +62,19 @@ You can find an interactive demo of this ray tracer online at [sinclam.github.io
 
 <br/><br/>
 
-<img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/f1207f39-abed-4ccf-b7d2-8cc0bd073850 height=800> 
+<img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/f1207f39-abed-4ccf-b7d2-8cc0bd073850 height=800>
+
+<br/><br/>
+
+<img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/673121c1-905e-4e6f-b6ca-e7eea75c24db width=800> 
+
+<br/><br/>
+
+<img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/18d9d37d-a2f6-4e9e-a811-a0ecf5f8d69b width=800> 
 
 ## Performance profiling
 
-Although the ray tracer is not (yet) heavily optimized (e.g. is does not yet leverage Zig's SIMD builtins),
+Although the ray tracer is not (yet) heavily optimized (e.g. it does not yet leverage Zig's SIMD builtins),
 it is still very fast—faster in fact on a single thread than almost every other Ray Tracer Challenge implementation
 on multiple threads I've compared with. And there is still significant room for optimization.
 
@@ -75,7 +83,7 @@ The optimizations I do make are largely informed by profilers. When built for na
 [Valgrind's troubled state on macOS](https://www.reddit.com/r/cpp/comments/13n3tjt/i_find_its_not_possible_to_do_serious_cc_coding/),
 combined with [Zig's incomplete Valgrind support](https://github.com/ziglang/zig/issues/1837), means profiling is not
 always simple. For example, I've seen Valgrind erroneously run into `SIGILL` and the like. Using `std.heap.raw_c_allocator`
-seems to fix most of these issues.
+on native seems to fix most of these issues.
 
 The ray tracer currently runs about 2x slower on WebAssembly than on native, which is reasonable. I use Firefox's
 "performance" tab in the developer tools for profiling on the web.
