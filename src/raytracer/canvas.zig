@@ -114,7 +114,7 @@ pub fn Canvas(comptime T: type) type {
         ///
         /// Caller borrows the referent pixel mutably.
         pub fn getPixelPointerMut(self: *Self, x: usize, y: usize) ?*Color(T) {
-            if (x >= self.width or y >= self.width) {
+            if (x >= self.width or y >= self.height) {
                 return null;
             }
             return &self.pixels[y * self.width + x];
@@ -125,7 +125,7 @@ pub fn Canvas(comptime T: type) type {
         ///
         /// Caller borrows the referent pixel immutably.
         pub fn getPixelPointer(self: Self, x: usize, y: usize) ?*const Color(T) {
-            if (x >= self.width or y >= self.width) {
+            if (x >= self.width or y >= self.height) {
                 return null;
             }
             return &self.pixels[y * self.width + x];
