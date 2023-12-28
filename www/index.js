@@ -86,7 +86,6 @@ addFileInput.addEventListener("change", async () => {
 
 const drawCanvas = (y0, dy, pixels) => {
     const height = Math.min(dy, canvas.height - y0);
-    console.log(pixels, canvas.width, height);
     const imageData = new ImageData(pixels, canvas.width, height);
 
     const ctx = canvas.getContext("2d");

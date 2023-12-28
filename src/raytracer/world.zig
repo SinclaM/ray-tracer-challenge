@@ -51,7 +51,7 @@ pub fn World(comptime T: type) type {
             try world.objects.append(sphere1);
             try world.objects.append(sphere2);
 
-            var light = Light(T).pointLight(
+            const light = Light(T).pointLight(
                 Tuple(T).point(-10.0, 10.0, -10.0),
                 Color(T).new(1.0, 1.0, 1.0)
             );
@@ -471,7 +471,7 @@ test "Coloring" {
         var w = try World(f32).default(allocator);
         defer w.destroy();
 
-        var outer = &w.objects.items[0];
+        const outer = &w.objects.items[0];
         outer.*.material.ambient = 1.0;
         var inner = &w.objects.items[1];
         inner.*.material.ambient = 1.0;

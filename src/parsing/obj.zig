@@ -30,7 +30,7 @@ pub fn ObjParser(comptime T: type) type {
         lines_ignored: usize,
 
         pub fn new(allocator: Allocator) !Self {
-            var default_group = try allocator.create(Shape(T));
+            const default_group = try allocator.create(Shape(T));
             default_group.* = try Shape(T).group(allocator);
 
             return .{
@@ -109,7 +109,7 @@ pub fn ObjParser(comptime T: type) type {
 
             var str = tokens.next();
             while (str) |next| : (str = tokens.next()) {
-                var current = try Self.handleFaceHelper(next);
+                const current = try Self.handleFaceHelper(next);
             
                 // Vertices are 1-indexed
                 const p1 = self.vertices.items[first.vertex_index - 1];
@@ -155,10 +155,10 @@ pub fn ObjParser(comptime T: type) type {
             // Ignore trailing items.
 
             // Copy the name string so that we own the memory.
-            var name = try self.allocator.alloc(u8, str.len);
+            const name = try self.allocator.alloc(u8, str.len);
             @memcpy(name, str);
 
-            var new_group = try Shape(T).group(self.allocator);
+            const new_group = try Shape(T).group(self.allocator);
 
             try self.default_group.addChild(new_group);
             const g = &self.default_group.variant.group.children.items[

@@ -21,7 +21,7 @@ pub fn Canvas(comptime T: type) type {
         /// Creates a new `Canvas` with dimensions `width` and `height`.
         /// Destroy with `destroy`.
         pub fn new(allocator: Allocator, width: usize, height: usize) !Self {
-            var pixels = try allocator.alloc(Color(T), width * height);
+            const pixels = try allocator.alloc(Color(T), width * height);
             for (pixels) |*pixel| {
                 pixel.* = Color(T).new(0.0, 0.0, 0.0);
             }

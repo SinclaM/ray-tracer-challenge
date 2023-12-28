@@ -12,7 +12,7 @@ const Light = @import("../raytracer/light.zig").Light;
 const Pattern = @import("../raytracer//patterns/pattern.zig").Pattern;
 
 pub fn drawSphere() !void {
-    comptime var canvas_size = 1000;
+    const canvas_size = 1000;
 
     const allocator = std.heap.c_allocator;
 

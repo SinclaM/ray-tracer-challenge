@@ -26,8 +26,8 @@ pub fn simulate() !void {
                               .wind = Tuple(f32).vec3(-0.01, 0.0, 0.0)};
 
 
-    comptime var width = 900;
-    comptime var height = 550;
+    const width = 900;
+    const height = 550;
 
     const allocator = std.heap.page_allocator;
 

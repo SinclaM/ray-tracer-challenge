@@ -10,7 +10,7 @@ const hit = @import("../raytracer/shapes/shape.zig").hit;
 const sortIntersections = @import("../raytracer/shapes/shape.zig").sortIntersections;
 
 pub fn drawSilhouette() !void {
-    comptime var canvas_size = 100;
+    const canvas_size = 100;
 
     const allocator = std.heap.c_allocator;
 

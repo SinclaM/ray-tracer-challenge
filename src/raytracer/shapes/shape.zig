@@ -128,7 +128,7 @@ pub fn Shape(comptime T: type) type {
         }
 
         pub fn worldToObject(self: *const Self, point: Tuple(T)) Tuple(T) {
-            var p = point;
+            const p = point;
         
             return self._inverse_transform.tupleMul(p);
         }
@@ -232,7 +232,7 @@ pub fn Shape(comptime T: type) type {
         pub fn group(allocator: Allocator) !Self {
             const children = ArrayList(Shape(T)).init(allocator);
 
-            var bbox = try allocator.create(Shape(T));
+            const bbox = try allocator.create(Shape(T));
             bbox.* = Shape(T).boundingBox();
 
             return Self.new(
@@ -404,9 +404,9 @@ fn TestShape(comptime T: type) type {
 }
 
 test "Id uniqueness" {
-    var s1 = Shape(f32).sphere();
-    var s2 = Shape(f32).sphere();
-    var s3 = Shape(f32).testShape();
+    const s1 = Shape(f32).sphere();
+    const s2 = Shape(f32).sphere();
+    const s3 = Shape(f32).testShape();
     try testing.expect(s1.id != s2.id);
     try testing.expect(s2.id != s3.id);
     try testing.expect(s3.id != s1.id);

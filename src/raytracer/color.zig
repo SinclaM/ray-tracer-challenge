@@ -21,9 +21,9 @@ pub fn Color(comptime T: type) type {
 
         /// Tests whether two `Color`s should be considered equal.
         pub inline fn approxEqual(self: Self, other: Self) bool {
-            return @fabs(self.r - other.r) < tolerance
-                and @fabs(self.g - other.g) < tolerance
-                and @fabs(self.b - other.b) < tolerance;
+            return @abs(self.r - other.r) < tolerance
+                and @abs(self.g - other.g) < tolerance
+                and @abs(self.b - other.b) < tolerance;
         }
 
         /// Adds two `Color`s elementwise.

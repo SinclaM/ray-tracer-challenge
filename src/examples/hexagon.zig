@@ -43,8 +43,8 @@ fn hexagonEdge(comptime T: type) !Shape(T) {
 
 fn hexagonSide(comptime T: type, allocator: Allocator) !Shape(T) {
     var side = try Shape(T).group(allocator);
-    var corner = try hexagonCorner(T);
-    var edge = try hexagonEdge(T);
+    const corner = try hexagonCorner(T);
+    const edge = try hexagonEdge(T);
 
     try side.addChild(corner);
     try side.addChild(edge);

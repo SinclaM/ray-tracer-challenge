@@ -193,9 +193,9 @@ pub fn TextureMap(comptime T: type) type {
             const Face = enum(u3) { front, back, left, right, up, down };
 
             fn faceFromPoint(point: Tuple(T)) Face {
-                const abs_x = @fabs(point.x);
-                const abs_y = @fabs(point.y);
-                const abs_z = @fabs(point.z);
+                const abs_x = @abs(point.x);
+                const abs_y = @abs(point.y);
+                const abs_z = @abs(point.z);
                 const coord = @max(abs_x, @max(abs_y, abs_z));
 
                 if (coord == point.x)  { return Face.right; }

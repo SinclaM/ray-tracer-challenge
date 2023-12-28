@@ -118,7 +118,7 @@ pub fn BoundingBox(comptime T: type) type {
             var tmin: T = 0.0;
             var tmax: T = 0.0;
 
-            if (@fabs(direction) >= epsilon) {
+            if (@abs(direction) >= epsilon) {
                 tmin = tmin_numerator / direction;
                 tmax = tmax_numerator / direction;
             } else {

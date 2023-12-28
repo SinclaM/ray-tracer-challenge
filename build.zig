@@ -17,18 +17,19 @@ pub fn build(b: *std.Build) void {
 
     if (target.cpu_arch) |arch| {
         if (arch == std.Target.Cpu.Arch.wasm32) {
-            const lib = b.addSharedLibrary(.{
+            const wasm_module = b.addExecutable(.{
                 .name = "ray-tracer-challenge",
                 .root_source_file = .{ .path = "src/lib.zig" },
                 .target = target,
                 .optimize = optimize,
             });
-            lib.rdynamic = true;
+            wasm_module.entry = .disabled;
+            wasm_module.rdynamic = true;
 
-            const install_lib = b.addInstallArtifact(
-                lib, .{ .dest_dir = .{ .override = .{ .custom = "../www/" } } }
+            const install_module = b.addInstallArtifact(
+                wasm_module, .{ .dest_dir = .{ .override = .{ .custom = "../www/" } } }
             );
-            b.getInstallStep().dependOn(&install_lib.step);
+            b.getInstallStep().dependOn(&install_module.step);
 
             var www = std.fs.cwd().openDir("www", .{}) catch @panic("Can't access www!");
             defer www.close();
@@ -51,7 +52,7 @@ pub fn build(b: *std.Build) void {
                 var scenes_dest = www.openDir("scenes", .{}) catch @panic("Can't access www/scenes!");
                 defer scenes_dest.close();
 
-                var iter_scenes = std.fs.cwd().openIterableDir("scenes", .{})
+                var iter_scenes = std.fs.cwd().openDir("scenes", .{ .iterate = true})
                     catch @panic("Can't access scenes for iteration!");
                 defer iter_scenes.close();
 
@@ -78,7 +79,7 @@ pub fn build(b: *std.Build) void {
                 var data_dest = www.openDir("data", .{}) catch @panic("Can't access www/data!");
                 defer data_dest.close();
 
-                var iter_data = std.fs.cwd().openIterableDir("data", .{})
+                var iter_data = std.fs.cwd().openDir("data", .{ .iterate = true })
                     catch @panic("Can't access data for iteration!");
                 defer iter_data.close();
 

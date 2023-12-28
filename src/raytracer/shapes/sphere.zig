@@ -77,7 +77,7 @@ test "Intersections" {
         try testing.expectEqual(xs.items.len, 2);
 
         const first  = xs.items[0];
-        var second = xs.items[1];
+        const second = xs.items[1];
         try testing.expectApproxEqAbs(first.t, 4.0, tolerance);
         try testing.expectApproxEqAbs(second.t, 6.0, tolerance);
         try testing.expectEqual(first.object, &s);
@@ -93,7 +93,7 @@ test "Intersections" {
         try testing.expectEqual(xs.items.len, 2);
 
         const first  = xs.items[0];
-        var second = xs.items[1];
+        const second = xs.items[1];
         try testing.expectApproxEqAbs(first.t, 5.0, tolerance);
         try testing.expectApproxEqAbs(second.t, 5.0, tolerance);
         try testing.expectEqual(first.object, &s);
@@ -117,8 +117,8 @@ test "Intersections" {
 
         try testing.expectEqual(xs.items.len, 2);
 
-        const first =  xs.items[0];
-        var second = xs.items[1];
+        const first  = xs.items[0];
+        const second = xs.items[1];
         try testing.expectApproxEqAbs(first.t, -1.0, tolerance);
         try testing.expectApproxEqAbs(second.t, 1.0, tolerance);
         try testing.expectEqual(first.object, &s);
@@ -134,7 +134,7 @@ test "Intersections" {
         try testing.expectEqual(xs.items.len, 2);
 
         const first  = xs.items[0];
-        var second = xs.items[1];
+        const second = xs.items[1];
         try testing.expectApproxEqAbs(first.t, -6.0, tolerance);
         try testing.expectApproxEqAbs(second.t, -4.0, tolerance);
         try testing.expectEqual(first.object, &s);
@@ -150,8 +150,8 @@ test "Intersections" {
 
         try testing.expectEqual(xs.items.len, 2);
 
-        const first =  xs.items[0];
-        var second = xs.items[1];
+        const first  = xs.items[0];
+        const second = xs.items[1];
         try testing.expectApproxEqAbs(first.t, 3.0, tolerance);
         try testing.expectApproxEqAbs(second.t, 7.0, tolerance);
         try testing.expectEqual(first.object, &s);

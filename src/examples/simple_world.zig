@@ -36,7 +36,7 @@ pub fn renderSimpleWorld() !void {
     left_wall.material.specular = 0.0;
     const solid_light_gray = Pattern(f64).solid(Color(f64).new(0.8, 0.8, 0.8));
     const solid_dark_gray = Pattern(f64).solid(Color(f64).new(0.2, 0.2, 0.2));
-    var gray_stripes = Pattern(f64).stripes(&solid_light_gray, &solid_dark_gray);
+    const gray_stripes = Pattern(f64).stripes(&solid_light_gray, &solid_dark_gray);
     left_wall.material.pattern = gray_stripes;
     try left_wall.material.pattern.setTransform(
         Matrix(f64, 4).identity().rotateY(pi / 2.0).scale(0.25, 0.25, 0.25)

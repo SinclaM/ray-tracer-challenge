@@ -511,7 +511,7 @@ fn parseObject(
             for (children) |child| {
                 // Groups will push their own transforms to their children when `setTransform`
                 // is called. We should not pass it as inherited state here.
-                var s = try parseObject(
+                const s = try parseObject(
                     T,
                     allocator,
                     arena_allocator,

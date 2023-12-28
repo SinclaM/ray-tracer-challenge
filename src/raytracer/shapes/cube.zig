@@ -30,7 +30,7 @@ pub fn Cube(comptime T: type) type {
             var tmin: T = 0.0;
             var tmax: T = 0.0;
 
-            if (@fabs(direction) >= epsilon) {
+            if (@abs(direction) >= epsilon) {
                 tmin = tmin_numerator / direction;
                 tmax = tmax_numerator / direction;
             } else {
@@ -82,9 +82,9 @@ pub fn Cube(comptime T: type) type {
             _ = self;
             _ = hit;
 
-            const abs_x = @fabs(point.x);
-            const abs_y = @fabs(point.y);
-            const abs_z = @fabs(point.z);
+            const abs_x = @abs(point.x);
+            const abs_y = @abs(point.y);
+            const abs_z = @abs(point.z);
             const maxc = @max(abs_x, @max(abs_y, abs_z));
 
             if (maxc == abs_x) {

@@ -7,8 +7,8 @@ const Tuple = @import("../raytracer/tuple.zig").Tuple;
 const Matrix = @import("../raytracer/matrix.zig").Matrix;
 
 pub fn drawHours() !void {
-    comptime var width = 100;
-    comptime var height = 100;
+    const width = 100;
+    const height = 100;
 
     const allocator = std.heap.c_allocator;
 

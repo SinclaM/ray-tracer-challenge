@@ -35,7 +35,7 @@ pub fn Cone(comptime T: type) type {
         }
 
         fn intersect_caps(cone: *const Shape(T), ray: Ray(T), xs: *Intersections(T)) !void {
-            if (!cone.variant.cone.closed or @fabs(ray.direction.y) < Self.tolerance) {
+            if (!cone.variant.cone.closed or @abs(ray.direction.y) < Self.tolerance) {
                 return;
             }
 
@@ -63,7 +63,7 @@ pub fn Cone(comptime T: type) type {
                         - 2.0 * ray.origin.y * ray.direction.y
                         + 2.0 * ray.origin.z * ray.direction.z;
 
-            if (@fabs(a) < Self.tolerance and @fabs(b) < Self.tolerance) {
+            if (@abs(a) < Self.tolerance and @abs(b) < Self.tolerance) {
                 // Ray misses
                 try Self.intersect_caps(super, ray, &xs);
                 return xs;
@@ -73,7 +73,7 @@ pub fn Cone(comptime T: type) type {
                         - ray.origin.y * ray.origin.y
                         + ray.origin.z * ray.origin.z;
 
-            if (@fabs(a) < Self.tolerance) {
+            if (@abs(a) < Self.tolerance) {
                 // This parallel ray intersects once with the surface...
                 try xs.append(Intersection(T).new(-c / (2.0 * b), super));
 
@@ -127,7 +127,7 @@ pub fn Cone(comptime T: type) type {
         }
 
         pub fn bounds(self: Self) Shape(T) {
-            const limit = @max(@fabs(self.min), @fabs(self.max));
+            const limit = @max(@abs(self.min), @abs(self.max));
 
             var box = Shape(T).boundingBox();
             box.variant.bounding_box.min = Tuple(T).point(-limit, self.min, -limit);
