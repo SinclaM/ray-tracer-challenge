@@ -1,4 +1,3 @@
-import * as Comlink from "./comlink.mjs";
 // ============================== DOM ELEMENTS =================================
 const canvas = document.getElementById("image-canvas");
 const textarea = document.getElementById("scene-description");
@@ -66,31 +65,105 @@ sceneChoices.addEventListener("change", async (event) => {
 });
 // =============================================================================
 // ================================= WORKERS ===================================
-const NUM_WORKERS = navigator.hardwareConcurrency;
+const exports = {
+    startInitRenderer: Module.cwrap("startInitRenderer", null, ["string", "number"]),
+    tryFinishInitRenderer: Module.cwrap("tryFinishInitRenderer", "number", []),
+    initRendererIsOk: Module.cwrap("initRendererIsOk", "number", []),
+    initRendererGetPixels: Module.cwrap("initRendererGetPixels", "number", []),
+    initRendererGetWidth: Module.cwrap("initRendererGetWidth", "number", []),
+    initRendererGetHeight: Module.cwrap("initRendererGetHeight", "number", []),
+    initRendererGetErr: Module.cwrap("initRendererGetErr", "string", []),
+    startRender: Module.cwrap("startRender", null, []),
+    tryFinishRender: Module.cwrap("tryFinishRender", "number", []),
+    rotateCamera: Module.cwrap("rotateCamera", null, ["number"]),
+    moveCamera: Module.cwrap("moveCamera", null, ["number"]),
+    deinitRenderer: Module.cwrap("deinitRenderer", null, []),
+};
 
-const workers = [];
-for (let i = 0; i < NUM_WORKERS; i++) {
-    const worker = new Worker("worker.js");
-    const obj = Comlink.wrap(worker);
-    workers.push(obj);
+const waitForCondition = (condition, pollInterval, action) => {
+    const waitFor = (result) => {
+        if (result) {
+            return result;
+        }
+        return new Promise((resolve) => setTimeout(resolve, pollInterval))
+            .then(() => Promise.resolve(condition()))
+            .then((res) => {
+                action();
+                return waitFor(res);
+            });
+    }
+
+    return waitFor();
 }
 
+const renderInterface = {
+    pixels: undefined,
+
+    init: async function(scene) {
+        // Tell the WASM code to initialize the renderer.
+        exports.startInitRenderer(scene, navigator.hardwareConcurrency);
+
+        // Dumb heuristic. Scenes referencing files (meshes, texture maps)
+        // are likely to take longer to initialize.
+        const initPollInterval = scene.includes("\"file\"") ? 100 : 10;
+
+        await waitForCondition(exports.tryFinishInitRenderer, initPollInterval, () => {});
+
+        // If there was an error, bail out.
+        if (!exports.initRendererIsOk()) {
+            const errorName = exports.initRendererGetErr();
+            throw new Error(errorName);
+        } else {
+            const pixelsPtr = exports.initRendererGetPixels();
+            const width = exports.initRendererGetWidth();
+            const height = exports.initRendererGetHeight();
+
+            // FIXME: this sometimes fails?
+            this.pixels = () => new Uint8ClampedArray(
+                Module.HEAPU8.buffer,
+                pixelsPtr,
+                width * height * 4
+            );
+
+            return { width, height };
+        }
+    },
+    render: async function() {
+        exports.startRender();
+
+        await waitForCondition(
+            exports.tryFinishRender,
+            100,
+            () => drawCanvas(0, canvas.height, renderInterface.pixels())
+        );
+    },
+    rotateCamera: exports.rotateCamera,
+    moveCamera: exports.moveCamera,
+    deinit: exports.deinitRenderer,
+};
 // =============================================================================
 // ============================== RENDER LOGIC =================================
-const userAddedFiles = new Map();
 addFileInput.addEventListener("change", async () => {
     const [file] = addFileInput.files;
-    userAddedFiles.set(file.name, await file.text());
+
+    const fr = new FileReader();
+    fr.onload = () => {
+        const data = new Uint8Array(fr.result);
+        Module["FS_createDataFile"]("/", file.name, data, true, true, true);
+    };
+
+    fr.readAsArrayBuffer(file);
+
     notyf.success(`Added ${file.name}`);
 });
 
 const drawCanvas = (y0, dy, pixels) => {
     const height = Math.min(dy, canvas.height - y0);
-    const imageData = new ImageData(pixels, canvas.width, height);
+    const imageData = new ImageData(pixels.slice(), canvas.width, height);
 
     const ctx = canvas.getContext("2d");
     ctx.putImageData(imageData, 0, y0);
-}
+};
 
 let rendering = false;
 let rendererIsInitialized = false;
@@ -101,12 +174,9 @@ const render = async (skipInitDeinit, silentOnSuccess) => {
     const renderStart = window.performance.now();
 
     if (rendererIsInitialized && !skipInitDeinit) {
-        await Promise.all(workers.map((obj) => obj.deinit()));
+        renderInterface.deinit();
         rendererIsInitialized = false;
     }
-
-    // We will render in batches of `dy` rows.
-    const dy = 10;
 
     if (!skipInitDeinit) {
         const scene = editor.getValue();
@@ -114,12 +184,12 @@ const render = async (skipInitDeinit, silentOnSuccess) => {
         let width = undefined;
         let height = undefined;
         try {
-            const dims = (await Promise.all(workers.map((obj, id) => obj.init(id, scene, userAddedFiles, dy))))[0];
+            const dims = await renderInterface.init(scene);
             rendererIsInitialized = true;
             width = dims.width;
             height = dims.height;
         } catch (error) {
-            console.error(`Unable to initialize renderer: ${error.message}.`)
+            console.error(error);
             notyf.error(`Unable to initialize renderer: ${error.message}.`);
             rendering = false;
             return;
@@ -129,34 +199,7 @@ const render = async (skipInitDeinit, silentOnSuccess) => {
         canvas.height = height;
     }
 
-    let jobs = [];
-    for (let y0 = 0; y0 < canvas.height; y0 += dy) {
-        jobs.push({ y0, dy });
-    }
-
-    // Shuffle the batching order to make the image "fade-in" (kind of)
-    // rather than simply rendering top-down or bottom-up.
-    //
-    // There's not much reason for this particular order, I just think it
-    // looks nice.
-    const m = 6 * dy;
-    const n = 3;
-    jobs.sort((a, b) => (a.y0 % m) - (b.y0 % m) + ((a.y0 + b.y0) % n));
-    jobs = jobs.reverse();
-
-    async function helper(obj) {
-        return new Promise(async (resolve) => {
-            const job = jobs.pop();
-            if (typeof(job) != "undefined") {
-                const pixels = await obj.render(job.y0);
-                drawCanvas(job.y0, job.dy, pixels);
-                await helper(obj);
-            }
-            resolve();
-        });
-    }
-    await Promise.all(workers.map((obj) => helper(obj)));
-
+    await renderInterface.render();
     const renderFinised = window.performance.now();
 
     if (!silentOnSuccess) {
@@ -164,7 +207,6 @@ const render = async (skipInitDeinit, silentOnSuccess) => {
         console.log(message);
         notyf.success(message);
     }
-
 
     rendering = false;
 };
@@ -197,7 +239,9 @@ const render = async (skipInitDeinit, silentOnSuccess) => {
         }
     });
 
-    renderButton.click();
+    Module["onRuntimeInitialized"] = () => {
+        renderButton.click();
+    };
 })();
 // =============================================================================
 // ========================== ARROW KEYS INTERACTIVITY =========================
@@ -207,7 +251,7 @@ const rotateCamera = async (angle, keyElement) => {
     if (!handlingMove && !rendering) {
         handlingMove = true;
         keyElement.classList.add("press");
-        await Promise.all(workers.map((obj) => obj.rotateCamera(angle)));
+        renderInterface.rotateCamera(angle);
         await render(true, true);
         keyElement.classList.remove("press");
         handlingMove = false;
@@ -218,7 +262,7 @@ const moveCamera = async (distance, keyElement) => {
     if (!handlingMove && !rendering) {
         handlingMove = true;
         keyElement.classList.add("press");
-        await Promise.all(workers.map((obj) => obj.moveCamera(distance)));
+        renderInterface.moveCamera(distance);
         await render(true, true);
         keyElement.classList.remove("press");
         handlingMove = false;
@@ -259,4 +303,4 @@ window.addEventListener(
     },
     true,
 );
-// =============================================================================
+ //=============================================================================

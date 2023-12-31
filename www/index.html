@@ -16,13 +16,18 @@
                 <a href="https://github.com/SinclaM/ray-tracer-challenge">
                     <img id="github-image" src="github-logo.png" alt="" />
                 </a>
-                <div id="header-title">The Ray Tracer Challenge <span style="color: #f7a41e">(in Zig)</span></div>
+                <div id="header-title">
+                    The Ray Tracer Challenge
+                    <span style="color: #f7a41e">(in Zig)</span>
+                </div>
                 <div id="scene-choices" class="select">
                     <select id="standard-select">
+                        <option value="cylinders.json">Cylinders</option>
                         <option value="cover.json">Cover Scene</option>
                         <option value="cubes.json">Cubes</option>
-                        <option value="cylinders.json">Cylinders</option>
-                        <option value="reflection_and_refraction.json">Reflection and Refraction</option>
+                        <option value="reflection_and_refraction.json">
+                            Reflection and Refraction
+                        </option>
                         <option value="fresnel.json">Fresnel</option>
                         <option value="groups.json">Groups</option>
                         <option value="teapot.json">Teapot</option>
@@ -38,7 +43,12 @@
                 <label for="add-file" id="add-file-label">
                     Add File<span class="plus-sign">+</span>
                 </label>
-                <input id="add-file" type="file" accept=".obj,.ppm" style="display: none"/>
+                <input
+                    id="add-file"
+                    type="file"
+                    accept=".obj,.ppm"
+                    style="display: none"
+                />
                 <button id="render" role="button">Render</button>
             </div>
             <div class="split">
@@ -48,7 +58,8 @@
                 <div id="split-1">
                     <canvas id="image-canvas"></canvas>
                     <div class="arrow-key-container">
-                        <div class="arrow-key up" data-key="38"></div><br>
+                        <div class="arrow-key up" data-key="38"></div>
+                        <br />
                         <div class="arrow-key left" data-key="37"></div>
                         <div class="arrow-key down" data-key="40"></div>
                         <div class="arrow-key right" data-key="39"></div>
@@ -80,6 +91,10 @@
             charset="utf-8"
         ></script>
         <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
-        <script type="module" src="index.js"></script>
+        <script>
+            var Module = {};
+        </script>
+        <script src="ray-tracer-challenge.js"></script>
+        <script src="index.js"></script>
     </body>
 </html>
