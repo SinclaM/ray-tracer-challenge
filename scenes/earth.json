@@ -51,7 +51,7 @@
                             "spherical": {
                                 "uv-pattern": {
                                     "image": {
-                                        "file": "earthmap1k.ppm"
+                                        "file": "earthmap1k.png"
                                     }
                                 }
                             }
