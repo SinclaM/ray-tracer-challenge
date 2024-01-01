@@ -2,6 +2,8 @@ const std = @import("std");
 const print = std.debug.print;
 const testing = std.testing;
 
+const zigimg = @import("zigimg");
+
 const Allocator = std.mem.Allocator;
 const Color = @import("color.zig").Color;
 const clamp = @import("color.zig").clamp;
@@ -27,6 +29,20 @@ pub fn Canvas(comptime T: type) type {
             }
 
             return .{ .width = width, .height = height, .pixels = pixels, .allocator = allocator };
+        }
+
+        pub fn from_image(allocator: Allocator, image: zigimg.Image) !Self {
+            var canvas = try Self.new(allocator, image.width, image.height);
+            errdefer canvas.destroy();
+
+            var i: usize = 0;
+            var iter = image.iterator();
+            while (iter.next()) |color| {
+                canvas.pixels[i] = Color(T).new(color.r, color.g, color.b);
+                i += 1;
+            }
+
+            return canvas;
         }
 
         pub fn from_ppm(allocator: Allocator, ppm_str: []const u8) !Self {
@@ -129,6 +145,34 @@ pub fn Canvas(comptime T: type) type {
                 return null;
             }
             return &self.pixels[y * self.width + x];
+        }
+
+        pub fn to_image(self: *const Self, allocator: Allocator) !zigimg.Image {
+            var image = zigimg.Image.init(allocator);
+            errdefer image.deinit(); // result.pixels is initialized to invalid,
+                                     // which is not freed during Image.deinit.
+                                     // So no need to worry about freeing unallocated pixels
+                                     // if PixelStorage.init fails.
+
+            image.width = self.width;
+            image.height = self.height;
+
+            image.pixels = try zigimg.color.PixelStorage.init(
+                allocator, zigimg.PixelFormat.rgb24, self.width * self.height
+            );
+
+            for (0..image.height) |row| {
+                for (0..image.width) |column| {
+                    const i = row * image.width + column;
+                    image.pixels.rgb24[i] = .{
+                        .r = clamp(T, self.pixels[i].r),
+                        .g = clamp(T, self.pixels[i].g),
+                        .b = clamp(T, self.pixels[i].b),
+                    };
+                }
+            }
+
+            return image;
         }
 
         /// Dumps a `Canvas` in the PPM image format.

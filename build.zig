@@ -16,6 +16,11 @@ pub fn build(b: *std.Build) !void {
     // set a preferred release mode, allowing the user to decide how to optimize.
     const optimize = b.standardOptimizeOption(.{});
 
+    const zigimg = b.dependency("zigimg", .{
+        .target = target,
+        .optimize = optimize,
+    });
+
     if (target.cpu_arch) |arch| {
         if (arch == std.Target.Cpu.Arch.wasm32) {
             const lib = b.addStaticLibrary(.{
@@ -33,6 +38,8 @@ pub fn build(b: *std.Build) !void {
             lib.shared_memory = true;
             lib.single_threaded = false;
             lib.bundle_compiler_rt = true;
+
+            lib.addModule("zigimg", zigimg.module("zigimg"));
 
             if (b.sysroot == null) {
                 @panic("pass '--sysroot \"[path to emsdk]/upstream/emscripten\"'");
@@ -60,7 +67,7 @@ pub fn build(b: *std.Build) !void {
             emcc_command.addArgs(&[_][]const u8{
                 "-o",
                 "www" ++ std.fs.path.sep_str ++ "ray-tracer-challenge.js",
-                "--preload-file",
+                "--embed-file",
                 "data@/",
                 "--no-entry",
                 "-pthread",
@@ -149,6 +156,8 @@ pub fn build(b: *std.Build) !void {
             .optimize = optimize,
         });
 
+        exe.addModule("zigimg", zigimg.module("zigimg"));
+
         // This declares intent for the executable to be installed into the
         // standard location when the user invokes the "install" step (the default
         // step when running `zig build`).
@@ -186,6 +195,8 @@ pub fn build(b: *std.Build) !void {
         .target = target,
         .optimize = optimize,
     });
+
+    unit_tests.addModule("zigimg", zigimg.module("zigimg"));
 
     const run_unit_tests = b.addRunArtifact(unit_tests);
 

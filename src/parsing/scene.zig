@@ -6,6 +6,8 @@ const json = std.json;
 const Allocator = std.mem.Allocator;
 const StringHashMap = std.StringHashMap;
 
+const zigimg = @import("zigimg");
+
 const Tuple = @import("../raytracer/tuple.zig").Tuple;
 const Matrix = @import("../raytracer/matrix.zig").Matrix;
 const Color = @import("../raytracer/color.zig").Color;
@@ -266,10 +268,13 @@ fn parseUvPattern(
                 break :blk UvPattern(T).uvCheckers(c.width, c.height, p1, p2);
             },
             .image => |image| {
-                const ppm = try load_file_data(allocator, image.file);
-                defer allocator.free(ppm);
+                const mem = try load_file_data(allocator, image.file);
+                defer allocator.free(mem);
 
-                const canvas = try Canvas(T).from_ppm(arena_allocator, ppm);
+                var im = try zigimg.Image.fromMemory(allocator, mem);
+                defer im.deinit();
+
+                const canvas = try Canvas(T).from_image(arena_allocator, im);
                 break :blk UvPattern(T).uvImage(canvas);
             },
         }

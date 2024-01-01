@@ -91,15 +91,9 @@ pub fn renderHexagon() !void {
     const canvas = try camera.render(allocator, world);
     defer canvas.destroy();
 
-    const ppm = try canvas.ppm(allocator);
-    defer allocator.free(ppm);
+    var image = try canvas.to_image(allocator);
+    defer image.deinit();
 
-    const file = try std.fs.cwd().createFile(
-        "images/hexagon.ppm",
-        .{ .read = true },
-    );
-    defer file.close();
-
-    _ = try file.writeAll(ppm);
+    try image.writeToFilePath("images" ++ std.fs.path.sep_str ++ "hexagon.png", .{ .png = .{} });
 }
 
