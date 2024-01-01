@@ -11,14 +11,23 @@ const Tuple = @import("raytracer/tuple.zig").Tuple;
 const Matrix = @import("raytracer/matrix.zig").Matrix;
 
 const Libc = struct {
+    // Zig's `std.c` includes some libc functions (fopen, fclose, fread), but others
+    // are missing (fseek, ftell).
+
     const EOF = -1; // in musl (and glibc)
-    extern fn fopen(pathname: [*:0]const c_char, mode: [*:0]const c_char) ?*anyopaque;
-    extern fn fclose(stream: *anyopaque) c_int;
-    extern fn feof(stream: *anyopaque) c_int;
-    extern fn fgetc(stream: *anyopaque) c_int;
+    const SEEK_END = 2;
+    const FILE = opaque{};
+    extern fn fopen(noalias pathname: [*:0]const c_char, noalias mode: [*:0]const c_char) ?*FILE;
+    extern fn fclose(stream: *FILE) c_int;
+    extern fn fseek(stream: *FILE, offset: c_long, whence: c_int) c_int;
+    extern fn rewind(stream: *FILE) void;
+    extern fn ftell(stream: *FILE) c_long;
+    extern fn fread(noalias ptr: *anyopaque, size: usize, nitems: usize, noalias stream: *FILE) usize;
 };
 
 fn readFile(allocator: Allocator, pathname: []const u8) ![]u8 {
+    // Must read files using linked libc functions explicitly. Zig's
+    // stdlib fileop functions do not seem to be functional yet with emscripten.
     var pathnameZ = try allocator.alloc(u8, pathname.len + 1);
     defer allocator.free(pathnameZ);
 
@@ -29,17 +38,28 @@ fn readFile(allocator: Allocator, pathname: []const u8) ![]u8 {
     const f = maybe_f orelse { return error.CannotOpenFile; };
     defer { _ = Libc.fclose(f); }
 
-    var string = std.ArrayList(u8).init(allocator);
-
-    // TODO: this is so slow, switch to fread.
-    while (Libc.feof(f) == 0) {
-        const c = Libc.fgetc(f);
-        if (c != Libc.EOF) {
-            try string.append(@intCast(c));
-        }
+    // fseek(file, 0, SEEK_END) is technically UB. C'est la vie.
+    const fseek_ret = Libc.fseek(f, 0, Libc.SEEK_END);
+    if (fseek_ret != 0) {
+        return error.CannotSeekFile;
     }
 
-    return try string.toOwnedSlice();
+    const fsize = Libc.ftell(f);
+    if (fsize == -1) {
+        return error.CannotGetFileSize;
+    }
+
+    Libc.rewind(f);
+
+    const string = try allocator.alloc(u8, @intCast(fsize));
+    errdefer allocator.free(string);
+
+    const fread_ret = Libc.fread(string.ptr, @intCast(fsize), 1, f);
+    if (fread_ret != 1) {
+        return error.CannotReadFile;
+    }
+
+    return string;
 }
 
 pub fn Renderer(comptime T: type) type {

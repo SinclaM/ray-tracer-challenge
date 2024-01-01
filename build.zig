@@ -24,7 +24,7 @@ pub fn build(b: *std.Build) !void {
                 .target = .{
                     .cpu_arch = .wasm32,
                     .cpu_model = .{ .explicit = &std.Target.wasm.cpu.mvp },
-                    .cpu_features_add = std.Target.wasm.featureSet(&.{ .atomics, .bulk_memory }),
+                    .cpu_features_add = std.Target.wasm.featureSet(&.{ .atomics, .bulk_memory, .simd128 }),
                     .os_tag = .emscripten,
                 },
                 .optimize = optimize,

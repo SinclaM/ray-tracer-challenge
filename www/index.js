@@ -117,10 +117,14 @@ const renderInterface = {
             const pixelsPtr = exports.initRendererGetPixels();
             const width = exports.initRendererGetWidth();
             const height = exports.initRendererGetHeight();
+            console.log(width, height);
 
-            // FIXME: this sometimes fails?
+            // Must use wasmMemory.buffer instead of Module.HEAPU8.buffer.
+            // Even though the emscripten docs say that canonical views like HEAPU8
+            // are refreshed when memory grows, this does not seem to actually be
+            // true.
             this.pixels = () => new Uint8ClampedArray(
-                Module.HEAPU8.buffer,
+                wasmMemory.buffer,
                 pixelsPtr,
                 width * height * 4
             );
@@ -134,7 +138,7 @@ const renderInterface = {
         await waitForCondition(
             exports.tryFinishRender,
             100,
-            () => drawCanvas(0, canvas.height, renderInterface.pixels())
+            () => drawCanvas(0, canvas.height, renderInterface.pixels)
         );
     },
     rotateCamera: exports.rotateCamera,
@@ -159,7 +163,7 @@ addFileInput.addEventListener("change", async () => {
 
 const drawCanvas = (y0, dy, pixels) => {
     const height = Math.min(dy, canvas.height - y0);
-    const imageData = new ImageData(pixels.slice(), canvas.width, height);
+    const imageData = new ImageData(pixels().slice(), canvas.width, height);
 
     const ctx = canvas.getContext("2d");
     ctx.putImageData(imageData, 0, y0);
