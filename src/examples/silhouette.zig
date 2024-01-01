@@ -46,14 +46,8 @@ pub fn drawSilhouette() !void {
         }
     }
 
-    const ppm = try canvas.ppm(allocator);
-    defer allocator.free(ppm);
+    var image = try canvas.to_image(allocator);
+    defer image.deinit();
 
-    const file = try std.fs.cwd().createFile(
-        "images/silhouette.ppm",
-        .{ .read = true },
-    );
-    defer file.close();
-
-    _ = try file.writeAll(ppm);
+    try image.writeToFilePath("images" ++ std.fs.path.sep_str ++ "silhouette.png", .{ .png = .{} });
 }
