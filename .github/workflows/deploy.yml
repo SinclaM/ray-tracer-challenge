@@ -24,11 +24,19 @@ jobs:
         with:
           zig-version: master
 
+      - name: Install Emscripten 🔧
+        run: |
+          curl -O https://codeload.github.com/emscripten-core/emsdk/tar.gz/refs/tags/3.1.51
+          tar xzf 3.1.51
+          cd emsdk-3.1.51
+          ./emsdk install latest
+          ./emsdk activate latest
+
       - name: Run tests 📊
         run: zig build test
 
       - name: Build 🏗️
-        run: zig build -Dtarget=wasm32-freestanding -Doptimize=ReleaseFast -Dcpu=generic+bulk_memory+atomics+mutable_globals
+        run: zig build --sysroot emsdk-3.1.51/upstream/emscripten -Dtarget=wasm32-emscripten -Doptimize=ReleaseFast && sed -i'' -e 's/_emscripten_return_address,/() => {},/g' www/ray-tracer-challenge.js
 
       - name: Deploy to GH Pages 🚀
         uses: peaceiris/actions-gh-pages@v3
