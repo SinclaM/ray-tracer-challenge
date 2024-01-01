@@ -35,7 +35,7 @@ pub fn Cylinder(comptime T: type) type {
         }
 
         fn intersect_caps(cyl: *const Shape(T), ray: Ray(T), xs: *Intersections(T)) !void {
-            if (!cyl.variant.cylinder.closed or @fabs(ray.direction.y) < Self.tolerance) {
+            if (!cyl.variant.cylinder.closed or @abs(ray.direction.y) < Self.tolerance) {
                 return;
             }
 
@@ -57,7 +57,7 @@ pub fn Cylinder(comptime T: type) type {
 
             var xs = Intersections(T).init(allocator);
 
-            if (@fabs(a) < Self.tolerance) {
+            if (@abs(a) < Self.tolerance) {
                 // Ray is parallel to y-axis
                 try Self.intersect_caps(super, ray, &xs);
                 return xs;

@@ -6,6 +6,8 @@ const json = std.json;
 const Allocator = std.mem.Allocator;
 const StringHashMap = std.StringHashMap;
 
+const zigimg = @import("zigimg");
+
 const Tuple = @import("../raytracer/tuple.zig").Tuple;
 const Matrix = @import("../raytracer/matrix.zig").Matrix;
 const Color = @import("../raytracer/color.zig").Color;
@@ -266,10 +268,13 @@ fn parseUvPattern(
                 break :blk UvPattern(T).uvCheckers(c.width, c.height, p1, p2);
             },
             .image => |image| {
-                const ppm = try load_file_data(allocator, image.file);
-                defer allocator.free(ppm);
+                const mem = try load_file_data(allocator, image.file);
+                defer allocator.free(mem);
 
-                const canvas = try Canvas(T).from_ppm(arena_allocator, ppm);
+                var im = try zigimg.Image.fromMemory(allocator, mem);
+                defer im.deinit();
+
+                const canvas = try Canvas(T).from_image(arena_allocator, im);
                 break :blk UvPattern(T).uvImage(canvas);
             },
         }
@@ -511,7 +516,7 @@ fn parseObject(
             for (children) |child| {
                 // Groups will push their own transforms to their children when `setTransform`
                 // is called. We should not pass it as inherited state here.
-                var s = try parseObject(
+                const s = try parseObject(
                     T,
                     allocator,
                     arena_allocator,

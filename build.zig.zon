@@ -1,0 +1,16 @@
+.{
+    .name = "ray-tracer-challenge",
+    .version = "0.0.0",
+    .dependencies = .{
+        .zigimg = .{
+            .url = "https://github.com/zigimg/zigimg/archive/b510787f9908ef704c9292768988a3d4c864d41c.tar.gz",
+            .hash = "1220e4f559ea449f13383e34b1102e6e1befd6f59a5a9538f823613546b4876e8706",
+        },
+    },
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "README.md",
+        "src",
+    },
+}

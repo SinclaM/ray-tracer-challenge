@@ -152,7 +152,7 @@ test "Adding a child to a group" {
     var g = try Shape(f32).group(allocator);
     defer g.variant.group.destroy();
 
-    var s = Shape(f32).testShape();
+    const s = Shape(f32).testShape();
 
     try g.addChild(s);
 
@@ -180,7 +180,7 @@ test "Intersecting a ray with an nonempty group" {
     var g = try Shape(f32).group(allocator);
     defer g.variant.group.destroy();
 
-    var s1 = Shape(f32).sphere();
+    const s1 = Shape(f32).sphere();
     var s2 = Shape(f32).sphere();
     try s2.setTransform(Matrix(f32, 4).identity().translate(0.0, 0.0, -3.0));
     var s3 = Shape(f32).sphere();
@@ -347,7 +347,7 @@ test "Subdividing a group with too few children" {
     var s3 = Shape(f32).sphere();
     try s3.setTransform(Matrix(f32, 4).identity().translate(2.0, -1.0, 0.0));
 
-    var s4 = Shape(f32).sphere();
+    const s4 = Shape(f32).sphere();
 
     var subgroup = try Shape(f32).group(allocator);
     try subgroup.addChild(s1);

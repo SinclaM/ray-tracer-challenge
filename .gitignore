@@ -5,3 +5,4 @@
 /www/*.wasm
 /www/scenes
 /www/data
+/www/ray-tracer-challenge.*

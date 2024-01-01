@@ -34,7 +34,7 @@ pub fn Triangle(comptime T: type) type {
             const dir_cross_e2 = ray.direction.cross(self.e2);
             const det = self.e1.dot(dir_cross_e2);
 
-            if (@fabs(det) < Self.tolerance) {
+            if (@abs(det) < Self.tolerance) {
                 // The ray is parallel and misses.
                 return xs;
             }
@@ -230,7 +230,7 @@ pub fn SmoothTriangle(comptime T: type) type {
             const dir_cross_e2 = ray.direction.cross(self.e2);
             const det = self.e1.dot(dir_cross_e2);
 
-            if (@fabs(det) < Self.tolerance) {
+            if (@abs(det) < Self.tolerance) {
                 // The ray is parallel and misses.
                 return xs;
             }

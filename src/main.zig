@@ -1,4 +1,5 @@
 const std = @import("std");
+const zigimg = @import("zigimg");
 
 const projectile = @import("examples/projectile.zig");
 const clock = @import("examples/clock.zig");
@@ -88,16 +89,9 @@ pub fn main() !void {
         defer canvas.destroy();
 
         // Get the PPM data.
-        const ppm = try canvas.ppm(allocator);
-        defer allocator.free(ppm);
+        var image = try canvas.to_image(allocator);
+        defer image.deinit();
 
-        // Save the image.
-        const file = try std.fs.cwd().createFile(
-            "images/" ++ scene ++ ".ppm",
-            .{ .read = true },
-        );
-        defer file.close();
-
-        _ = try file.writeAll(ppm);
+        try image.writeToFilePath("images" ++ std.fs.path.sep_str ++ scene ++ ".png", .{ .png = .{} });
     }
 }

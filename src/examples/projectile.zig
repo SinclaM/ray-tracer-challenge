@@ -26,8 +26,8 @@ pub fn simulate() !void {
                               .wind = Tuple(f32).vec3(-0.01, 0.0, 0.0)};
 
 
-    comptime var width = 900;
-    comptime var height = 550;
+    const width = 900;
+    const height = 550;
 
     const allocator = std.heap.page_allocator;
 
@@ -47,15 +47,9 @@ pub fn simulate() !void {
         env.tick(&proj);
     }
 
-    const ppm = try canvas.ppm(allocator);
-    defer allocator.free(ppm);
+    var image = try canvas.to_image(allocator);
+    defer image.deinit();
 
-    const file = try std.fs.cwd().createFile(
-        "images/projectile.ppm",
-        .{ .read = true },
-    );
-    defer file.close();
-
-    _ = try file.writeAll(ppm);
+    try image.writeToFilePath("images" ++ std.fs.path.sep_str ++ "projectile.png", .{ .png = .{} });
 }
 

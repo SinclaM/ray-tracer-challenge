@@ -10,33 +10,57 @@ const clamp = @import("raytracer/color.zig").clamp;
 const Tuple = @import("raytracer/tuple.zig").Tuple;
 const Matrix = @import("raytracer/matrix.zig").Matrix;
 
-const Imports = struct {
-    extern "env" fn _throwError(pointer: [*]const u8, length: u32) noreturn;
-    pub fn throwError(message: []const u8) noreturn {
-        _throwError(message.ptr, message.len);
-    }
-    extern fn jsConsoleLogWrite(ptr: [*]const u8, len: usize) void;
-    extern fn jsConsoleLogFlush() void;
-    extern fn loadFileData(allocator: [*]const Allocator, name_ptr: [*]const u8, name_len: usize) [*:0]const u8;
+const Libc = struct {
+    // Zig's `std.c` includes some libc functions (fopen, fclose, fread), but others
+    // are missing (fseek, ftell).
+
+    const EOF = -1; // in musl (and glibc)
+    const SEEK_END = 2;
+    const FILE = opaque{};
+    extern fn fopen(noalias pathname: [*:0]const c_char, noalias mode: [*:0]const c_char) ?*FILE;
+    extern fn fclose(stream: *FILE) c_int;
+    extern fn fseek(stream: *FILE, offset: c_long, whence: c_int) c_int;
+    extern fn rewind(stream: *FILE) void;
+    extern fn ftell(stream: *FILE) c_long;
+    extern fn fread(noalias ptr: *anyopaque, size: usize, nitems: usize, noalias stream: *FILE) usize;
 };
 
-pub const Console = struct {
-    pub const Logger = struct {
-        pub const Error = error{};
-        pub const Writer = std.io.Writer(void, Error, write);
+fn readFile(allocator: Allocator, pathname: []const u8) ![]u8 {
+    // Must read files using linked libc functions explicitly. Zig's
+    // stdlib fileop functions do not seem to be functional yet with emscripten.
+    var pathnameZ = try allocator.alloc(u8, pathname.len + 1);
+    defer allocator.free(pathnameZ);
 
-        fn write(_: void, bytes: []const u8) Error!usize {
-            Imports.jsConsoleLogWrite(bytes.ptr, bytes.len);
-            return bytes.len;
-        }
-    };
+    std.mem.copyForwards(u8, pathnameZ, pathname);
+    pathnameZ[pathname.len] = 0;
 
-    const logger = Logger.Writer{ .context = {} };
-    pub fn log(comptime format: []const u8, args: anytype) void {
-        logger.print(format, args) catch return;
-        Imports.jsConsoleLogFlush();
+    const maybe_f = Libc.fopen(@ptrCast(pathnameZ.ptr), @ptrCast("rb"));
+    const f = maybe_f orelse { return error.CannotOpenFile; };
+    defer { _ = Libc.fclose(f); }
+
+    // fseek(file, 0, SEEK_END) is technically UB. C'est la vie.
+    const fseek_ret = Libc.fseek(f, 0, Libc.SEEK_END);
+    if (fseek_ret != 0) {
+        return error.CannotSeekFile;
     }
-};
+
+    const fsize = Libc.ftell(f);
+    if (fsize == -1) {
+        return error.CannotGetFileSize;
+    }
+
+    Libc.rewind(f);
+
+    const string = try allocator.alloc(u8, @intCast(fsize));
+    errdefer allocator.free(string);
+
+    const fread_ret = Libc.fread(string.ptr, @intCast(fsize), 1, f);
+    if (fread_ret != 1) {
+        return error.CannotReadFile;
+    }
+
+    return string;
+}
 
 pub fn Renderer(comptime T: type) type {
     return struct {
@@ -46,8 +70,11 @@ pub fn Renderer(comptime T: type) type {
         scene_arena: ArenaAllocator,
         scene_info: SceneInfo(T),
         pixels: []u8,
+        n_threads: usize,
+        render_thread_pool: std.Thread.Pool = undefined,
+        finished_count: std.atomic.Value(usize) = std.atomic.Value(usize).init(0),
 
-        fn new(allocator: Allocator, scene: []const u8, dy: usize) !Self {
+        fn new(allocator: Allocator, scene: []const u8, n_threads: usize) !Self {
             var scene_arena = ArenaAllocator.init(allocator);
             errdefer scene_arena.deinit();
 
@@ -57,10 +84,10 @@ pub fn Renderer(comptime T: type) type {
             );
 
             const pixels = try scene_arena.allocator().alloc(
-                u8, 4 * scene_info.camera.hsize * dy
+                u8, 4 * scene_info.camera.hsize * scene_info.camera.vsize
             );
 
-            for (0..dy) |y| {
+            for (0..scene_info.camera.vsize) |y| {
                 for (0..scene_info.camera.hsize) |x| {
                     pixels[(y * scene_info.camera.hsize + x) * 4] = 0;
                     pixels[(y * scene_info.camera.hsize + x) * 4 + 1] = 0;
@@ -74,6 +101,7 @@ pub fn Renderer(comptime T: type) type {
                 .scene_arena = scene_arena,
                 .scene_info = scene_info,
                 .pixels = pixels,
+                .n_threads = n_threads,
             }; 
         }
 
@@ -90,9 +118,7 @@ pub fn Renderer(comptime T: type) type {
         }
 
         fn loadFileData(allocator: Allocator, file_name: []const u8) ![]const u8 {
-            const ptr = Imports.loadFileData(@ptrCast(&allocator), file_name.ptr, file_name.len);
-            const obj = std.mem.span(ptr);
-            return obj;
+            return try readFile(allocator, file_name);
         }
 
         fn getCanvasInfo(self: Self) CanvasInfo {
@@ -103,29 +129,38 @@ pub fn Renderer(comptime T: type) type {
             };
         }
 
-        fn render(self: *Self, y0: usize, dy: usize) !void {
+        fn renderWorker(self: *Self, y: usize) void {
             const camera = &self.scene_info.camera;
             const world = &self.scene_info.world;
 
             var arena = std.heap.ArenaAllocator.init(self.rendering_allocator);
             defer arena.deinit();
 
-            for (y0..@min(y0 + dy, camera.vsize)) |y| {
-                for (0..camera.hsize) |x| {
-                    const ray = camera.rayForPixel(x, y);
-                    const color = try world.colorAt(arena.allocator(), ray, 5);
+            for (0..camera.hsize) |x| {
+                const ray = camera.rayForPixel(x, y);
+                const color = world.colorAt(arena.allocator(), ray, 5) catch |err| @panic(@errorName(err));
 
-                    self.pixels[((y - y0) * self.scene_info.camera.hsize + x) * 4] = clamp(T, color.r);
-                    self.pixels[((y - y0) * self.scene_info.camera.hsize + x) * 4 + 1] = clamp(T, color.g);
-                    self.pixels[((y - y0) * self.scene_info.camera.hsize + x) * 4 + 2] = clamp(T, color.b);
-                    self.pixels[((y - y0) * self.scene_info.camera.hsize + x) * 4 + 3] = 255;
+                self.pixels[(y * self.scene_info.camera.hsize + x) * 4] = clamp(T, color.r);
+                self.pixels[(y * self.scene_info.camera.hsize + x) * 4 + 1] = clamp(T, color.g);
+                self.pixels[(y * self.scene_info.camera.hsize + x) * 4 + 2] = clamp(T, color.b);
+                self.pixels[(y * self.scene_info.camera.hsize + x) * 4 + 3] = 255;
 
-                    _ = arena.reset(.retain_capacity);
-                }
+                _ = arena.reset(.retain_capacity);
+            }
+
+            _  = self.finished_count.fetchAdd(1, .Monotonic);
+        }
+
+        fn startRender(self: *Self) !void {
+            self.finished_count.store(0, .Monotonic);
+
+            try self.render_thread_pool.init(.{ .allocator = self.rendering_allocator, .n_jobs = self.n_threads });
+            for (0..self.scene_info.camera.vsize) |y| {
+                try self.render_thread_pool.spawn(Self.renderWorker, .{ self, y });
             }
         }
 
-        fn rotate_camera(self: *Self, angle: T) !void {
+        fn rotateCamera(self: *Self, angle: T) !void {
             var from = self.scene_info.camera._saved_from_to_up[0];
             const to = self.scene_info.camera._saved_from_to_up[1];
             const up = self.scene_info.camera._saved_from_to_up[2];
@@ -139,7 +174,7 @@ pub fn Renderer(comptime T: type) type {
             self.scene_info.camera._saved_from_to_up = [_]Tuple(T) { from, to, up };
         }
 
-        fn move_camera(self: *Self, distance: T) !void {
+        fn moveCamera(self: *Self, distance: T) !void {
             var from = self.scene_info.camera._saved_from_to_up[0];
             const to = self.scene_info.camera._saved_from_to_up[1];
             const up = self.scene_info.camera._saved_from_to_up[2];
@@ -153,24 +188,7 @@ pub fn Renderer(comptime T: type) type {
     };
 }
 
-// Calls to @panic are sent here.
-// See https://ziglang.org/documentation/master/#panic
-pub fn panic(message: []const u8, _: ?*std.builtin.StackTrace, _: ?usize) noreturn {
-    Imports.throwError(message);
-}
-
-export fn wasmAlloc(length: usize) [*]const u8 {
-    const slice = std.heap.wasm_allocator.alloc(u8, length) catch |err| @panic(@errorName(err));
-    return slice.ptr;
-}
-
-export fn wasmAllocWithAllocator(allocator: [*]const Allocator, length: usize) [*]const u8 {
-    const slice = allocator[0].alloc(u8, length) catch |err| @panic(@errorName(err));
-    return slice.ptr;
-}
-
 var renderer: ?Renderer(f64) = null;
-
 
 // Returning a struct to WASM means the JS side will have to deconstruct
 // the struct layout to extract the relevant information. That does not
@@ -190,47 +208,59 @@ const CanvasInfo = extern struct {
     height: usize,
 };
 
-var initRendererResult: Result(CanvasInfo, [:0]const u8) = undefined;
+var init_renderer_result: Result(CanvasInfo, [:0]const u8) = undefined;
+var init_renderer_thread: std.Thread = undefined;
+var init_renderer_thread_done = false;
 
-export fn initRenderer(scene_ptr: [*:0]const u8, dy: usize) void {
-    const allocator = std.heap.wasm_allocator;
+fn initRendererWorker(scene_ptr: [*:0]const u8, n_threads: usize) void {
+    const allocator = std.heap.raw_c_allocator;
 
     const scene = std.mem.span(scene_ptr);
-    defer allocator.free(scene);
 
-    if (Renderer(f64).new(allocator, scene, dy)) |r| {
+    if (Renderer(f64).new(allocator, scene, n_threads)) |r| {
         renderer = r;
-        initRendererResult = .{ .ok = renderer.?.getCanvasInfo() };
+        init_renderer_result = .{ .ok = renderer.?.getCanvasInfo() };
     } else |err| {
-        initRendererResult = .{ .err = @errorName(err) };
+        init_renderer_result = .{ .err = @errorName(err) };
     }
+
+    init_renderer_thread_done = true;
+}
+
+export fn startInitRenderer(scene_ptr: [*:0]const u8, n_threads: usize) void {
+    init_renderer_thread_done = false;
+    init_renderer_thread = std.Thread.spawn(.{}, initRendererWorker, .{scene_ptr, n_threads})
+        catch |err| @panic(@errorName(err));
+}
+
+export fn tryFinishInitRenderer() bool {
+    if (init_renderer_thread_done) {
+        init_renderer_thread.join();
+    }
+    return init_renderer_thread_done;
 }
 
 export fn initRendererIsOk() bool {
-    switch (initRendererResult) {
+    switch (init_renderer_result) {
         .ok => return true,
         .err => return false,
     }
 }
 
 export fn initRendererGetPixels() [*]const u8 {
-    return initRendererResult.ok.pixels;
+    return init_renderer_result.ok.pixels;
 }
 
 export fn initRendererGetWidth() usize {
-    return initRendererResult.ok.width;
+    return init_renderer_result.ok.width;
 }
 
 export fn initRendererGetHeight() usize {
-    return initRendererResult.ok.height;
+    return init_renderer_result.ok.height;
 }
 
-export fn initRendererGetErrPtr() [*]const u8 {
-    return initRendererResult.err.ptr;
-}
-
-export fn initRendererGetErrLen() usize {
-    return initRendererResult.err.len;
+export fn initRendererGetErr() [*]const u8 {
+    return init_renderer_result.err.ptr;
 }
 
 export fn deinitRenderer() void {
@@ -239,25 +269,37 @@ export fn deinitRenderer() void {
     }
 }
 
-export fn render(y0: usize, dy: usize) void {
+export fn startRender() void {
     if (renderer) |*renderer_| {
-        renderer_.render(y0, dy) catch |err| @panic(@errorName(err));
+        renderer_.startRender() catch |err| @panic(@errorName(err));
     } else {
         @panic("Renderer is uninitialized\n");
     }
 }
 
-export fn rotate_camera(angle: f64) void {
+export fn tryFinishRender() bool {
     if (renderer) |*renderer_| {
-        renderer_.rotate_camera(angle) catch |err| @panic(@errorName(err));
+        const finished = renderer_.finished_count.load(.Monotonic) == renderer_.scene_info.camera.vsize;
+        if (finished) {
+            renderer_.render_thread_pool.deinit();
+        }
+        return finished;
     } else {
         @panic("Renderer is uninitialized\n");
     }
 }
 
-export fn move_camera(distance: f64) void {
+export fn rotateCamera(angle: f64) void {
     if (renderer) |*renderer_| {
-        renderer_.move_camera(distance) catch |err| @panic(@errorName(err));
+        renderer_.rotateCamera(angle) catch |err| @panic(@errorName(err));
+    } else {
+        @panic("Renderer is uninitialized\n");
+    }
+}
+
+export fn moveCamera(distance: f64) void {
+    if (renderer) |*renderer_| {
+        renderer_.moveCamera(distance) catch |err| @panic(@errorName(err));
     } else {
         @panic("Renderer is uninitialized\n");
     }

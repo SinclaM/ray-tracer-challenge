@@ -40,10 +40,10 @@ pub fn Tuple(comptime T: type) type {
 
         /// Tests if two tuples should be considered equal.
         pub inline fn approxEqual(self: Self, other: Self) bool {
-            return @fabs(self.x - other.x) < tolerance
-                and @fabs(self.y - other.y) < tolerance
-                and @fabs(self.z - other.z) < tolerance
-                and @fabs(self.w - other.w) < tolerance;
+            return @abs(self.x - other.x) < tolerance
+                and @abs(self.y - other.y) < tolerance
+                and @abs(self.z - other.z) < tolerance
+                and @abs(self.w - other.w) < tolerance;
         }
 
         /// Adds `Tuple`s elementwise.

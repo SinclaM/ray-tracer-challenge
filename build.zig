@@ -1,9 +1,10 @@
 const std = @import("std");
+const builtin = @import("builtin");
 
 // Although this function looks imperative, note that its job is to
 // declaratively construct a build graph that will be executed by an external
 // runner.
-pub fn build(b: *std.Build) void {
+pub fn build(b: *std.Build) !void {
     // Standard target options allows the person running `zig build` to choose
     // what target to build for. Here we do not override the defaults, which
     // means any target is allowed, and the default is native. Other options
@@ -15,22 +16,74 @@ pub fn build(b: *std.Build) void {
     // set a preferred release mode, allowing the user to decide how to optimize.
     const optimize = b.standardOptimizeOption(.{});
 
+    const zigimg = b.dependency("zigimg", .{
+        .target = target,
+        .optimize = optimize,
+    });
+
     if (target.cpu_arch) |arch| {
         if (arch == std.Target.Cpu.Arch.wasm32) {
-            const lib = b.addSharedLibrary(.{
-                .name = "ray-tracer-challenge",
+            const lib = b.addStaticLibrary(.{
+                .name = "lib",
                 .root_source_file = .{ .path = "src/lib.zig" },
-                .target = target,
+                .target = .{
+                    .cpu_arch = .wasm32,
+                    .cpu_model = .{ .explicit = &std.Target.wasm.cpu.mvp },
+                    .cpu_features_add = std.Target.wasm.featureSet(&.{ .atomics, .bulk_memory, .simd128 }),
+                    .os_tag = .emscripten,
+                },
                 .optimize = optimize,
+                .link_libc = true
             });
-            lib.rdynamic = true;
+            lib.shared_memory = true;
+            lib.single_threaded = false;
+            lib.bundle_compiler_rt = true;
 
-            const install_lib = b.addInstallArtifact(
-                lib, .{ .dest_dir = .{ .override = .{ .custom = "../www/" } } }
+            lib.addModule("zigimg", zigimg.module("zigimg"));
+
+            if (b.sysroot == null) {
+                @panic("pass '--sysroot \"[path to emsdk]/upstream/emscripten\"'");
+            }
+
+            const emccExe = switch (builtin.os.tag) {
+                .windows => "emcc.bat",
+                else => "emcc",
+            };
+            var emcc_run_arg = try b.allocator.alloc(
+                u8,
+                b.sysroot.?.len + emccExe.len + 1
             );
-            b.getInstallStep().dependOn(&install_lib.step);
+            defer b.allocator.free(emcc_run_arg);
 
-            var www = std.fs.cwd().openDir("www", .{}) catch @panic("Can't access www!");
+            emcc_run_arg = try std.fmt.bufPrint(
+                emcc_run_arg,
+                "{s}" ++ std.fs.path.sep_str ++ "{s}",
+                .{ b.sysroot.?, emccExe }
+            );
+
+            const emcc_command = b.addSystemCommand(&[_][]const u8{emcc_run_arg});
+            emcc_command.addFileArg(lib.getEmittedBin());
+            emcc_command.step.dependOn(&lib.step);
+            emcc_command.addArgs(&[_][]const u8{
+                "-o",
+                "www" ++ std.fs.path.sep_str ++ "ray-tracer-challenge.js",
+                "--embed-file",
+                "data@/",
+                "--no-entry",
+                "-pthread",
+                "-sPTHREAD_POOL_SIZE=navigator.hardwareConcurrency",
+                "-sINITIAL_MEMORY=167772160",
+                "-sALLOW_MEMORY_GROWTH",
+                "-sEXPORTED_FUNCTIONS=_startInitRenderer,_tryFinishInitRenderer,_initRendererIsOk,_initRendererGetPixels,_initRendererGetWidth,_initRendererGetHeight,_initRendererGetErr,_deinitRenderer,_startRender,_tryFinishRender,_rotateCamera,_moveCamera",
+                "-sEXPORTED_RUNTIME_METHODS=ccall,cwrap",
+                "-sSTACK_SIZE=10485760", // Increase stack size to 10MB
+                "-sALLOW_BLOCKING_ON_MAIN_THREAD=1",
+                "-O3",
+                //"-sUSE_OFFSET_CONVERTER",
+            });
+            b.getInstallStep().dependOn(&emcc_command.step);
+
+            var www = try std.fs.cwd().openDir("www", .{});
             defer www.close();
 
             www.makeDir("scenes") catch |err| switch (err) {
@@ -45,25 +98,23 @@ pub fn build(b: *std.Build) void {
 
             {
                 // Copy all the scene descriptions into www
-                var scenes_src = std.fs.cwd().openDir("scenes", .{}) catch @panic("Can't access scenes!");
+                var scenes_src = try std.fs.cwd().openDir("scenes", .{});
                 defer scenes_src.close();
 
-                var scenes_dest = www.openDir("scenes", .{}) catch @panic("Can't access www/scenes!");
+                var scenes_dest = try www.openDir("scenes", .{});
                 defer scenes_dest.close();
 
-                var iter_scenes = std.fs.cwd().openIterableDir("scenes", .{})
-                    catch @panic("Can't access scenes for iteration!");
+                var iter_scenes = try std.fs.cwd().openDir("scenes", .{ .iterate = true});
                 defer iter_scenes.close();
 
                 var iter = iter_scenes.iterate();
                 while (true) {
-                    const entry = iter.next() catch @panic("Can't iterate through scenes!");
+                    const entry = try iter.next();
                     if (entry == null) {
                         break;
                     } else {
                         switch (entry.?.kind) {
-                            .file => scenes_src.copyFile(entry.?.name, scenes_dest, entry.?.name, .{})
-                                catch @panic("Can't copy scene!"),
+                            .file => try scenes_src.copyFile(entry.?.name, scenes_dest, entry.?.name, .{}),
                             else => {},
                         }
                     }
@@ -72,25 +123,23 @@ pub fn build(b: *std.Build) void {
 
             {
                 // Copy all the data files into www
-                var data_src = std.fs.cwd().openDir("data", .{}) catch @panic("Can't access data!");
+                var data_src = try std.fs.cwd().openDir("data", .{});
                 defer data_src.close();
 
-                var data_dest = www.openDir("data", .{}) catch @panic("Can't access www/data!");
+                var data_dest = try www.openDir("data", .{});
                 defer data_dest.close();
 
-                var iter_data = std.fs.cwd().openIterableDir("data", .{})
-                    catch @panic("Can't access data for iteration!");
+                var iter_data = try std.fs.cwd().openDir("data", .{ .iterate = true });
                 defer iter_data.close();
 
                 var iter = iter_data.iterate();
                 while (true) {
-                    const entry = iter.next() catch @panic("Can't iterate through data!");
+                    const entry = try iter.next();
                     if (entry == null) {
                         break;
                     } else {
                         switch (entry.?.kind) {
-                            .file => data_src.copyFile(entry.?.name, data_dest, entry.?.name, .{})
-                                catch @panic("Can't copy data!"),
+                            .file => try data_src.copyFile(entry.?.name, data_dest, entry.?.name, .{}),
                             else => {},
                         }
                     }
@@ -106,6 +155,8 @@ pub fn build(b: *std.Build) void {
             .target = target,
             .optimize = optimize,
         });
+
+        exe.addModule("zigimg", zigimg.module("zigimg"));
 
         // This declares intent for the executable to be installed into the
         // standard location when the user invokes the "install" step (the default
@@ -144,6 +195,8 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
+
+    unit_tests.addModule("zigimg", zigimg.module("zigimg"));
 
     const run_unit_tests = b.addRunArtifact(unit_tests);
 

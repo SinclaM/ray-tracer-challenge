@@ -12,7 +12,7 @@ const Light = @import("../raytracer/light.zig").Light;
 const Pattern = @import("../raytracer//patterns/pattern.zig").Pattern;
 
 pub fn drawSphere() !void {
-    comptime var canvas_size = 1000;
+    const canvas_size = 1000;
 
     const allocator = std.heap.c_allocator;
 
@@ -57,14 +57,8 @@ pub fn drawSphere() !void {
         }
     }
 
-    const ppm = try canvas.ppm(allocator);
-    defer allocator.free(ppm);
+    var image = try canvas.to_image(allocator);
+    defer image.deinit();
 
-    const file = try std.fs.cwd().createFile(
-        "images/sphere.ppm",
-        .{ .read = true },
-    );
-    defer file.close();
-
-    _ = try file.writeAll(ppm);
+    try image.writeToFilePath("images" ++ std.fs.path.sep_str ++ "sphere.png", .{ .png = .{} });
 }

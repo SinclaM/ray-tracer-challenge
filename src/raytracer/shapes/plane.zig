@@ -28,7 +28,7 @@ pub fn Plane(comptime T: type) type {
             _ = self;
             var xs = Intersections(T).init(allocator);
 
-            if (@fabs(ray.direction.y) > Self.epsilon) {
+            if (@abs(ray.direction.y) > Self.epsilon) {
                 try xs.append(Intersection(T).new(-ray.origin.y / ray.direction.y, super));
             }
 

@@ -70,7 +70,7 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
         pub fn approxEqual(self: Self, other: Self) bool {
             for (0..N) |row| {
                 for (0..N) |col| {
-                    if (@fabs(self.data[row][col] - other.data[row][col]) > tolerance) {
+                    if (@abs(self.data[row][col] - other.data[row][col]) > tolerance) {
                         return false;
                     }
                 }
@@ -201,7 +201,7 @@ pub fn Matrix(comptime T: type, comptime N: usize) type {
         /// Finds the inverse of `self`. Fails if `self` is not invertible.
         pub fn inverse(self: Self) !Self {
             const det_ = self.det();
-            if (@fabs(det_) < Self.tolerance) {
+            if (@abs(det_) < Self.tolerance) {
                 return MatrixError.NotInvertible;
             }
 
