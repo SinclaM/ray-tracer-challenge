@@ -82,7 +82,8 @@ zig build -Doptimize=ReleaseFast
 
 To target the web (populating `www/` with the all the site's files):
 ```bash
-zig build -Dtarget=wasm32-freestanding -Doptimize=ReleaseFast -Dcpu=generic+bulk_memory+atomics+mutable_globals
+zig build --sysroot ~/emsdk/upstream/emscripten -Dtarget=wasm32-emscripten -Doptimize=ReleaseFast
+    && sed -i'' -e 's/_emscripten_return_address,/() => {},/g' www/ray-tracer-challenge.js
 ```
 
 ## Performance profiling
@@ -103,18 +104,13 @@ The ray tracer currently runs about 2x slower on WebAssembly than on native, whi
 
 I also use [hyperfine](https://github.com/sharkdp/hyperfine) for benchmarking.
 
-Performance on the website for complicated scenes can be seriously inhibited by memory consumption, since each web worker
-maintains its own complete copy of the scene information. It would be easy to simple share memory, using a `SharedArrayBuffer`
-for the WASM memory, but unfortunately Zig currently provides no support (or documentation) for this. This problem becomes
-amplified on Chrome, which overestimates the amount of web workers that can run in parallel on my system, leading to
-even more inflated memory use and worse performance. At some point I'd like to add a slider for the number of web workers
-to use instead of just relying on `navigator.hardwareConcurrency`, which would help here.
-
 ## Benchmarks
 
 Below are some benchmarks for scenes that can be found on the website. These benchmarks are not rigorously controlled
-and averaged, but rather a general overview of speeds for various scenes. The best way to get a feel for the performance
-is to try things out yourself!
+and averaged, but rather a general overview of speeds for various scenes. They may also change depending significantly
+between Zig compiler versions. For example, I noticed a perfromance regression of up to 25% going from 0.11.0 to the
+WIP 0.12.0 (perhaps related to [this similar issue](https://github.com/ziglang/zig/issues/17768)). The best way to
+get a feel for the performance is to try things out yourself!
 
 All benchmarks were done on a 2019 MacBook Pro (2.6Ghz, 6-Core Intel i7; 16GB RAM; macOS 12.6.7). WASM specific benchmarks
 were done on Firefox 117 using 6 web workers (the maximum number of web workers Firefox will run in parallel, even on my
@@ -125,20 +121,23 @@ and bounding boxes already made, textures already loaded, etc.), which is suppor
 camera movememnt. This preheating is irrelevant for simple scenes, but gives massive speedups for scenes that load
 textures or construct BVHs.
 
+Also note that renders on the website are periodically polled for completion. Renders may actually
+complete up to 100ms before the reported time, which affects the benchmarks for very short renders.
+
 | Scene                     | Resolution     | Native      | WASM       |   WASM Preheated   |
 | ------------------------- | -------------- | ----------- | ---------- | ------------------ |
-| Cover Scene               | 1280x1280      | 1.446 s     | 2.313 s    |  2.305 s           |
-| Cubes                     | 600x300        | 0.190 s     | 0.413 s    |  0.404 s           |
-| Cylinders                 | 800x400        | 0.088 s     | 0.106 s    |  0.110 s           |
-| Reflection and Refraction | 400x200        | 0.088 s     | 0.161 s    |  0.164 s           |
-| Fresnel                   | 600x600        | 0.243 s     | 0.355 s    |  0.341 s           |
-| Groups                    | 600x200        | 0.074 s     | 0.145 s    |  0.148 s           |
-| Teapot                    | 250x150        | 0.164 s     | 0.364 s    |  0.232 s           |
-| Dragons                   | 500x200        | 6.991 s     | 17.011 s   |  4.324 s           |
-| Nefertiti                 | 300x500        | 4.630 s     | 10.578 s   |  7.039 s           |
-| Earth                     | 800x400        | 0.082 s     | 0.359 s    |  0.043 s           |
-| Skybox[^1]                | 800x400        | 1.775 s     | 15.031 s   |  0.055 s           |
-| Raytracer REPL Default    | 1280x720       | 0.138 s     | 0.142 s    |  0.140 s           |
+| Cover Scene               | 1280x1280      | 1.413 s     | 2.408 s    |  2.299 s           |
+| Cubes                     | 600x300        | 0.225 s     | 0.418 s    |  0.407 s           |
+| Cylinders                 | 800x400        | 0.111 s     | 0.221 s    |  0.109 s           |
+| Reflection and Refraction | 400x200        | 0.113 s     | 0.213 s    |  0.205 s           |
+| Fresnel                   | 600x600        | 0.283 s     | 0.429 s    |  0.411 s           |
+| Groups                    | 600x200        | 0.091 s     | 0.217 s    |  0.202 s           |
+| Teapot                    | 250x150        | 0.175 s     | 0.413 s    |  0.210 s           |
+| Dragons                   | 500x200        | 6.957 s     | 12.663 s   |  2.492 s           |
+| Nefertiti                 | 300x500        | 4.827 s     | 6.358 s    |  3.036 s           |
+| Earth                     | 800x400        | 0.095 s     | 0.212 s    |  0.103 s           |
+| Skybox[^1]                | 800x400        | 1.466 s     | 1.531 s    |  0.102 s           |
+| Raytracer REPL Default    | 1280x720       | 0.210 s     | 0.220 s    |  0.209 s           |
 
 ## Other implementations
 There are many great implementations of the Ray Tracer Challenge. At many points throughout the project, I referred to others
