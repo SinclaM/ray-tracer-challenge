@@ -117,7 +117,6 @@ const renderInterface = {
             const pixelsPtr = exports.initRendererGetPixels();
             const width = exports.initRendererGetWidth();
             const height = exports.initRendererGetHeight();
-            console.log(width, height);
 
             // Must use wasmMemory.buffer instead of Module.HEAPU8.buffer.
             // Even though the emscripten docs say that canonical views like HEAPU8
