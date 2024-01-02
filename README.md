@@ -147,4 +147,9 @@ to verify my implementation, draw inspiration, or compare performance. I recomme
 * [The Raytracer Challenge REPL](https://raytracer.xyz/): online demo with amazing site design.
 * [RayTracerCPU](https://iliathoughts.com/posts/raytracer2/): very fast, helpful online demo.
 
-[^1]: The skybox for this scene is a hefty 240 MB, so the rendering time on the website is dominated by the time needed to download the skybox texture from the server.
+## Known limitations
+The website for this project uses the `SharedArrayBuffer` type, which may not be supported in some browsers (particurly,
+Safari on iOS—even though [it is supposedly supported](https://caniuse.com/sharedarraybuffer)??). Use of `SharedArrayBuffer`
+also requires certain HTTP headers to be set, which GitHub Pages does not support. To get around this, I use
+[coi-serviceworker](https://github.com/gzuidhof/coi-serviceworker), which has the disadvantage of not working in
+Private/Incognito sessions.
