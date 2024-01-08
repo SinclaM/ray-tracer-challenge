@@ -24,7 +24,7 @@ You can find an interactive demo of this ray tracer online at [sinclam.github.io
 - [x] Chapter 13 - Cylinders
 - [x] Chapter 14 - Groups
 - [x] Chapter 15 - Triangles
-- [ ] Chapter 16 - Constructive Solid Geometry (CSG)
+- [x] Chapter 16 - Constructive Solid Geometry (CSG)
 - [ ] Chapter 17 - Next Steps
 - [x] A1 - Rendering the Cover Image
 - [ ] Bonus Chapter - Rendering soft shadows
@@ -63,6 +63,9 @@ Dragon model from [http://raytracerchallenge.com/bonus/assets/dragon.zip](http:/
 <img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/f1207f39-abed-4ccf-b7d2-8cc0bd073850 height=800>
 
 Nefertiti bust model from [https://github.com/alecjacobson/common-3d-test-models/blob/master/data/nefertiti.obj](https://github.com/alecjacobson/common-3d-test-models/blob/master/data/nefertiti.obj).
+
+### Constructive Solid Geometry
+<img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/11c48dca-c8b4-4062-a050-2b5bc69008b7 width=800>
 
 ### Earth
 <img src=https://github.com/SinclaM/ray-tracer-challenge/assets/82351204/673121c1-905e-4e6f-b6ca-e7eea75c24db width=800>
@@ -124,20 +127,21 @@ textures or construct BVHs.
 Also note that renders on the website are periodically polled for completion. Renders may actually
 complete up to 100ms before the reported time, which affects the benchmarks for very short renders.
 
-| Scene                     | Resolution     | Native      | WASM       |   WASM Preheated   |
-| ------------------------- | -------------- | ----------- | ---------- | ------------------ |
-| Cover Scene               | 1280x1280      | 1.413 s     | 2.408 s    |  2.299 s           |
-| Cubes                     | 600x300        | 0.225 s     | 0.418 s    |  0.407 s           |
-| Cylinders                 | 800x400        | 0.111 s     | 0.221 s    |  0.109 s           |
-| Reflection and Refraction | 400x200        | 0.113 s     | 0.213 s    |  0.205 s           |
-| Fresnel                   | 600x600        | 0.283 s     | 0.429 s    |  0.411 s           |
-| Groups                    | 600x200        | 0.091 s     | 0.217 s    |  0.202 s           |
-| Teapot                    | 250x150        | 0.175 s     | 0.413 s    |  0.210 s           |
-| Dragons                   | 500x200        | 6.957 s     | 12.663 s   |  2.492 s           |
-| Nefertiti                 | 300x500        | 4.827 s     | 6.358 s    |  3.036 s           |
-| Earth                     | 800x400        | 0.095 s     | 0.212 s    |  0.103 s           |
-| Skybox[^1]                | 800x400        | 1.466 s     | 1.531 s    |  0.102 s           |
-| Raytracer REPL Default    | 1280x720       | 0.210 s     | 0.220 s    |  0.209 s           |
+| Scene                       | Resolution     | Native      | WASM       |   WASM Preheated   |
+| --------------------------- | -------------- | ----------- | ---------- | ------------------ |
+| Cover Scene                 | 1280x1280      | 1.413 s     | 2.408 s    |  2.299 s           |
+| Cubes                       | 600x300        | 0.225 s     | 0.418 s    |  0.407 s           |
+| Cylinders                   | 800x400        | 0.111 s     | 0.221 s    |  0.109 s           |
+| Reflection and Refraction   | 400x200        | 0.113 s     | 0.213 s    |  0.205 s           |
+| Fresnel                     | 600x600        | 0.283 s     | 0.429 s    |  0.411 s           |
+| Groups                      | 600x200        | 0.091 s     | 0.217 s    |  0.202 s           |
+| Teapot                      | 250x150        | 0.175 s     | 0.413 s    |  0.210 s           |
+| Dragons                     | 500x200        | 6.957 s     | 12.663 s   |  2.492 s           |
+| Nefertiti                   | 300x500        | 4.827 s     | 6.358 s    |  3.036 s           |
+| Constructive Solid Geometry | 1280x720       | 0.267s      | 1.920 s    |  1.792 s           |
+| Earth                       | 800x400        | 0.095 s     | 0.212 s    |  0.103 s           |
+| Skybox                      | 800x400        | 1.466 s     | 1.531 s    |  0.102 s           |
+| Raytracer REPL Default      | 1280x720       | 0.210 s     | 0.220 s    |  0.209 s           |
 
 ## Other implementations
 There are many great implementations of the Ray Tracer Challenge. At many points throughout the project, I referred to others

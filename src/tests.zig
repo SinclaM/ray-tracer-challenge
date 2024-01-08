@@ -17,6 +17,7 @@ comptime {
     _ = @import("raytracer/shapes/plane.zig");
     _ = @import("raytracer/shapes/triangle.zig");
     _ = @import("raytracer/shapes/group.zig");
+    _ = @import("raytracer/shapes/csg.zig");
     _ = @import("raytracer/patterns/pattern.zig");
     _ = @import("raytracer/patterns/solid.zig");
     _ = @import("raytracer/patterns/blend.zig");

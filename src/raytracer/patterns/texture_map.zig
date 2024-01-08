@@ -207,42 +207,42 @@ pub fn TextureMap(comptime T: type) type {
                 return Face.back;
             }
 
-            fn uv_front(point: Tuple(T)) [2]T {
+            fn uvFront(point: Tuple(T)) [2]T {
                 const u = @mod(point.x + 1.0, 2.0) / 2.0;
                 const v = @mod(point.y + 1.0, 2.0) / 2.0;
 
                 return [_]T { u, v };
             }
 
-            fn uv_back(point: Tuple(T)) [2]T {
+            fn uvBack(point: Tuple(T)) [2]T {
                 const u = @mod(1.0 - point.x, 2.0) / 2.0;
                 const v = @mod(point.y + 1.0, 2.0) / 2.0;
 
                 return [_]T { u, v };
             }
 
-            fn uv_left(point: Tuple(T)) [2]T {
+            fn uvLeft(point: Tuple(T)) [2]T {
                 const u = @mod(point.z + 1.0, 2.0) / 2.0;
                 const v = @mod(point.y + 1.0, 2.0) / 2.0;
 
                 return [_]T { u, v };
             }
 
-            fn uv_right(point: Tuple(T)) [2]T {
+            fn uvRight(point: Tuple(T)) [2]T {
                 const u = @mod(1.0 - point.z, 2.0) / 2.0;
                 const v = @mod(point.y + 1.0, 2.0) / 2.0;
 
                 return [_]T { u, v };
             }
 
-            fn uv_up(point: Tuple(T)) [2]T {
+            fn uvUp(point: Tuple(T)) [2]T {
                 const u = @mod(point.x + 1.0, 2.0) / 2.0;
                 const v = @mod(1.0 - point.z, 2.0) / 2.0;
 
                 return [_]T { u, v };
             }
 
-            fn uv_down(point: Tuple(T)) [2]T {
+            fn uvDown(point: Tuple(T)) [2]T {
                 const u = @mod(point.x + 1.0, 2.0) / 2.0;
                 const v = @mod(point.z + 1.0, 2.0) / 2.0;
 
@@ -255,12 +255,12 @@ pub fn TextureMap(comptime T: type) type {
                 const face = @This().faceFromPoint(pattern_point);
 
                 const uv = switch (face) {
-                    .left  => @This().uv_left(pattern_point),
-                    .right => @This().uv_right(pattern_point),
-                    .front => @This().uv_front(pattern_point),
-                    .back  => @This().uv_back(pattern_point),
-                    .up    => @This().uv_up(pattern_point),
-                    .down  => @This().uv_down(pattern_point)
+                    .left  => @This().uvLeft(pattern_point),
+                    .right => @This().uvRight(pattern_point),
+                    .front => @This().uvFront(pattern_point),
+                    .back  => @This().uvBack(pattern_point),
+                    .up    => @This().uvUp(pattern_point),
+                    .down  => @This().uvDown(pattern_point)
                 };
 
                 return self.face_patterns[@intFromEnum(face)].uvPatternAt(uv[0], uv[1], object_point);
@@ -426,33 +426,33 @@ fn testUvMapping(comptime T: type, comptime faceFn: fn(Tuple(T)) [2]T, point: Tu
 }
 
 test "UV mapping the front face of a cube" {
-    try testUvMapping(f32, TextureMap(f32).Cubic.uv_front, Tuple(f32).point(-0.5, 0.5, 1), 0.25, 0.75);
-    try testUvMapping(f32, TextureMap(f32).Cubic.uv_front, Tuple(f32).point(0.5, -0.5, 1), 0.75, 0.25);
+    try testUvMapping(f32, TextureMap(f32).Cubic.uvFront, Tuple(f32).point(-0.5, 0.5, 1), 0.25, 0.75);
+    try testUvMapping(f32, TextureMap(f32).Cubic.uvFront, Tuple(f32).point(0.5, -0.5, 1), 0.75, 0.25);
 }
 
 test "UV mapping the back face of a cube" {
-    try testUvMapping(f32, TextureMap(f32).Cubic.uv_back, Tuple(f32).point(0.5, 0.5, -1), 0.25, 0.75);
-    try testUvMapping(f32, TextureMap(f32).Cubic.uv_back, Tuple(f32).point(-0.5, -0.5, -1), 0.75, 0.25);
+    try testUvMapping(f32, TextureMap(f32).Cubic.uvBack, Tuple(f32).point(0.5, 0.5, -1), 0.25, 0.75);
+    try testUvMapping(f32, TextureMap(f32).Cubic.uvBack, Tuple(f32).point(-0.5, -0.5, -1), 0.75, 0.25);
 }
 
 test "UV mapping the left face of a cube" {
-    try testUvMapping(f32, TextureMap(f32).Cubic.uv_left, Tuple(f32).point(-1, 0.5, -0.5), 0.25, 0.75);
-    try testUvMapping(f32, TextureMap(f32).Cubic.uv_left, Tuple(f32).point(-1, -0.5, 0.5), 0.75, 0.25);
+    try testUvMapping(f32, TextureMap(f32).Cubic.uvLeft, Tuple(f32).point(-1, 0.5, -0.5), 0.25, 0.75);
+    try testUvMapping(f32, TextureMap(f32).Cubic.uvLeft, Tuple(f32).point(-1, -0.5, 0.5), 0.75, 0.25);
 }
 
 test "UV mapping the right face of a cube" {
-    try testUvMapping(f32, TextureMap(f32).Cubic.uv_right, Tuple(f32).point(1, 0.5, 0.5), 0.25, 0.75);
-    try testUvMapping(f32, TextureMap(f32).Cubic.uv_right, Tuple(f32).point(1, -0.5, -0.5), 0.75, 0.25);
+    try testUvMapping(f32, TextureMap(f32).Cubic.uvRight, Tuple(f32).point(1, 0.5, 0.5), 0.25, 0.75);
+    try testUvMapping(f32, TextureMap(f32).Cubic.uvRight, Tuple(f32).point(1, -0.5, -0.5), 0.75, 0.25);
 }
 
 test "UV mapping the upper face of a cube" {
-    try testUvMapping(f32, TextureMap(f32).Cubic.uv_up, Tuple(f32).point(-0.5, 1, -0.5), 0.25, 0.75);
-    try testUvMapping(f32, TextureMap(f32).Cubic.uv_up, Tuple(f32).point(0.5, 1, 0.5), 0.75, 0.25);
+    try testUvMapping(f32, TextureMap(f32).Cubic.uvUp, Tuple(f32).point(-0.5, 1, -0.5), 0.25, 0.75);
+    try testUvMapping(f32, TextureMap(f32).Cubic.uvUp, Tuple(f32).point(0.5, 1, 0.5), 0.75, 0.25);
 }
 
 test "UV mapping the lower face of a cube" {
-    try testUvMapping(f32, TextureMap(f32).Cubic.uv_down, Tuple(f32).point(-0.5, -1, 0.5), 0.25, 0.75);
-    try testUvMapping(f32, TextureMap(f32).Cubic.uv_down, Tuple(f32).point(0.5, -1, -0.5), 0.75, 0.25);
+    try testUvMapping(f32, TextureMap(f32).Cubic.uvDown, Tuple(f32).point(-0.5, -1, 0.5), 0.25, 0.75);
+    try testUvMapping(f32, TextureMap(f32).Cubic.uvDown, Tuple(f32).point(0.5, -1, -0.5), 0.75, 0.25);
 }
 
 test "Finding the colors on a mapped cube" {
@@ -533,7 +533,7 @@ test "Canvas-based checker pattern in 2D" {
         \\9 9 9  0 0 0  1 1 1  2 2 2  3 3 3  4 4 4  5 5 5  6 6 6  7 7 7  8 8 8
     ;
 
-    const canvas = try Canvas(f32).from_ppm(allocator, ppm);
+    const canvas = try Canvas(f32).fromPpm(allocator, ppm);
     defer canvas.destroy();
 
     const uv_pattern = UvPattern(f32).uvImage(canvas);

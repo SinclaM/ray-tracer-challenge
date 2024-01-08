@@ -26,6 +26,7 @@ pub fn Group(comptime T: type) type {
             for (self.children.items) |child| {
                 switch (child.variant) {
                     .group => |g| g.destroy(),
+                    .csg => |csg| csg.destroy(),
                     else => {}
                 }
             }
@@ -70,19 +71,18 @@ pub fn Group(comptime T: type) type {
             @panic("`localNormalAt` not implemented for groups");
         }
 
-        pub fn bounds(self: Self) Shape(T) {
-            var box = Shape(T).boundingBox();
-
-            for (self.children.items) |child| {
-                box.variant.bounding_box.merge(
-                    child.parent_space_bounds().variant.bounding_box
-                );
-            }
-
-            return box;
+        /// Adds `child` to a group.
+        pub fn addChild(self: *Self, child: Shape(T)) !void {
+            try self.children.append(child);
+            self._bbox.variant.bounding_box.merge(child.parentSpaceBounds().variant.bounding_box);
         }
 
-        pub fn partition_children(self: *Self, allocator: Allocator) ![2]ArrayList(Shape(T)) {
+
+        pub fn bounds(self: Self) Shape(T) {
+            return self._bbox.*;
+        }
+
+        pub fn partitionChildren(self: *Self, allocator: Allocator) ![2]ArrayList(Shape(T)) {
             var left = ArrayList(Shape(T)).init(allocator);
             var right = ArrayList(Shape(T)).init(allocator);
             var new_children = ArrayList(Shape(T)).init(allocator);
@@ -92,14 +92,14 @@ pub fn Group(comptime T: type) type {
             const right_box = &split[1].variant.bounding_box;
 
             for (self.children.items) |child| {
-                if (left_box.contains_box(
-                        child.parent_space_bounds().variant.bounding_box
+                if (left_box.containsBox(
+                        child.parentSpaceBounds().variant.bounding_box
                     )
                 ) {
                     try left.append(child);
                 } else if (
-                    right_box.contains_box(
-                        child.parent_space_bounds().variant.bounding_box
+                    right_box.containsBox(
+                        child.parentSpaceBounds().variant.bounding_box
                     )
                 ) {
                     try right.append(child);
@@ -114,7 +114,7 @@ pub fn Group(comptime T: type) type {
             return [_]ArrayList(Shape(T)) { left, right };
         }
 
-        pub fn make_subgroup(
+        pub fn makeSubgroup(
             self: *Self, allocator: Allocator, super: *Shape(T), children: ArrayList(Shape(T))
         ) !void {
             _ = self;
@@ -128,10 +128,10 @@ pub fn Group(comptime T: type) type {
             // the necessary side effects (i.e. updating the subgroup's bounding
             // box) can happen.
             for (children.items) |child| {
-                try subgroup.addChild(child);
+                try subgroup.variant.group.addChild(child);
             }
 
-            try super.addChild(subgroup);
+            try super.variant.group.addChild(subgroup);
         }
     };
 }
@@ -154,7 +154,7 @@ test "Adding a child to a group" {
 
     const s = Shape(f32).testShape();
 
-    try g.addChild(s);
+    try g.variant.group.addChild(s);
 
     try testing.expectEqual(g.variant.group.children.items.len, 1);
     try testing.expectEqual(g.variant.group.children.items[0], s);
@@ -186,9 +186,9 @@ test "Intersecting a ray with an nonempty group" {
     var s3 = Shape(f32).sphere();
     try s3.setTransform(Matrix(f32, 4).identity().translate(5.0, 0.0, 0.0));
 
-    try g.addChild(s1);
-    try g.addChild(s2);
-    try g.addChild(s3);
+    try g.variant.group.addChild(s1);
+    try g.variant.group.addChild(s2);
+    try g.variant.group.addChild(s3);
 
     const r = Ray(f32).new(Tuple(f32).point(0.0, 0.0, -5.0), Tuple(f32).vec3(0.0, 0.0, 1.0));
 
@@ -212,7 +212,7 @@ test "Intersecting a transformed group" {
     var s = Shape(f32).sphere();
     try s.setTransform(Matrix(f32, 4).identity().translate(5.0, 0.0, 0.0));
 
-    try g.addChild(s);
+    try g.variant.group.addChild(s);
     try g.setTransform(Matrix(f32, 4).identity().scale(2.0, 2.0, 2.0));
 
     const r = Ray(f32).new(Tuple(f32).point(10.0, 0.0, -10.0), Tuple(f32).vec3(0.0, 0.0, 1.0));
@@ -236,8 +236,8 @@ test "A group has a bounding box that contains its children" {
 
     var g = try Shape(f32).group(allocator);
     defer g.variant.group.destroy();
-    try g.addChild(s);
-    try g.addChild(c);
+    try g.variant.group.addChild(s);
+    try g.variant.group.addChild(c);
 
     const box = g.bounds();
 
@@ -259,11 +259,11 @@ test "Partitioning a group's children" {
     var g = try Shape(f32).group(allocator);
     defer g.variant.group.destroy();
 
-    try g.addChild(s1);
-    try g.addChild(s2);
-    try g.addChild(s3);
+    try g.variant.group.addChild(s1);
+    try g.variant.group.addChild(s2);
+    try g.variant.group.addChild(s3);
 
-    const partition = try g.variant.group.partition_children(allocator);
+    const partition = try g.variant.group.partitionChildren(allocator);
     defer {
         partition[0].deinit();
         partition[1].deinit();
@@ -290,7 +290,7 @@ test "Creating a sub-group from a list of children" {
     try children.append(s1);
     try children.append(s2);
 
-    try g.variant.group.make_subgroup(allocator, &g, children);
+    try g.variant.group.makeSubgroup(allocator, &g, children);
 
     try testing.expectEqual(g.variant.group.children.items.len, 1);
 }
@@ -310,9 +310,9 @@ test "Subdividing a group partitions its children" {
     var g = try Shape(f32).group(allocator);
     defer g.variant.group.destroy();
 
-    try g.addChild(s1);
-    try g.addChild(s2);
-    try g.addChild(s3);
+    try g.variant.group.addChild(s1);
+    try g.variant.group.addChild(s2);
+    try g.variant.group.addChild(s3);
 
     try g.divide(allocator, 1);
 
@@ -350,15 +350,15 @@ test "Subdividing a group with too few children" {
     const s4 = Shape(f32).sphere();
 
     var subgroup = try Shape(f32).group(allocator);
-    try subgroup.addChild(s1);
-    try subgroup.addChild(s2);
-    try subgroup.addChild(s3);
+    try subgroup.variant.group.addChild(s1);
+    try subgroup.variant.group.addChild(s2);
+    try subgroup.variant.group.addChild(s3);
 
     var g = try Shape(f32).group(allocator);
     defer g.variant.group.destroy();
 
-    try g.addChild(subgroup);
-    try g.addChild(s4);
+    try g.variant.group.addChild(subgroup);
+    try g.variant.group.addChild(s4);
 
     try g.divide(allocator, 3);
 

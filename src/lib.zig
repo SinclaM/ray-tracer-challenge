@@ -112,6 +112,9 @@ pub fn Renderer(comptime T: type) type {
                     .group => |*g| {
                         g.destroy();
                     },
+                    .csg => |*csg| {
+                        csg.destroy();
+                    },
                     else => {}
                 }
             }

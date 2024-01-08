@@ -31,14 +31,14 @@ pub fn BoundingBox(comptime T: type) type {
             self.max.z = @max(self.max.z, point.z);
         }
 
-        pub fn contains_point(self: Self, point: Tuple(T)) bool {
+        pub fn containsPoint(self: Self, point: Tuple(T)) bool {
             return  self.min.x <= point.x and point.x <= self.max.x
                 and self.min.y <= point.y and point.y <= self.max.y
                 and self.min.z <= point.z and point.z <= self.max.z;
         }
 
-        pub fn contains_box(self: Self, other: Self) bool {
-            return self.contains_point(other.min) and self.contains_point(other.max);
+        pub fn containsBox(self: Self, other: Self) bool {
+            return self.containsPoint(other.min) and self.containsPoint(other.max);
         }
 
         pub fn merge(self: *Self, other: Self) void {
@@ -197,31 +197,31 @@ test "Checking to see if a box contains a given point" {
     box.variant.bounding_box.max = Tuple(f32).point(11.0, 4.0, 7.0);
 
     try testing.expect(
-        box.variant.bounding_box.contains_point(Tuple(f32).point(5.0, -2.0, 0.0))
+        box.variant.bounding_box.containsPoint(Tuple(f32).point(5.0, -2.0, 0.0))
     );
     try testing.expect(
-        box.variant.bounding_box.contains_point(Tuple(f32).point(11.0, 4.0, 7.0))
+        box.variant.bounding_box.containsPoint(Tuple(f32).point(11.0, 4.0, 7.0))
     );
     try testing.expect(
-        box.variant.bounding_box.contains_point(Tuple(f32).point(8.0, 1.0, 3.0))
+        box.variant.bounding_box.containsPoint(Tuple(f32).point(8.0, 1.0, 3.0))
     );
     try testing.expect(
-        !box.variant.bounding_box.contains_point(Tuple(f32).point(3.0, 0.0, 3.0))
+        !box.variant.bounding_box.containsPoint(Tuple(f32).point(3.0, 0.0, 3.0))
     );
     try testing.expect(
-        !box.variant.bounding_box.contains_point(Tuple(f32).point(8.0, -4.0, 3.0))
+        !box.variant.bounding_box.containsPoint(Tuple(f32).point(8.0, -4.0, 3.0))
     );
     try testing.expect(
-        !box.variant.bounding_box.contains_point(Tuple(f32).point(8.0, 1.0, -1.0))
+        !box.variant.bounding_box.containsPoint(Tuple(f32).point(8.0, 1.0, -1.0))
     );
     try testing.expect(
-        !box.variant.bounding_box.contains_point(Tuple(f32).point(13.0, 1.0, 3.0))
+        !box.variant.bounding_box.containsPoint(Tuple(f32).point(13.0, 1.0, 3.0))
     );
     try testing.expect(
-        !box.variant.bounding_box.contains_point(Tuple(f32).point(8.0, 5.0, 3.0))
+        !box.variant.bounding_box.containsPoint(Tuple(f32).point(8.0, 5.0, 3.0))
     );
     try testing.expect(
-        !box.variant.bounding_box.contains_point(Tuple(f32).point(8.0, 1.0, 8.0))
+        !box.variant.bounding_box.containsPoint(Tuple(f32).point(8.0, 1.0, 8.0))
     );
 }
 
@@ -236,7 +236,7 @@ fn testBoxConstainsBox(comptime T: type, min: Tuple(T), max: Tuple(T), result: b
     box2.variant.bounding_box.min = min;
     box2.variant.bounding_box.max = max;
 
-    try testing.expectEqual(box.variant.bounding_box.contains_box(box2.variant.bounding_box), result);
+    try testing.expectEqual(box.variant.bounding_box.containsBox(box2.variant.bounding_box), result);
 }
 
 test "Checking to see if a box contains a given box" {

@@ -16,6 +16,8 @@ const Triangle = @import("triangle.zig").Triangle;
 const SmoothTriangle = @import("triangle.zig").SmoothTriangle;
 const Plane = @import("plane.zig").Plane;
 const Group = @import("group.zig").Group;
+const Csg = @import("csg.zig").Csg;
+const Operation = @import("csg.zig").Operation;
 const PreComputations = @import("../world.zig").PreComputations;
 
 pub fn Intersection(comptime T: type) type {
@@ -105,6 +107,7 @@ pub fn Shape(comptime T: type) type {
             triangle: Triangle(T),
             smooth_triangle: SmoothTriangle(T),
             group: Group(T),
+            csg: Csg(T),
         };
 
         id: usize,
@@ -152,7 +155,7 @@ pub fn Shape(comptime T: type) type {
         }
 
         /// Creates a glass sphere.
-        pub fn glass_sphere() Self {
+        pub fn glassSphere() Self {
             var sphere_ = Self.sphere();
             sphere_.material.transparency = 1.0;
             sphere_.material.refractive_index = 1.5;
@@ -246,13 +249,35 @@ pub fn Shape(comptime T: type) type {
             );
         }
 
-        /// Adds `child` to a group.
-        ///
-        /// Assumes `self.variant` is a group.
-        pub fn addChild(self: *Self, child: Self) !void {
-            try self.variant.group.children.append(child);
-            self.variant.group._bbox.variant.bounding_box
-                .merge(child.parent_space_bounds().variant.bounding_box);
+        /// Creates a new csg.
+        pub fn csg(
+            allocator: Allocator, left: Self, right: Self, operation: Operation
+        ) !Self {
+            const bbox = try allocator.create(Shape(T));
+            errdefer allocator.destroy(bbox);
+            bbox.* = left.parentSpaceBounds();
+
+            bbox.variant.bounding_box.merge(right.parentSpaceBounds().variant.bounding_box);
+
+            const owned_left = try allocator.create(Shape(T));
+            errdefer allocator.destroy(owned_left);
+            owned_left.* = left;
+
+            const owned_right = try allocator.create(Shape(T));
+            errdefer allocator.destroy(owned_right);
+            owned_right.* = right;
+
+            return Self.new(
+                Self.Variant {
+                    .csg = .{
+                        .allocator = allocator, 
+                        .left = owned_left,
+                        .right = owned_right,
+                        .operation = operation,
+                        ._bbox = bbox,
+                    }
+                }
+            );
         }
 
         /// Sets the shape's transformation matrix to `matrix`.
@@ -270,6 +295,11 @@ pub fn Shape(comptime T: type) type {
                     g._bbox.* = g._bbox.variant.bounding_box.transform(matrix);
                     
                 },
+                .csg => |c| {
+                    // CSG also pass transforms onto their children
+                    try c.left.setTransform(matrix.mul(c.left._transform));
+                    try c.right.setTransform(matrix.mul(c.right._transform));
+                },
                 else => {
                     // Everyone else updates their own state.
                     self._transform = matrix;
@@ -283,6 +313,7 @@ pub fn Shape(comptime T: type) type {
         pub fn intersect(self: *const Self, allocator: Allocator, ray: Ray(T)) !Intersections(T) {
             const transformed = switch (self.variant) {
                 .group => ray,
+                .csg => ray,
                 else => ray.transform(self._inverse_transform)
             };
 
@@ -330,7 +361,7 @@ pub fn Shape(comptime T: type) type {
             unreachable;
         }
 
-        pub fn parent_space_bounds(self: Self) Self {
+        pub fn parentSpaceBounds(self: Self) Self {
             return self
                 .bounds()
                 .variant
@@ -342,22 +373,26 @@ pub fn Shape(comptime T: type) type {
             switch (self.variant) {
                 .group => |*g| {
                     if (g.children.items.len >= threshold) {
-                        const partition = try g.partition_children(allocator);
+                        const partition = try g.partitionChildren(allocator);
                         const left = partition[0];
                         const right = partition[1];
 
                         if (left.items.len > 0) {
-                            try g.make_subgroup(allocator, self, left);
+                            try g.makeSubgroup(allocator, self, left);
                         }
 
                         if (right.items.len > 0) {
-                            try g.make_subgroup(allocator, self, right);
+                            try g.makeSubgroup(allocator, self, right);
                         }
                     }
 
                     for (g.children.items) |*child| {
                         try child.divide(allocator, threshold);
                     }
+                },
+                .csg => |*c| {
+                    try c.left.divide(allocator, threshold);
+                    try c.right.divide(allocator, threshold);
                 },
                 else => {}
             }
@@ -483,15 +518,15 @@ test "Hit" {
 }
 
 fn testRefraction(comptime T: type, allocator: Allocator, i: usize, n1: T, n2: T) !void {
-    var a = Shape(T).glass_sphere();
+    var a = Shape(T).glassSphere();
     try a.setTransform(Matrix(T, 4).identity().scale(2.0, 2.0, 2.0));
     a.material.refractive_index = 1.5;
 
-    var b = Shape(T).glass_sphere();
+    var b = Shape(T).glassSphere();
     try b.setTransform(Matrix(T, 4).identity().translate(0.0, 0.0, -0.25));
     b.material.refractive_index = 2.0;
 
-    var c = Shape(T).glass_sphere();
+    var c = Shape(T).glassSphere();
     try c.setTransform(Matrix(T, 4).identity().translate(0.0, 0.0, 0.25));
     c.material.refractive_index = 2.5;
 
@@ -533,8 +568,8 @@ test "Converting a point from world to object space" {
     var s = Shape(f32).sphere();
     try s.setTransform(Matrix(f32, 4).identity().translate(5.0, 0.0, 0.0));
 
-    try g2.addChild(s);
-    try g1.addChild(g2);
+    try g2.variant.group.addChild(s);
+    try g1.variant.group.addChild(g2);
 
     try g2.setTransform(Matrix(f32, 4).identity().scale(2.0, 2.0, 2.0));
     try g1.setTransform(Matrix(f32, 4).identity().rotateY(std.math.pi / 2.0));
@@ -556,8 +591,8 @@ test "Converting a normal from object to world space" {
     var s = Shape(f32).sphere();
     try s.setTransform(Matrix(f32, 4).identity().translate(5.0, 0.0, 0.0));
 
-    try g2.addChild(s);
-    try g1.addChild(g2);
+    try g2.variant.group.addChild(s);
+    try g1.variant.group.addChild(g2);
 
     try g2.setTransform(Matrix(f32, 4).identity().scale(1.0, 2.0, 3.0));
     try g1.setTransform(Matrix(f32, 4).identity().rotateY(std.math.pi / 2.0));
@@ -580,8 +615,8 @@ test "Finding the normal on a child object" {
     var s = Shape(f32).sphere();
     try s.setTransform(Matrix(f32, 4).identity().translate(5.0, 0.0, 0.0));
 
-    try g2.addChild(s);
-    try g1.addChild(g2);
+    try g2.variant.group.addChild(s);
+    try g1.variant.group.addChild(g2);
 
     try g2.setTransform(Matrix(f32, 4).identity().scale(1.0, 2.0, 3.0));
     try g1.setTransform(Matrix(f32, 4).identity().rotateY(std.math.pi / 2.0));
@@ -609,10 +644,10 @@ test "Querying a shape's bounding box in its parent's space" {
 
     var g = try Shape(f32).group(allocator);
     defer g.variant.group.destroy();
-    try g.addChild(s);
+    try g.variant.group.addChild(s);
     try g.setTransform(Matrix(f32, 4).identity().shear(.{ .xz = 3.0, .zy = -2.2 }));
 
-    const box = s.parent_space_bounds();
+    const box = s.parentSpaceBounds();
 
     try testing.expect(box.variant.bounding_box.min.approxEqual(Tuple(f32).point(0.5, -5.0, 1.0)));
     try testing.expect(box.variant.bounding_box.max.approxEqual(Tuple(f32).point(1.5, -1.0, 9.0)));
