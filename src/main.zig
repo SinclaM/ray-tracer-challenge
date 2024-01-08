@@ -79,6 +79,9 @@ pub fn main() !void {
                     .group => |*g| {
                         g.destroy();
                     },
+                    .csg => |*csg| {
+                        csg.destroy();
+                    },
                     else => {}
                 }
             }
@@ -89,7 +92,7 @@ pub fn main() !void {
         defer canvas.destroy();
 
         // Get the PPM data.
-        var image = try canvas.to_image(allocator);
+        var image = try canvas.toImage(allocator);
         defer image.deinit();
 
         try image.writeToFilePath("images" ++ std.fs.path.sep_str ++ scene ++ ".png", .{ .png = .{} });

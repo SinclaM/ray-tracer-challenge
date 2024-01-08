@@ -362,7 +362,7 @@ test "PreComputations" {
 
     {
         const r = Ray(f32).new(Tuple(f32).point(0.0, 0.0, -5.0), Tuple(f32).vec3(0.0, 0.0, 1.0));
-        var shape = Shape(f32).glass_sphere();
+        var shape = Shape(f32).glassSphere();
         try shape.setTransform(Matrix(f32, 4).identity().translate(0.0, 0.0, 1.0));
         const i =  Intersection(f32).new(5.0, &shape);
         var xs = Intersections(f32).init(allocator);
@@ -811,7 +811,7 @@ test "Schlick" {
     const tolerance = 1e-5;
 
     {
-        const shape = Shape(f32).glass_sphere();
+        const shape = Shape(f32).glassSphere();
         const r = Ray(f32).new(
             Tuple(f32).point(0.0, 0.0, 1.0 / @sqrt(2.0)), Tuple(f32).vec3(0.0, 1.0, 0.0)
         );
@@ -827,7 +827,7 @@ test "Schlick" {
     }
 
     {
-        const shape = Shape(f32).glass_sphere();
+        const shape = Shape(f32).glassSphere();
         const r = Ray(f32).new(
             Tuple(f32).point(0.0, 0.0, 0.0), Tuple(f32).vec3(0.0, 1.0, 0.0)
         );
@@ -843,7 +843,7 @@ test "Schlick" {
     }
 
     {
-        const shape = Shape(f32).glass_sphere();
+        const shape = Shape(f32).glassSphere();
         const r = Ray(f32).new(
             Tuple(f32).point(0.0, 0.99, -2.0), Tuple(f32).vec3(0.0, 0.0, 1.0)
         );

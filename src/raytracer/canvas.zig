@@ -31,7 +31,7 @@ pub fn Canvas(comptime T: type) type {
             return .{ .width = width, .height = height, .pixels = pixels, .allocator = allocator };
         }
 
-        pub fn from_image(allocator: Allocator, image: zigimg.Image) !Self {
+        pub fn fromImage(allocator: Allocator, image: zigimg.Image) !Self {
             var canvas = try Self.new(allocator, image.width, image.height);
             errdefer canvas.destroy();
 
@@ -45,7 +45,7 @@ pub fn Canvas(comptime T: type) type {
             return canvas;
         }
 
-        pub fn from_ppm(allocator: Allocator, ppm_str: []const u8) !Self {
+        pub fn fromPpm(allocator: Allocator, ppm_str: []const u8) !Self {
             var lines = std.mem.tokenizeScalar(u8, ppm_str, '\n');
 
             const first_line = lines.next();
@@ -147,7 +147,7 @@ pub fn Canvas(comptime T: type) type {
             return &self.pixels[y * self.width + x];
         }
 
-        pub fn to_image(self: *const Self, allocator: Allocator) !zigimg.Image {
+        pub fn toImage(self: *const Self, allocator: Allocator) !zigimg.Image {
             var image = zigimg.Image.init(allocator);
             errdefer image.deinit(); // result.pixels is initialized to invalid,
                                      // which is not freed during Image.deinit.
@@ -311,7 +311,7 @@ test "Reading a file with the wrong magic number" {
         \\0 0 0
     ;
 
-    try testing.expectError(Canvas(f32).ParseError.InvalidMagicNumber, Canvas(f32).from_ppm(allocator, ppm));
+    try testing.expectError(Canvas(f32).ParseError.InvalidMagicNumber, Canvas(f32).fromPpm(allocator, ppm));
 }
 
 test "Reading a PPM returns a canvas of the right size" {
@@ -327,7 +327,7 @@ test "Reading a PPM returns a canvas of the right size" {
         \\0 0 0  0 0 0  0 0 0  0 0 0  0 0 0
     ;
 
-    const canvas = try Canvas(f32).from_ppm(allocator, ppm);
+    const canvas = try Canvas(f32).fromPpm(allocator, ppm);
     defer canvas.destroy();
 
     try testing.expectEqual(canvas.width, 10);
@@ -346,7 +346,7 @@ test "Reading pixel data from a PPM file" {
         \\255 255 0  0 255 255  255 0 255  127 127 127
     ;
 
-    const canvas = try Canvas(f32).from_ppm(allocator, ppm);
+    const canvas = try Canvas(f32).fromPpm(allocator, ppm);
     defer canvas.destroy();
 
     try testing.expect(canvas.getPixelPointer(0, 0).?.*.approxEqual(Color(f32).new(1, 0.49804, 0)));
@@ -378,7 +378,7 @@ test "PPM parsing ignores comment lines" {
         \\255 0 255
     ;
 
-    const canvas = try Canvas(f32).from_ppm(allocator, ppm);
+    const canvas = try Canvas(f32).fromPpm(allocator, ppm);
     defer canvas.destroy();
 
     try testing.expect(canvas.getPixelPointer(0, 0).?.*.approxEqual(Color(f32).new(1, 1, 1)));
@@ -398,7 +398,7 @@ test "PPM parsing allows an RGB triple to span lines" {
         \\204
     ;
 
-    const canvas = try Canvas(f32).from_ppm(allocator, ppm);
+    const canvas = try Canvas(f32).fromPpm(allocator, ppm);
     defer canvas.destroy();
 
     try testing.expect(canvas.getPixelPointer(0, 0).?.*.approxEqual(Color(f32).new(0.2, 0.6, 0.8)));
@@ -415,7 +415,7 @@ test "PPM parsing respects the scale setting" {
         \\75 50 25  0 0 0
     ;
 
-    const canvas = try Canvas(f32).from_ppm(allocator, ppm);
+    const canvas = try Canvas(f32).fromPpm(allocator, ppm);
     defer canvas.destroy();
 
     try testing.expect(canvas.getPixelPointer(0, 1).?.*.approxEqual(Color(f32).new(0.75, 0.5, 0.25)));

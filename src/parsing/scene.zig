@@ -21,6 +21,8 @@ const World = @import("../raytracer/world.zig").World;
 const Camera = @import("../raytracer/camera.zig").Camera;
 const Canvas = @import("../raytracer/canvas.zig").Canvas;
 
+const Operation = @import("../raytracer/shapes/csg.zig").Operation;
+
 const ObjParser = @import("obj.zig").ObjParser;
 
 fn ObjectDefinitionConfig(comptime T: type) type {
@@ -141,6 +143,11 @@ fn ObjectConfig(comptime T: type) type {
             },
             plane: void,
             group: []ObjectConfig(T),
+            csg: *struct {
+                left: ObjectConfig(T),
+                right: ObjectConfig(T),
+                operation: enum { @"union", intersection, difference },
+            }
         },
         transform: ?TransformConfig(T) = null,
         material: ?MaterialConfig(T) = null,
@@ -274,7 +281,7 @@ fn parseUvPattern(
                 var im = try zigimg.Image.fromMemory(allocator, mem);
                 defer im.deinit();
 
-                const canvas = try Canvas(T).from_image(arena_allocator, im);
+                const canvas = try Canvas(T).fromImage(arena_allocator, im);
                 break :blk UvPattern(T).uvImage(canvas);
             },
         }
@@ -525,10 +532,39 @@ fn parseObject(
                     definitions,
                     load_file_data
                 );
-                try g.addChild(s);
+                try g.variant.group.addChild(s);
             }
 
             break :blk g;
+        },
+        .csg => |csg| blk: {
+            const left = try parseObject(
+                T,
+                allocator,
+                arena_allocator,
+                csg.left,
+                .{ .material = material, .casts_shadow = casts_shadow},
+                definitions,
+                load_file_data
+            );
+            const right = try parseObject(
+                T,
+                allocator,
+                arena_allocator,
+                csg.right,
+                .{ .material = material, .casts_shadow = casts_shadow},
+                definitions,
+                load_file_data
+            );
+
+            const op: Operation = switch (csg.operation) {
+                .@"union" => .Union,
+                .intersection => .Intersection,
+                .difference => .Difference,
+            };
+
+            const c = try Shape(T).csg(allocator, left, right, op);
+            break :blk c;
         }
     };
 

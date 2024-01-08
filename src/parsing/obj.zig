@@ -143,7 +143,7 @@ pub fn ObjParser(comptime T: type) type {
                 triangle.material = state.material orelse Material(T).new();
                 triangle.casts_shadow = state.casts_shadow orelse true;
 
-                try self.active_group.addChild(triangle);
+                try self.active_group.variant.group.addChild(triangle);
 
                 last = current;
             }
@@ -160,7 +160,7 @@ pub fn ObjParser(comptime T: type) type {
 
             const new_group = try Shape(T).group(self.allocator);
 
-            try self.default_group.addChild(new_group);
+            try self.default_group.variant.group.addChild(new_group);
             const g = &self.default_group.variant.group.children.items[
                 self.default_group.variant.group.children.items.len - 1
             ];

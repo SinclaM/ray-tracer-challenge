@@ -27,25 +27,25 @@ pub fn Cylinder(comptime T: type) type {
         max: T = inf(T),
         closed: bool = false,
 
-        fn check_cap(ray: Ray(T), t: T) bool {
+        fn checkCap(ray: Ray(T), t: T) bool {
             const x = ray.origin.x + t * ray.direction.x;
             const z = ray.origin.z + t * ray.direction.z;
 
             return x * x + z * z <= 1.0;
         }
 
-        fn intersect_caps(cyl: *const Shape(T), ray: Ray(T), xs: *Intersections(T)) !void {
+        fn intersectCaps(cyl: *const Shape(T), ray: Ray(T), xs: *Intersections(T)) !void {
             if (!cyl.variant.cylinder.closed or @abs(ray.direction.y) < Self.tolerance) {
                 return;
             }
 
             var t = (cyl.variant.cylinder.min - ray.origin.y) / ray.direction.y;
-            if (check_cap(ray, t)) {
+            if (checkCap(ray, t)) {
                 try xs.append(Intersection(T).new(t, cyl));
             }
 
             t = (cyl.variant.cylinder.max - ray.origin.y) / ray.direction.y;
-            if (check_cap(ray, t)) {
+            if (checkCap(ray, t)) {
                 try xs.append(Intersection(T).new(t, cyl));
             }
         }
@@ -59,7 +59,7 @@ pub fn Cylinder(comptime T: type) type {
 
             if (@abs(a) < Self.tolerance) {
                 // Ray is parallel to y-axis
-                try Self.intersect_caps(super, ray, &xs);
+                try Self.intersectCaps(super, ray, &xs);
                 return xs;
             }
 
@@ -92,7 +92,7 @@ pub fn Cylinder(comptime T: type) type {
                 try xs.append(Intersection(T).new(t1, super));
             }
 
-            try Self.intersect_caps(super, ray, &xs);
+            try Self.intersectCaps(super, ray, &xs);
 
             return xs;
         }

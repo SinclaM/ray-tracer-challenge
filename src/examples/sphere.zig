@@ -57,7 +57,7 @@ pub fn drawSphere() !void {
         }
     }
 
-    var image = try canvas.to_image(allocator);
+    var image = try canvas.toImage(allocator);
     defer image.deinit();
 
     try image.writeToFilePath("images" ++ std.fs.path.sep_str ++ "sphere.png", .{ .png = .{} });

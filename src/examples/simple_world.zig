@@ -126,7 +126,7 @@ pub fn renderSimpleWorld() !void {
     const canvas = try camera.render(allocator, world);
     defer canvas.destroy();
 
-    var image = try canvas.to_image(allocator);
+    var image = try canvas.toImage(allocator);
     defer image.deinit();
 
     try image.writeToFilePath("images" ++ std.fs.path.sep_str ++ "simple_world.png", .{ .png = .{} });

@@ -27,25 +27,25 @@ pub fn Cone(comptime T: type) type {
         max: T = inf(T),
         closed: bool = false,
 
-        fn check_cap(ray: Ray(T), t: T, radius: T) bool {
+        fn checkCap(ray: Ray(T), t: T, radius: T) bool {
             const x = ray.origin.x + t * ray.direction.x;
             const z = ray.origin.z + t * ray.direction.z;
 
             return x * x + z * z <= radius * radius;
         }
 
-        fn intersect_caps(cone: *const Shape(T), ray: Ray(T), xs: *Intersections(T)) !void {
+        fn intersectCaps(cone: *const Shape(T), ray: Ray(T), xs: *Intersections(T)) !void {
             if (!cone.variant.cone.closed or @abs(ray.direction.y) < Self.tolerance) {
                 return;
             }
 
             var t = (cone.variant.cone.min - ray.origin.y) / ray.direction.y;
-            if (check_cap(ray, t, cone.variant.cone.min)) {
+            if (checkCap(ray, t, cone.variant.cone.min)) {
                 try xs.append(Intersection(T).new(t, cone));
             }
 
             t = (cone.variant.cone.max - ray.origin.y) / ray.direction.y;
-            if (check_cap(ray, t, cone.variant.cone.max)) {
+            if (checkCap(ray, t, cone.variant.cone.max)) {
                 try xs.append(Intersection(T).new(t, cone));
             }
         }
@@ -65,7 +65,7 @@ pub fn Cone(comptime T: type) type {
 
             if (@abs(a) < Self.tolerance and @abs(b) < Self.tolerance) {
                 // Ray misses
-                try Self.intersect_caps(super, ray, &xs);
+                try Self.intersectCaps(super, ray, &xs);
                 return xs;
             }
 
@@ -78,7 +78,7 @@ pub fn Cone(comptime T: type) type {
                 try xs.append(Intersection(T).new(-c / (2.0 * b), super));
 
                 // ...but might hit a cap on the way out!
-                try Self.intersect_caps(super, ray, &xs);
+                try Self.intersectCaps(super, ray, &xs);
                 return xs;
             }
 
@@ -108,7 +108,7 @@ pub fn Cone(comptime T: type) type {
                 try xs.append(Intersection(T).new(t1, super));
             }
 
-            try Self.intersect_caps(super, ray, &xs);
+            try Self.intersectCaps(super, ray, &xs);
             return xs;
         }
 

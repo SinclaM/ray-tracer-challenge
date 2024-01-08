@@ -46,8 +46,8 @@ fn hexagonSide(comptime T: type, allocator: Allocator) !Shape(T) {
     const corner = try hexagonCorner(T);
     const edge = try hexagonEdge(T);
 
-    try side.addChild(corner);
-    try side.addChild(edge);
+    try side.variant.group.addChild(corner);
+    try side.variant.group.addChild(edge);
 
     return side;
 }
@@ -59,7 +59,7 @@ fn hexagon(comptime T: type, allocator: Allocator) !Shape(T) {
         var side = try hexagonSide(T, allocator);
         try side.setTransform(Matrix(T, 4).identity().rotateY(@as(T, @floatFromInt(n)) * pi / 3.0));
 
-        try hex.addChild(side);
+        try hex.variant.group.addChild(side);
     }
 
     return hex;
@@ -91,7 +91,7 @@ pub fn renderHexagon() !void {
     const canvas = try camera.render(allocator, world);
     defer canvas.destroy();
 
-    var image = try canvas.to_image(allocator);
+    var image = try canvas.toImage(allocator);
     defer image.deinit();
 
     try image.writeToFilePath("images" ++ std.fs.path.sep_str ++ "hexagon.png", .{ .png = .{} });
