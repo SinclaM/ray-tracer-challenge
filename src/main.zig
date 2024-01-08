@@ -41,6 +41,7 @@ pub fn main() !void {
         "nefertiti",
         "earth",
         "skybox",
+        "csg",
         "xyz",
         "align_check"
     };
