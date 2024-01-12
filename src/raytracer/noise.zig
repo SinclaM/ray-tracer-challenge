@@ -23,8 +23,8 @@ const permutation = [_]u8 {
 };
 
 const p = blk: {
-    comptime var i = 0;
-    comptime var self: [512]u8 = undefined;
+    var i = 0;
+    var self: [512]u8 = undefined;
     while (i < 256) : (i += 1) {
         self[256 + i] = permutation[i];
         self[i] = permutation[i];

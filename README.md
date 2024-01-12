@@ -85,7 +85,7 @@ zig build -Doptimize=ReleaseFast
 
 To target the web (populating `www/` with the all the site's files):
 ```bash
-zig build --sysroot ~/emsdk/upstream/emscripten -Dtarget=wasm32-emscripten -Doptimize=ReleaseFast
+zig build --sysroot [emsdk]/upstream/emscripten -Dtarget=wasm32-emscripten -Dcpu=generic+bulk_memory+atomics+simd128 -Doptimize=ReleaseFast
     && sed -i'' -e 's/_emscripten_return_address,/() => {},/g' www/ray-tracer-challenge.js
 ```
 
