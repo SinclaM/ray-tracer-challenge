@@ -1,0 +1,88 @@
+{
+    "camera": {
+        "width": 1280,
+        "height": 720,
+        "field-of-view": 1.0471975512,
+        "from": [0, 1.5, -5],
+        "to": [0, 0, 0],
+        "up": [0, 1, 0]
+    },
+    "lights": [
+        {
+            "point-light": {
+                "position": [-10, 10, -10],
+                "intensity": [1, 1, 1]
+            }
+
+        }
+    ],
+    "objects": [
+        {
+            "type": {
+                "csg": {
+                    "operation": "difference",
+                    "left": {
+                        "type": {
+                            "csg": {
+                                "operation": "intersection",
+                                "left": {
+                                    "type": { "sphere": {} },
+                                    "transform": [
+                                        { "scale": [1.3, 1.3, 1.3] }
+                                    ]
+                                },
+                                "right": {
+                                    "type": { "cube": {} },
+                                    "transform": [
+                                        { "rotate-y": 1.0471975512 }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "right": {
+                        "type": {
+                            "csg": {
+                                "operation": "union",
+                                "left": {
+                                    "type": {
+                                        "csg": {
+                                            "operation": "union",
+                                            "left": {
+                                                "type": { "cylinder": {} },
+                                                "transform": [
+                                                    { "scale": [0.6, 0.6, 0.6] },
+                                                    { "rotate-y": 1.0471975512 }
+                                                ],
+                                                "material": { "pattern": { "type": { "solid": [1, 0, 0] } } }
+                                            },
+                                            "right": {
+                                                "type": { "cylinder": {} },
+                                                "transform": [
+                                                    { "scale": [0.6, 0.6, 0.6] },
+                                                    { "rotate-x": 1.5707963268 },
+                                                    { "rotate-y": 1.0471975512 }
+                                                ],
+                                                "material": { "pattern": { "type": { "solid": [0, 0, 1] } } }
+                                            }
+                                        }
+                                    }
+                                },
+                                "right": {
+                                    "type": { "cylinder": {} },
+                                    "transform": [
+                                        { "scale": [0.6, 0.6, 0.6] },
+                                        { "rotate-z": 1.5707963268 },
+                                        { "rotate-y": 1.0471975512 }
+                                    ],
+                                    "material": { "pattern": { "type": { "solid": [0, 1, 0] } } }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+    ]
+}
