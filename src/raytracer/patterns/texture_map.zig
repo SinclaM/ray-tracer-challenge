@@ -65,8 +65,10 @@ fn UvCheckers(comptime T: type) type {
 fn UvImage(comptime T: type) type {
     return struct {
         const Self = @This();
+        const Interpolation = enum { None, Bilinear };
 
         canvas: Canvas(T),
+        interpolation: Interpolation,
 
         fn uvPatternAt(self: Self, u: T, v: T, object_point: Tuple(T)) Color(T) {
             _ = object_point;
@@ -76,7 +78,28 @@ fn UvImage(comptime T: type) type {
             const x = u * @as(T, @floatFromInt(self.canvas.width - 1));
             const y = v_flip * @as(T, @floatFromInt(self.canvas.height - 1));
 
-            return self.canvas.getPixelPointer(@intFromFloat(@round(x)), @intFromFloat(@round(y))).?.*;
+            switch (self.interpolation) {
+                .None => {
+                    return self.canvas.getPixelPointer(@intFromFloat(@round(x)), @intFromFloat(@round(y))).?.*;
+                },
+                .Bilinear => {
+                    const x1 = @floor(x);
+                    const x2 = @ceil(x);
+                    const y1 = @floor(y);
+                    const y2 = @ceil(y);
+
+                    const color_11 = self.canvas.getPixelPointer(@intFromFloat(x1), @intFromFloat(y1)).?.*;
+                    const color_21 = self.canvas.getPixelPointer(@intFromFloat(x2), @intFromFloat(y1)).?.*;
+                    const color_12 = self.canvas.getPixelPointer(@intFromFloat(x1), @intFromFloat(y2)).?.*;
+                    const color_22 = self.canvas.getPixelPointer(@intFromFloat(x2), @intFromFloat(y2)).?.*;
+
+                    const color_x1 = color_11.mul(x2 - x).add(color_21.mul(x - x1));
+                    const color_x2 = color_12.mul(x2 - x).add(color_22.mul(x - x1));
+
+                    const color_xy = color_x1.mul(y2 - y).add(color_x2.mul(y - y1));
+                    return color_xy;
+                }
+            }
         }
     };
 }
@@ -124,8 +147,8 @@ pub fn UvPattern(comptime T: type) type {
             };
         }
 
-        pub fn uvImage(canvas: Canvas(T)) Self {
-            return .{ .variant = .{ .uv_image = .{ .canvas = canvas } } };
+        pub fn uvImage(canvas: Canvas(T), interpolation: UvImage(T).Interpolation) Self {
+            return .{ .variant = .{ .uv_image = .{ .canvas = canvas, .interpolation = interpolation } } };
         }
 
         fn uvPatternAt(self: Self, u: T, v: T, object_point: Tuple(T)) Color(T) {
@@ -536,7 +559,7 @@ test "Canvas-based checker pattern in 2D" {
     const canvas = try Canvas(f32).fromPpm(allocator, ppm);
     defer canvas.destroy();
 
-    const uv_pattern = UvPattern(f32).uvImage(canvas);
+    const uv_pattern = UvPattern(f32).uvImage(canvas, .None);
 
     try testing.expect(uv_pattern.uvPatternAt(0.0, 0.0, undefined).approxEqual(Color(f32).new(0.9, 0.9, 0.9)));
     try testing.expect(uv_pattern.uvPatternAt(0.3, 0.0, undefined).approxEqual(Color(f32).new(0.2, 0.2, 0.2)));

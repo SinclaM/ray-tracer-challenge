@@ -70,6 +70,7 @@ fn UvPatternConfig(comptime T: type) type {
         },
         image: struct {
             file: []const u8,
+            interpolation: enum { none, bilinear } = .none,
         },
     };
 }
@@ -282,7 +283,13 @@ fn parseUvPattern(
                 defer im.deinit();
 
                 const canvas = try Canvas(T).fromImage(arena_allocator, im);
-                break :blk UvPattern(T).uvImage(canvas);
+                break :blk UvPattern(T).uvImage(
+                   canvas,
+                   switch (image.interpolation) {
+                       .none => .None,
+                       .bilinear => .Bilinear
+                   }
+                );
             },
         }
     };
