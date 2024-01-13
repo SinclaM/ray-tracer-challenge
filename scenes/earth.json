@@ -51,7 +51,8 @@
                             "spherical": {
                                 "uv-pattern": {
                                     "image": {
-                                        "file": "earthmap1k.png"
+                                        "file": "earthmap1k.png",
+                                        "interpolation": "bilinear"
                                     }
                                 }
                             }
