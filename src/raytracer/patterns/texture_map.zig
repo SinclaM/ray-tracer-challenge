@@ -172,7 +172,7 @@ pub fn TextureMap(comptime T: type) type {
             uv_pattern: UvPattern(T),
 
             pub fn patternAt(self: @This(), pattern_point: Tuple(T), object_point: Tuple(T)) Color(T) {
-                const theta = std.math.atan2(T, pattern_point.x, pattern_point.z);
+                const theta = std.math.atan2(pattern_point.x, pattern_point.z);
 
                 const vec = Tuple(T).vec3(pattern_point.x, pattern_point.y, pattern_point.z);
                 const radius = vec.magnitude();
@@ -203,7 +203,7 @@ pub fn TextureMap(comptime T: type) type {
             uv_pattern: UvPattern(T),
 
             pub fn patternAt(self: @This(), pattern_point: Tuple(T), object_point: Tuple(T)) Color(T) {
-                const theta = std.math.atan2(T, pattern_point.x, pattern_point.z);
+                const theta = std.math.atan2(pattern_point.x, pattern_point.z);
                 const raw_u = theta / (2.0 * std.math.pi);
                 const u = 1.0 - (raw_u + 0.5);
 
