@@ -69,6 +69,7 @@ pub fn build(b: *std.Build) !void {
             "-pthread",
             "-sPTHREAD_POOL_SIZE=navigator.hardwareConcurrency",
             "-sINITIAL_MEMORY=167772160",
+            "-sMAXIMUM_MEMORY=4gb",
             "-sALLOW_MEMORY_GROWTH",
             "-sEXPORTED_FUNCTIONS=_startInitRenderer,_tryFinishInitRenderer,_initRendererIsOk,_initRendererGetPixels,_initRendererGetWidth,_initRendererGetHeight,_initRendererGetErr,_deinitRenderer,_startRender,_tryFinishRender,_rotateCamera,_moveCamera",
             "-sEXPORTED_RUNTIME_METHODS=ccall,cwrap",
