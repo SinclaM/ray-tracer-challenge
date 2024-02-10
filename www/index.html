@@ -106,19 +106,13 @@
             };
 
             const findMaximumMemorySize = () => {
-                let maximum = initialMemorySize;
-
-                while (maximum < 65536 && allowed(initialMemorySize, maximum)) {
-                    maximum = Math.min(maximum * 2, 65536);
-                }
-
                 let left = initialMemorySize;
-                let right = maximum;
+                let right = 65536;
 
                 while (left < right) {
                     const mid = Math.ceil((left + right) / 2);
 
-                    if (allowed(initialMemorySize, mid)) {
+                    if (allowed(mid)) {
                         left = mid;
                     } else {
                         right = mid - 1;
